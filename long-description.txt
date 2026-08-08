@@ -1,0 +1,75 @@
+✂️ make it shorter is an ai summarizer for people who have more to read than time to read it. It takes a long read and boils it down to the point — on any page, in any language.
+
+You can summarize the text you selected, or the whole page at once. Select one or more paragraphs when those are what you want summarized. Run it on the whole page when you want to know whether it is worth going deeper. Either way, make it shorter gives back one compact block that holds the substance.
+
+🔎 A summary usually raises questions, so the tool prepares them in advance. Under each result you get follow-up buttons written for your specific text, not a fixed menu. Depending on what you summarized, they may look like this:
+
+➤ What does this mean
+➤ When will this happen
+➤ How much does it cost
+➤ Who is affected
+➤ What happens next
+
+Press one and you get the answer to that question, pulled from the same text rather than from anywhere else. So the tool works in both directions: it can make it shorter, and it can open up the part you care about. That is the difference from a plain text summarizer, which leaves you with a short paragraph and no way back.
+
+📚 What it handles:
+
+📰 Articles and blog posts
+✉️ Emails and long message threads
+📊 Reports and research papers
+📄 Any other structured text
+
+⚙️ Two more things worth knowing:
+
+- Language. Read a page in any language and get the summary in yours. Translation and summarization happen in the same pass, so you do not need a second tab or a separate translation step.
+- Depth. If the result is not what you needed, you can adjust how strongly the source is compressed — a light trim, or enough to make it a short paragraph. The default suits most articles, so most days you will not touch it.
+
+The summaries keep names, numbers and dates from the original, because those are usually the reason you opened the article in the first place.
+
+🎯 Where it earns its place:
+
+1️⃣ Study — work through a chapter before the seminar, then make it really short for your own notes.
+2️⃣ Work — summarize this thread before you answer, or make it short and straight to the point before you forward it.
+3️⃣ Research — an article summarizer for the first pass through a reading list, including papers where you have to summarize ai methods you have not met before.
+4️⃣ Looking things up — run make it shorter on five sources and keep the one that answers your question.
+
+The point is not to stop reading. The point is to know what you are about to read. A summary tells you whether an article deserves twenty minutes, which section holds the answer, and what the author concluded. After that you can open the original and read it properly, or close the tab and move on.
+
+Whatever the request sounds like in your head — make it way shorter, make it very short, or make it as short as possible — it is the same tool and the same result.
+
+🧭 A summary is a map, not a replacement. When a detail decides something, like a number in a contract or a condition in a policy, go back to the source and read that part in full.
+
+⚠️ There is AI underneath, so it will get something wrong now and then — a misread nuance, a detail left out. Nothing dramatic, but worth knowing when the text matters.
+
+📌 Your text is not stored. Summarizing a private email or an internal document leaves nothing behind.
+
+📋 Questions people ask:
+
+❓ I have a long report — can you make it shorter?
+💡 Yes, that is the main case. Select the part you need, or run the summarizer on the whole page.
+
+❓ The summary is still long. Can you make it even shorter?
+💡 Raise the compression and you can make it much shorter. Push it further and you can make it a lot shorter, down to a couple of lines.
+
+❓ Can you make it short and simple, not just short?
+💡 Yes. Plain wording instead of jargon is part of the job when you ask it to make it simple and shorter.
+
+❓ Can u make it short enough for a chat message?
+💡 Usually. A strong cut leaves one or two sentences you can paste as they are.
+
+❓ Can you make it a little shorter instead of a full summary?
+💡 Yes. Ask it to make it a bit shorter and a light cut keeps the structure of the original, trimming only the rest.
+
+❓ Can you summarize text from image files or screenshots?
+💡 No. It works with text you can select on a page, not with pictures of text.
+
+❓ Does it rewrite the text, or actually shorten it?
+💡 It shortens. Say make it shorter please and you get less text, rather than the same length in different words.
+
+❓ I keep typing summerize by mistake. Is that the same thing?
+💡 Yes. summerize and summerizer are common misspellings of summarize and summarizer, and this is the tool you were looking for.
+
+❓ Does it work as a summary generator for my own drafts?
+💡 Yes. Select your draft and summarize it the same way you would summarize somebody else's text. Writers run make it shorter on their own copy before sending it out.
+
+make it shorter — for when you need to make it short, shorten it, or simply find out what a page says before you commit to reading it.
