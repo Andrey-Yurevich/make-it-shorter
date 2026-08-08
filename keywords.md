@@ -3,15 +3,14 @@
 
 ## Main Keywords
 
-_Вкладка Broad Match, отсортировано по Volume desc._
 
 | Main keyword | Volume (before refresh) | Volume (after refresh) | KD (before refresh) | KD (after refresh) | Times used |
 | --- | --- | --- | --- | --- | --- |
-| make it shorter | 5400 | 5400 | 40 | **43** |  |
-| can you make it shorter | 2400 | 2400 | 30 | 30 |  |
+| make it shorter | 5400 | 5400 | 40 | **43** | 1 |
+| can you make it shorter | 2400 | 2400 | 30 | 30 | 1 |
 | make it short | 2400 | 2400 | 75 | 75 |  |
 | make it short and simple | 1000 | 1000 | 85 | 85 |  |
-| make it way shorter | 880 | 880 | 25 | 25 |  |
+| make it way shorter | 880 | 880 | d25 | 25 |  |
 | can you make it short | 590 | 590 | 43 | 43 |  |
 | make it even shorter | 390 | 390 | 17 | 17 |  |
 | make it very short | 390 | 390 | 42 | 42 |  |
@@ -34,10 +33,10 @@ _Вкладка Broad Match, отсортировано по Volume desc._
 
 | Extra keyword | Volume (before refresh) | Volume (after refresh) | KD (before refresh) | KD (after refresh) | Times used |
 | --- | --- | --- | --- | --- | --- |
-| summary | 60500 | 60500 | 80 | 80 |  |
+| summary | 60500 | 60500 | 80 | 80 | 1 |
 | summarize | 49500 | 49500 | 89 | 89 |  |
-| summarizer | 40500 | 40500 | 78 | 78 |  |
-| ai summarizer | 27100 | 27100 | 71 | 71 |  |
+| summarizer | 40500 | 40500 | 78 | 78 | 1 |
+| ai summarizer | 27100 | 27100 | 71 | 71 | 1 |
 | summarization | 12100 | 12100 | 58 | 58 |  |
 | quillbot paraphrase | 9900 | 9900 | 87 | 87 |  |
 | summarize ai | 9900 | 9900 | 78 | 78 |  |
@@ -48,7 +47,7 @@ _Вкладка Broad Match, отсортировано по Volume desc._
 | summerizer | 6600 | 6600 | 73 | 73 |  |
 | text summarizer | 6600 | 6600 | 77 | 77 |  |
 | quillbot translate | 5400 | 5400 | 61 | 61 |  |
-| shorten it | 5400 | 5400 | 61 | 61 |  |
+| shorten it | 5400 | 5400 | 61 | 61 | 1 |
 | summaries | 5400 | 5400 | 65 | 65 |  |
 | summarize text from image | 5400 | 5400 | 42 | 42 |  |
 | summarize this | 5400 | 5400 | 85 | 85 |  |
