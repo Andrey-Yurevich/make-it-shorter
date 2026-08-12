@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Thanks</title>
+<style>
+  body{font:16px/1.5 system-ui,sans-serif;margin:0;display:grid;place-items:center;height:100vh;color:#1b1b1f}
+</style>
+</head>
+<body>
+<p id="m">One moment…</p>
+<script>
+// ЗАГЛУШКА. Подставить реальные адреса перед выкатом.
+var STORE_URL = 'https://chromewebstore.google.com/detail/__EXTENSION_ID__';
+var FORM_URL  = 'https://docs.google.com/forms/__FORM_ID__/viewform';
+
+var stars = parseInt(new URLSearchParams(location.search).get('stars'), 10);
+
+if (!(stars >= 1 && stars <= 5)) {
+  location.replace('/');
+} else if (stars >= 4) {
+  location.replace(STORE_URL);
+} else {
+  location.replace(FORM_URL + '?usp=pp_url&entry.__STARS_FIELD__=' + stars);
+}
+</script>
+<noscript><p>Enable JavaScript, or <a href="/">go to the homepage</a>.</p></noscript>
+</body>
+</html>
