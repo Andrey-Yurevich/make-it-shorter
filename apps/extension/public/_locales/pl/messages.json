@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Streszczenie AI: streszczenie albo po prostu krócej. Długi artykuł? Jedno kliknięcie, w każdym języku."
+  },
+  "actionTitle": { "message": "Streść tę stronę" },
+  "contextMenuSelection": { "message": "Skróć zaznaczenie" },
+  "floatingIconTitle": { "message": "Skróć zaznaczenie" },
+  "menuTitle": { "message": "Menu" },
+  "historyTitle": { "message": "Historia" },
+  "historyEmpty": { "message": "Nie ma jeszcze dialogów." },
+  "newDialog": { "message": "Nowy dialog" },
+  "clearHistory": { "message": "Wyczyść historię" },
+  "deleteDialog": { "message": "Usuń dialog" },
+  "close": { "message": "Zamknij" },
+  "settingsTitle": { "message": "Ustawienia" },
+  "settingsLanguage": { "message": "Język streszczenia" },
+  "settingsRatio": { "message": "Jak krótko" },
+  "ratio_light": { "message": "Lekko" },
+  "ratio_normal": { "message": "Zwykle" },
+  "ratio_tight": { "message": "Maksymalnie" },
+  "composerPlaceholder": { "message": "Wklej tekst do skrócenia" },
+  "composerSend": { "message": "Skróć" },
+  "composerTooShort": { "message": "Dodaj więcej tekstu — to za mało na streszczenie." },
+  "emptyTitle": { "message": "Zaznacz tekst albo wklej własny" },
+  "emptyBody": {
+    "message": "Kliknij ikonę na pasku, aby skrócić całą stronę, albo zaznacz tekst na stronie."
+  },
+  "unreadableTitle": { "message": "Nie udało się odczytać tej strony" },
+  "unreadableBody": { "message": "Wklej tekst poniżej, a zostanie skrócony." },
+  "sourceLabel": { "message": "Tekst źródłowy" },
+  "sourceTruncated": { "message": "Tekst był długi, więc przetworzono tylko jego część." },
+  "working": { "message": "Pracuję…" },
+  "retry": { "message": "Spróbuj ponownie" },
+  "errorTooShort": { "message": "Ten tekst jest za krótki na streszczenie." },
+  "errorTooLong": { "message": "Ten tekst jest za długi na streszczenie." },
+  "errorRateLimited": { "message": "Dzienny limit został wykorzystany. Wróć jutro." },
+  "errorUnsupportedLanguage": { "message": "Ten język nie jest jeszcze obsługiwany." },
+  "errorInvalidRequest": { "message": "Coś poszło nie tak. Spróbuj ponownie." },
+  "errorServiceDisabled": { "message": "Usługa jest chwilowo niedostępna." },
+  "errorUpstream": { "message": "Nie udało się dokończyć streszczenia. Spróbuj ponownie." },
+  "rateUs": { "message": "Oceń nas" }
+}

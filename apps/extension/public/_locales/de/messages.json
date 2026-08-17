@@ -1,0 +1,45 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "KI-Zusammenfassung: kurz gefasst oder einfach kürzer. Langer Artikel? Ein Klick, in jeder Sprache."
+  },
+  "actionTitle": { "message": "Diese Seite zusammenfassen" },
+  "contextMenuSelection": { "message": "Auswahl kürzen" },
+  "floatingIconTitle": { "message": "Auswahl kürzen" },
+  "menuTitle": { "message": "Menü" },
+  "historyTitle": { "message": "Verlauf" },
+  "historyEmpty": { "message": "Noch keine Dialoge." },
+  "newDialog": { "message": "Neuer Dialog" },
+  "clearHistory": { "message": "Verlauf löschen" },
+  "deleteDialog": { "message": "Dialog löschen" },
+  "close": { "message": "Schließen" },
+  "settingsTitle": { "message": "Einstellungen" },
+  "settingsLanguage": { "message": "Sprache der Zusammenfassung" },
+  "settingsRatio": { "message": "Wie kurz" },
+  "ratio_light": { "message": "Leicht" },
+  "ratio_normal": { "message": "Normal" },
+  "ratio_tight": { "message": "Maximal" },
+  "composerPlaceholder": { "message": "Text zum Kürzen einfügen" },
+  "composerSend": { "message": "Kürzen" },
+  "composerTooShort": { "message": "Mehr Text einfügen — das ist zu kurz für eine Zusammenfassung." },
+  "emptyTitle": { "message": "Text markieren oder eigenen einfügen" },
+  "emptyBody": {
+    "message": "Auf das Symbol in der Leiste klicken, um die ganze Seite zu kürzen, oder Text auf der Seite markieren."
+  },
+  "unreadableTitle": { "message": "Diese Seite konnte nicht gelesen werden" },
+  "unreadableBody": { "message": "Text unten einfügen, dann wird er gekürzt." },
+  "sourceLabel": { "message": "Ausgangstext" },
+  "sourceTruncated": { "message": "Der Text war lang, deshalb wurde nur ein Teil verarbeitet." },
+  "working": { "message": "Arbeitet…" },
+  "retry": { "message": "Erneut versuchen" },
+  "errorTooShort": { "message": "Dieser Text ist zu kurz für eine Zusammenfassung." },
+  "errorTooLong": { "message": "Dieser Text ist zu lang für eine Zusammenfassung." },
+  "errorRateLimited": { "message": "Das Limit für heute ist aufgebraucht. Morgen wieder." },
+  "errorUnsupportedLanguage": { "message": "Diese Sprache wird noch nicht unterstützt." },
+  "errorInvalidRequest": { "message": "Etwas ist schiefgelaufen. Bitte erneut versuchen." },
+  "errorServiceDisabled": { "message": "Der Dienst ist vorübergehend nicht verfügbar." },
+  "errorUpstream": {
+    "message": "Die Zusammenfassung konnte nicht beendet werden. Bitte erneut versuchen."
+  },
+  "rateUs": { "message": "Bewerten" }
+}

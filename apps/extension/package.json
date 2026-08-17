@@ -1,0 +1,30 @@
+{
+  "name": "make-it-shorter-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:locales": "node scripts/check-locales.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"src/shared/*.test.ts\"",
+    "build": "npm run check:locales && npm run typecheck && npm test && vite build && vite build --config vite.extract.config.ts && vite build --config vite.content.config.ts"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "clsx": "^2.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/chrome": "^0.2.6",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1"
+  }
+}

@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* The panel is a narrow column that never scrolls as a whole — only the dialog area
+   inside it does, so the composer and the header stay put. */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  overflow: hidden;
+}
+
+@theme {
+  --color-ink: #1b1b1f;
+  --color-ink-soft: #52525b;
+  --color-line: #e4e4e7;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f4f5;
+}

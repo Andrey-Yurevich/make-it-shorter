@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Shrnutí s AI: shrnutí, nebo prostě kratší text. Dlouhý článek? Jedno kliknutí, v každém jazyce."
+  },
+  "actionTitle": { "message": "Shrnout tuto stránku" },
+  "contextMenuSelection": { "message": "Zkrátit výběr" },
+  "floatingIconTitle": { "message": "Zkrátit výběr" },
+  "menuTitle": { "message": "Nabídka" },
+  "historyTitle": { "message": "Historie" },
+  "historyEmpty": { "message": "Zatím žádné dialogy." },
+  "newDialog": { "message": "Nový dialog" },
+  "clearHistory": { "message": "Vymazat historii" },
+  "deleteDialog": { "message": "Smazat dialog" },
+  "close": { "message": "Zavřít" },
+  "settingsTitle": { "message": "Nastavení" },
+  "settingsLanguage": { "message": "Jazyk shrnutí" },
+  "settingsRatio": { "message": "Jak krátce" },
+  "ratio_light": { "message": "Lehce" },
+  "ratio_normal": { "message": "Běžně" },
+  "ratio_tight": { "message": "Maximálně" },
+  "composerPlaceholder": { "message": "Vložte text ke zkrácení" },
+  "composerSend": { "message": "Zkrátit" },
+  "composerTooShort": { "message": "Přidejte text — tohle je na shrnutí příliš krátké." },
+  "emptyTitle": { "message": "Označte text nebo vložte vlastní" },
+  "emptyBody": {
+    "message": "Klikněte na ikonu na liště a zkraťte celou stránku, nebo označte text na stránce."
+  },
+  "unreadableTitle": { "message": "Tuto stránku se nepodařilo přečíst" },
+  "unreadableBody": { "message": "Vložte text níže a bude zkrácen." },
+  "sourceLabel": { "message": "Zdrojový text" },
+  "sourceTruncated": { "message": "Text byl dlouhý, zpracována byla jen jeho část." },
+  "working": { "message": "Pracuji…" },
+  "retry": { "message": "Zkusit znovu" },
+  "errorTooShort": { "message": "Tento text je na shrnutí příliš krátký." },
+  "errorTooLong": { "message": "Tento text je na shrnutí příliš dlouhý." },
+  "errorRateLimited": { "message": "Dnešní limit je vyčerpán. Vraťte se zítra." },
+  "errorUnsupportedLanguage": { "message": "Tento jazyk zatím není podporován." },
+  "errorInvalidRequest": { "message": "Něco se pokazilo. Zkuste to znovu." },
+  "errorServiceDisabled": { "message": "Služba je dočasně nedostupná." },
+  "errorUpstream": { "message": "Shrnutí se nepodařilo dokončit. Zkuste to znovu." },
+  "rateUs": { "message": "Ohodnoťte nás" }
+}

@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Ringkasan AI: buat ringkasan atau sekadar perpendek. Artikel panjang? Sekali klik, dalam bahasa apa pun."
+  },
+  "actionTitle": { "message": "Ringkas halaman ini" },
+  "contextMenuSelection": { "message": "Perpendek teks terpilih" },
+  "floatingIconTitle": { "message": "Perpendek teks terpilih" },
+  "menuTitle": { "message": "Menu" },
+  "historyTitle": { "message": "Riwayat" },
+  "historyEmpty": { "message": "Belum ada dialog." },
+  "newDialog": { "message": "Dialog baru" },
+  "clearHistory": { "message": "Hapus riwayat" },
+  "deleteDialog": { "message": "Hapus dialog" },
+  "close": { "message": "Tutup" },
+  "settingsTitle": { "message": "Pengaturan" },
+  "settingsLanguage": { "message": "Bahasa ringkasan" },
+  "settingsRatio": { "message": "Seberapa pendek" },
+  "ratio_light": { "message": "Ringan" },
+  "ratio_normal": { "message": "Normal" },
+  "ratio_tight": { "message": "Maksimal" },
+  "composerPlaceholder": { "message": "Tempel teks untuk diperpendek" },
+  "composerSend": { "message": "Perpendek" },
+  "composerTooShort": { "message": "Tambahkan teks — ini terlalu pendek untuk diringkas." },
+  "emptyTitle": { "message": "Pilih teks atau tempel teks Anda" },
+  "emptyBody": {
+    "message": "Klik ikon di bilah alat untuk memperpendek seluruh halaman, atau pilih teks di halaman."
+  },
+  "unreadableTitle": { "message": "Halaman ini tidak dapat dibaca" },
+  "unreadableBody": { "message": "Tempel teks di bawah dan teks akan diperpendek." },
+  "sourceLabel": { "message": "Teks asli" },
+  "sourceTruncated": { "message": "Teksnya panjang, jadi hanya sebagian yang diproses." },
+  "working": { "message": "Sedang bekerja…" },
+  "retry": { "message": "Coba lagi" },
+  "errorTooShort": { "message": "Teks ini terlalu pendek untuk diringkas." },
+  "errorTooLong": { "message": "Teks ini terlalu panjang untuk diringkas." },
+  "errorRateLimited": { "message": "Kuota hari ini habis. Kembalilah besok." },
+  "errorUnsupportedLanguage": { "message": "Bahasa ini belum didukung." },
+  "errorInvalidRequest": { "message": "Terjadi kesalahan. Coba lagi." },
+  "errorServiceDisabled": { "message": "Layanan sementara tidak tersedia." },
+  "errorUpstream": { "message": "Ringkasan tidak dapat diselesaikan. Coba lagi." },
+  "rateUs": { "message": "Beri nilai" }
+}

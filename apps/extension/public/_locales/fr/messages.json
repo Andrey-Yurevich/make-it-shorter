@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Résumé par IA : un résumé, ou simplement plus court. Article long ? Un clic, dans toutes les langues."
+  },
+  "actionTitle": { "message": "Résumer cette page" },
+  "contextMenuSelection": { "message": "Raccourcir la sélection" },
+  "floatingIconTitle": { "message": "Raccourcir la sélection" },
+  "menuTitle": { "message": "Menu" },
+  "historyTitle": { "message": "Historique" },
+  "historyEmpty": { "message": "Aucun dialogue pour l'instant." },
+  "newDialog": { "message": "Nouveau dialogue" },
+  "clearHistory": { "message": "Effacer l'historique" },
+  "deleteDialog": { "message": "Supprimer le dialogue" },
+  "close": { "message": "Fermer" },
+  "settingsTitle": { "message": "Paramètres" },
+  "settingsLanguage": { "message": "Langue du résumé" },
+  "settingsRatio": { "message": "Niveau de concision" },
+  "ratio_light": { "message": "Léger" },
+  "ratio_normal": { "message": "Normal" },
+  "ratio_tight": { "message": "Maximal" },
+  "composerPlaceholder": { "message": "Collez le texte à raccourcir" },
+  "composerSend": { "message": "Raccourcir" },
+  "composerTooShort": { "message": "Ajoutez du texte : c'est trop court pour un résumé." },
+  "emptyTitle": { "message": "Sélectionnez du texte ou collez le vôtre" },
+  "emptyBody": {
+    "message": "Cliquez sur l'icône de la barre pour raccourcir toute la page, ou sélectionnez du texte."
+  },
+  "unreadableTitle": { "message": "Cette page n'a pas pu être lue" },
+  "unreadableBody": { "message": "Collez le texte ci-dessous, il sera raccourci." },
+  "sourceLabel": { "message": "Texte source" },
+  "sourceTruncated": { "message": "Le texte était long : seule une partie a été traitée." },
+  "working": { "message": "En cours…" },
+  "retry": { "message": "Réessayer" },
+  "errorTooShort": { "message": "Ce texte est trop court pour être résumé." },
+  "errorTooLong": { "message": "Ce texte est trop long pour être résumé." },
+  "errorRateLimited": { "message": "La limite du jour est atteinte. Revenez demain." },
+  "errorUnsupportedLanguage": { "message": "Cette langue n'est pas encore prise en charge." },
+  "errorInvalidRequest": { "message": "Une erreur est survenue. Réessayez." },
+  "errorServiceDisabled": { "message": "Le service est temporairement indisponible." },
+  "errorUpstream": { "message": "Le résumé n'a pas pu être terminé. Réessayez." },
+  "rateUs": { "message": "Notez-nous" }
+}

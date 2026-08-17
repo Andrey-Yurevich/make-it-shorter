@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "ИИ-суммаризатор: краткое изложение или просто короче. Длинная статья? Сожмите её одним кликом, на любом языке."
+  },
+  "actionTitle": { "message": "Сжать эту страницу" },
+  "contextMenuSelection": { "message": "Сжать выделенное" },
+  "floatingIconTitle": { "message": "Сжать выделенное" },
+  "menuTitle": { "message": "Меню" },
+  "historyTitle": { "message": "История" },
+  "historyEmpty": { "message": "Диалогов пока нет." },
+  "newDialog": { "message": "Новый диалог" },
+  "clearHistory": { "message": "Очистить историю" },
+  "deleteDialog": { "message": "Удалить диалог" },
+  "close": { "message": "Закрыть" },
+  "settingsTitle": { "message": "Настройки" },
+  "settingsLanguage": { "message": "Язык резюме" },
+  "settingsRatio": { "message": "Насколько коротко" },
+  "ratio_light": { "message": "Слегка" },
+  "ratio_normal": { "message": "Обычно" },
+  "ratio_tight": { "message": "Максимально" },
+  "composerPlaceholder": { "message": "Вставьте текст, чтобы сжать" },
+  "composerSend": { "message": "Сжать" },
+  "composerTooShort": { "message": "Добавьте текста — этого слишком мало для резюме." },
+  "emptyTitle": { "message": "Выделите текст или вставьте свой" },
+  "emptyBody": {
+    "message": "Нажмите иконку на панели, чтобы сжать всю страницу, или выделите текст на странице."
+  },
+  "unreadableTitle": { "message": "Эту страницу не удалось прочитать" },
+  "unreadableBody": { "message": "Вставьте текст ниже, и он будет сжат." },
+  "sourceLabel": { "message": "Исходный текст" },
+  "sourceTruncated": { "message": "Текст оказался длинным, обработана только его часть." },
+  "working": { "message": "Работаем…" },
+  "retry": { "message": "Попробовать снова" },
+  "errorTooShort": { "message": "Этот текст слишком короткий для резюме." },
+  "errorTooLong": { "message": "Этот текст слишком длинный для резюме." },
+  "errorRateLimited": { "message": "Лимит на сегодня исчерпан. Возвращайтесь завтра." },
+  "errorUnsupportedLanguage": { "message": "Этот язык пока не поддерживается." },
+  "errorInvalidRequest": { "message": "Что-то пошло не так. Попробуйте ещё раз." },
+  "errorServiceDisabled": { "message": "Сервис временно недоступен." },
+  "errorUpstream": { "message": "Не удалось закончить резюме. Попробуйте ещё раз." },
+  "rateUs": { "message": "Оцените нас" }
+}

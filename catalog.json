@@ -1,0 +1,126 @@
+{
+  "version": 2,
+  "actions": [
+    {
+      "id": "explain_simply",
+      "since": 1,
+      "description": "the text leans on jargon, technical terms, or formal phrasing that a general reader would stumble over",
+      "instruction": "Restate the main point in plain, everyday language, and unpack the specialist terms the text uses. Add nothing the text does not contain."
+    },
+    {
+      "id": "key_facts",
+      "since": 1,
+      "description": "the text carries hard specifics — figures, sums, dates, quantities — that its point depends on",
+      "instruction": "List the hard specifics the text gives: figures, sums, dates, quantities. Say what each one refers to. Include only what is actually stated."
+    },
+    {
+      "id": "why_it_matters",
+      "since": 1,
+      "description": "the text describes something with consequences beyond itself, and a reader could reasonably ask what turns on it",
+      "instruction": "Explain what turns on this according to the text: what changes, for whom, and with what effect. Stay with consequences the text states or plainly implies, and do not restate the summary."
+    },
+    {
+      "id": "whats_the_catch",
+      "since": 1,
+      "description": "whatever the text presents — an offer, a rule, a product, a plan — carries conditions, exclusions, limits or costs that it states without dwelling on. Not for criticism voiced by other people; that is other_views",
+      "instruction": "Point out the fine print: the conditions, exclusions, limits or costs built into the thing itself, which the text states but does not emphasise. Leave other people's criticism aside. If there genuinely is none, say so in one sentence."
+    },
+    {
+      "id": "other_views",
+      "since": 1,
+      "description": "named people or groups in the text disagree, object, or criticise — or the text argues one side of a question others contest",
+      "instruction": "Set out who disagrees with what, and on what grounds, using the positions the text itself reports. Where it gives only one side, say so and name the side it takes."
+    },
+    {
+      "id": "how_reliable",
+      "since": 1,
+      "description": "the text makes factual claims that rest on sources, studies, data, or named authorities",
+      "instruction": "Say what the claims rest on: which sources, studies, or authorities, and how directly each claim is attributed. Note where something is asserted with nothing behind it."
+    },
+    {
+      "id": "whats_next",
+      "since": 1,
+      "description": "the text points to steps, deadlines, decisions, or events that are still ahead",
+      "instruction": "Lay out what is still ahead according to the text: steps, deadlines, decisions, or events, with their timing where it is given. If no timing is stated, say so rather than guessing."
+    },
+    {
+      "id": "what_to_do",
+      "since": 1,
+      "description": "the text puts a requirement, entitlement or choice on the reader without laying out how to act on it. Not for texts that are already a set of instructions — there the summary covers it",
+      "instruction": "Spell out what the reader would actually do, as concrete steps in the order the text implies. Stay strictly within what the text describes, invent no steps, and do not simply repeat instructions the summary already gave."
+    },
+    {
+      "id": "even_shorter",
+      "since": 2,
+      "description": "the text spends many paragraphs circling a single conclusion, verdict or bottom line that could be stated in one sentence",
+      "instruction": "Compress the whole thing to one or two sentences — decidedly shorter than the summary above. Keep only what a reader would need if they read nothing else.",
+      "deprecated": true
+    },
+    {
+      "id": "main_points",
+      "since": 2,
+      "description": "the text runs through several parallel items — findings, rules, features, arguments — that its prose keeps in one unbroken flow",
+      "instruction": "Give the essential points as a short list, one line each, in the order the text presents them. Cover the whole text, not only its opening."
+    },
+    {
+      "id": "background",
+      "since": 2,
+      "description": "the text refers to earlier events, decisions or history that a reader arriving cold would need in order to follow it",
+      "instruction": "Explain the background the text refers to: what came before, and how the situation reached this point. Use only what the text itself supplies."
+    },
+    {
+      "id": "how_it_works",
+      "since": 2,
+      "description": "the text describes a mechanism, process or system whose workings a reader might want unpacked",
+      "instruction": "Explain how it works according to the text: the mechanism or process, in causal order. Do not add mechanisms the text does not describe."
+    },
+    {
+      "id": "key_terms",
+      "since": 2,
+      "description": "the text uses specialist vocabulary a general reader would not know. Not for restating the whole point in plain language — that is explain_simply",
+      "instruction": "Define the specialist terms the text uses, one short line each, in the sense the text uses them. Cover the terms a general reader would stumble on, not the ordinary words."
+    },
+    {
+      "id": "who_is_who",
+      "since": 2,
+      "description": "the text names several people, companies or institutions acting on each other — contracting, deciding, objecting, taking over — and a reader could lose track of which is which",
+      "instruction": "Identify the people, organisations and bodies the text names, and say what part each plays. Keep to one line each and to what the text states."
+    },
+    {
+      "id": "timeline",
+      "since": 2,
+      "description": "the text gives dates, years or periods scattered through the prose, mentioned out of the order in which the events happened",
+      "instruction": "Put the events in time order with the dates or intervals the text gives. Where the text is vague about timing, say so rather than inventing a date."
+    },
+    {
+      "id": "examples",
+      "since": 2,
+      "description": "the text makes general claims and backs them with concrete cases, which would land better pulled out of the prose",
+      "instruction": "Pull out the concrete examples or cases the text gives and say what each one illustrates. If the text offers none, say so in one sentence."
+    },
+    {
+      "id": "pros_and_cons",
+      "since": 2,
+      "description": "the text weighs something a reader might adopt or reject, and supplies material on both its merits and its downsides",
+      "instruction": "Set out the case for and the case against as the text presents them, keeping the two sides apart. Where the text is one-sided, say which side is missing."
+    },
+    {
+      "id": "whats_missing",
+      "since": 2,
+      "description": "the text is visibly incomplete: it cites a figure without saying where it came from, refers to a decision without its outcome, or announces detail it never delivers",
+      "instruction": "Name the questions a reader would still have: what the text does not address, leaves vague, or promises without delivering. Do not speculate about the answers."
+    },
+    {
+      "id": "whos_it_for",
+      "since": 2,
+      "description": "the text describes something aimed at particular people — a product, service, rule or piece of advice — and whom it suits is not stated plainly",
+      "instruction": "Say who this is for and who it is not for according to the text: which people it suits, and which it would not serve. Stay within what the text supports."
+    },
+    {
+      "id": "what_changed",
+      "since": 2,
+      "description": "the text describes a departure from an earlier state — a new rule, a revision, an update, a reversal",
+      "instruction": "Say what is different now compared with before, according to the text: what the previous state was and what replaced it. Where the text does not say what came before, note that."
+    }
+  ]
+}

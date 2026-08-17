@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "ШІ-стиснення: короткий виклад або просто коротше. Довга стаття? Один клік, будь-якою мовою."
+  },
+  "actionTitle": { "message": "Стиснути цю сторінку" },
+  "contextMenuSelection": { "message": "Стиснути виділене" },
+  "floatingIconTitle": { "message": "Стиснути виділене" },
+  "menuTitle": { "message": "Меню" },
+  "historyTitle": { "message": "Історія" },
+  "historyEmpty": { "message": "Діалогів поки немає." },
+  "newDialog": { "message": "Новий діалог" },
+  "clearHistory": { "message": "Очистити історію" },
+  "deleteDialog": { "message": "Видалити діалог" },
+  "close": { "message": "Закрити" },
+  "settingsTitle": { "message": "Налаштування" },
+  "settingsLanguage": { "message": "Мова резюме" },
+  "settingsRatio": { "message": "Наскільки коротко" },
+  "ratio_light": { "message": "Злегка" },
+  "ratio_normal": { "message": "Звичайно" },
+  "ratio_tight": { "message": "Максимально" },
+  "composerPlaceholder": { "message": "Вставте текст, щоб стиснути" },
+  "composerSend": { "message": "Стиснути" },
+  "composerTooShort": { "message": "Додайте тексту — цього замало для резюме." },
+  "emptyTitle": { "message": "Виділіть текст або вставте свій" },
+  "emptyBody": {
+    "message": "Натисніть іконку на панелі, щоб стиснути всю сторінку, або виділіть текст на сторінці."
+  },
+  "unreadableTitle": { "message": "Цю сторінку не вдалося прочитати" },
+  "unreadableBody": { "message": "Вставте текст нижче, і його буде стиснуто." },
+  "sourceLabel": { "message": "Вихідний текст" },
+  "sourceTruncated": { "message": "Текст був довгий, оброблено лише його частину." },
+  "working": { "message": "Працюємо…" },
+  "retry": { "message": "Спробувати ще раз" },
+  "errorTooShort": { "message": "Цей текст закороткий для резюме." },
+  "errorTooLong": { "message": "Цей текст задовгий для резюме." },
+  "errorRateLimited": { "message": "Ліміт на сьогодні вичерпано. Поверніться завтра." },
+  "errorUnsupportedLanguage": { "message": "Ця мова поки не підтримується." },
+  "errorInvalidRequest": { "message": "Щось пішло не так. Спробуйте ще раз." },
+  "errorServiceDisabled": { "message": "Сервіс тимчасово недоступний." },
+  "errorUpstream": { "message": "Не вдалося завершити резюме. Спробуйте ще раз." },
+  "rateUs": { "message": "Оцініть нас" }
+}

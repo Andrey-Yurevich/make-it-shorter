@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "AI सारांश: सारांश पाइए या बस छोटा कीजिए। लंबा लेख? एक क्लिक में, किसी भी भाषा में।"
+  },
+  "actionTitle": { "message": "इस पेज का सारांश" },
+  "contextMenuSelection": { "message": "चुना हुआ हिस्सा छोटा करें" },
+  "floatingIconTitle": { "message": "चुना हुआ हिस्सा छोटा करें" },
+  "menuTitle": { "message": "मेन्यू" },
+  "historyTitle": { "message": "इतिहास" },
+  "historyEmpty": { "message": "अभी कोई संवाद नहीं है।" },
+  "newDialog": { "message": "नया संवाद" },
+  "clearHistory": { "message": "इतिहास मिटाएँ" },
+  "deleteDialog": { "message": "संवाद हटाएँ" },
+  "close": { "message": "बंद करें" },
+  "settingsTitle": { "message": "सेटिंग्स" },
+  "settingsLanguage": { "message": "सारांश की भाषा" },
+  "settingsRatio": { "message": "कितना छोटा" },
+  "ratio_light": { "message": "हल्का" },
+  "ratio_normal": { "message": "सामान्य" },
+  "ratio_tight": { "message": "अधिकतम" },
+  "composerPlaceholder": { "message": "छोटा करने के लिए टेक्स्ट चिपकाएँ" },
+  "composerSend": { "message": "छोटा करें" },
+  "composerTooShort": { "message": "और टेक्स्ट जोड़ें — सारांश के लिए यह बहुत छोटा है।" },
+  "emptyTitle": { "message": "टेक्स्ट चुनें या अपना चिपकाएँ" },
+  "emptyBody": {
+    "message": "पूरा पेज छोटा करने के लिए टूलबार आइकन दबाएँ, या पेज पर टेक्स्ट चुनें।"
+  },
+  "unreadableTitle": { "message": "यह पेज पढ़ा नहीं जा सका" },
+  "unreadableBody": { "message": "नीचे टेक्स्ट चिपकाएँ, वह छोटा कर दिया जाएगा।" },
+  "sourceLabel": { "message": "मूल टेक्स्ट" },
+  "sourceTruncated": { "message": "टेक्स्ट लंबा था, इसलिए उसका केवल एक हिस्सा लिया गया।" },
+  "working": { "message": "काम चल रहा है…" },
+  "retry": { "message": "फिर कोशिश करें" },
+  "errorTooShort": { "message": "यह टेक्स्ट सारांश के लिए बहुत छोटा है।" },
+  "errorTooLong": { "message": "यह टेक्स्ट सारांश के लिए बहुत लंबा है।" },
+  "errorRateLimited": { "message": "आज की सीमा पूरी हो गई। कल फिर आइए।" },
+  "errorUnsupportedLanguage": { "message": "यह भाषा अभी उपलब्ध नहीं है।" },
+  "errorInvalidRequest": { "message": "कुछ गड़बड़ हो गई। फिर कोशिश करें।" },
+  "errorServiceDisabled": { "message": "सेवा फिलहाल उपलब्ध नहीं है।" },
+  "errorUpstream": { "message": "सारांश पूरा नहीं हो सका। फिर कोशिश करें।" },
+  "rateUs": { "message": "हमें रेट करें" }
+}

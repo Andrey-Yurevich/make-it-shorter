@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Rezumat cu IA: un rezumat sau pur și simplu mai scurt. Articol lung? Un clic, în orice limbă."
+  },
+  "actionTitle": { "message": "Rezumă această pagină" },
+  "contextMenuSelection": { "message": "Scurtează selecția" },
+  "floatingIconTitle": { "message": "Scurtează selecția" },
+  "menuTitle": { "message": "Meniu" },
+  "historyTitle": { "message": "Istoric" },
+  "historyEmpty": { "message": "Încă niciun dialog." },
+  "newDialog": { "message": "Dialog nou" },
+  "clearHistory": { "message": "Șterge istoricul" },
+  "deleteDialog": { "message": "Șterge dialogul" },
+  "close": { "message": "Închide" },
+  "settingsTitle": { "message": "Setări" },
+  "settingsLanguage": { "message": "Limba rezumatului" },
+  "settingsRatio": { "message": "Cât de scurt" },
+  "ratio_light": { "message": "Ușor" },
+  "ratio_normal": { "message": "Normal" },
+  "ratio_tight": { "message": "Maxim" },
+  "composerPlaceholder": { "message": "Lipiți textul de scurtat" },
+  "composerSend": { "message": "Scurtează" },
+  "composerTooShort": { "message": "Adăugați mai mult text — acesta e prea scurt pentru un rezumat." },
+  "emptyTitle": { "message": "Selectați text sau lipiți textul dvs." },
+  "emptyBody": {
+    "message": "Faceți clic pe pictograma din bară pentru a scurta toată pagina, sau selectați text pe pagină."
+  },
+  "unreadableTitle": { "message": "Această pagină nu a putut fi citită" },
+  "unreadableBody": { "message": "Lipiți textul mai jos și va fi scurtat." },
+  "sourceLabel": { "message": "Text sursă" },
+  "sourceTruncated": { "message": "Textul era lung, așa că a fost procesată doar o parte." },
+  "working": { "message": "Se lucrează…" },
+  "retry": { "message": "Încercați din nou" },
+  "errorTooShort": { "message": "Acest text e prea scurt pentru un rezumat." },
+  "errorTooLong": { "message": "Acest text e prea lung pentru un rezumat." },
+  "errorRateLimited": { "message": "Limita de azi s-a epuizat. Reveniți mâine." },
+  "errorUnsupportedLanguage": { "message": "Această limbă nu este încă acceptată." },
+  "errorInvalidRequest": { "message": "Ceva n-a mers. Încercați din nou." },
+  "errorServiceDisabled": { "message": "Serviciul este temporar indisponibil." },
+  "errorUpstream": { "message": "Rezumatul nu a putut fi finalizat. Încercați din nou." },
+  "rateUs": { "message": "Evaluați-ne" }
+}

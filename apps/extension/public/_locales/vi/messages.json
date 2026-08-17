@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Tóm tắt bằng AI: lấy bản tóm tắt hoặc chỉ cần ngắn hơn. Bài dài? Một cú nhấp, mọi ngôn ngữ."
+  },
+  "actionTitle": { "message": "Tóm tắt trang này" },
+  "contextMenuSelection": { "message": "Rút gọn phần đã chọn" },
+  "floatingIconTitle": { "message": "Rút gọn phần đã chọn" },
+  "menuTitle": { "message": "Menu" },
+  "historyTitle": { "message": "Lịch sử" },
+  "historyEmpty": { "message": "Chưa có hội thoại nào." },
+  "newDialog": { "message": "Hội thoại mới" },
+  "clearHistory": { "message": "Xóa lịch sử" },
+  "deleteDialog": { "message": "Xóa hội thoại" },
+  "close": { "message": "Đóng" },
+  "settingsTitle": { "message": "Cài đặt" },
+  "settingsLanguage": { "message": "Ngôn ngữ tóm tắt" },
+  "settingsRatio": { "message": "Ngắn đến mức nào" },
+  "ratio_light": { "message": "Nhẹ" },
+  "ratio_normal": { "message": "Bình thường" },
+  "ratio_tight": { "message": "Tối đa" },
+  "composerPlaceholder": { "message": "Dán văn bản cần rút gọn" },
+  "composerSend": { "message": "Rút gọn" },
+  "composerTooShort": { "message": "Hãy thêm văn bản — phần này quá ngắn để tóm tắt." },
+  "emptyTitle": { "message": "Chọn văn bản hoặc dán văn bản của bạn" },
+  "emptyBody": {
+    "message": "Nhấp biểu tượng trên thanh công cụ để rút gọn cả trang, hoặc chọn văn bản trên trang."
+  },
+  "unreadableTitle": { "message": "Không đọc được trang này" },
+  "unreadableBody": { "message": "Dán văn bản bên dưới và nó sẽ được rút gọn." },
+  "sourceLabel": { "message": "Văn bản gốc" },
+  "sourceTruncated": { "message": "Văn bản dài, nên chỉ một phần được xử lý." },
+  "working": { "message": "Đang xử lý…" },
+  "retry": { "message": "Thử lại" },
+  "errorTooShort": { "message": "Văn bản này quá ngắn để tóm tắt." },
+  "errorTooLong": { "message": "Văn bản này quá dài để tóm tắt." },
+  "errorRateLimited": { "message": "Đã hết lượt hôm nay. Hãy quay lại ngày mai." },
+  "errorUnsupportedLanguage": { "message": "Ngôn ngữ này chưa được hỗ trợ." },
+  "errorInvalidRequest": { "message": "Đã có lỗi xảy ra. Hãy thử lại." },
+  "errorServiceDisabled": { "message": "Dịch vụ tạm thời không khả dụng." },
+  "errorUpstream": { "message": "Không hoàn thành được bản tóm tắt. Hãy thử lại." },
+  "rateUs": { "message": "Đánh giá" }
+}

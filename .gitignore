@@ -1,0 +1,35 @@
+# OS
+.DS_Store
+
+# Release artifact: scripts/make-release.sh rebuilds build/ from scratch every run.
+build/
+
+# Node
+node_modules/
+apps/extension/dist/
+*.tsbuildinfo
+
+# Go build output. `go build` with no -o names the binary after the module
+# directory, so a stray local build lands as apps/backend/backend. The release
+# path never produces it: make-release.sh writes build/bootstrap instead.
+# The paths are anchored on purpose — a bare `backend` pattern would also match
+# the apps/backend and specs/backend directories.
+/apps/backend/backend
+/apps/backend/bootstrap
+
+# Terraform. Provider plugins are ~800M and re-downloadable via `terraform init`.
+# State lives in S3 (see versions.tf); local state files only appear by accident.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local secrets. terraform.tfvars is tracked deliberately: single prod
+# environment, no secrets in it, and it is the only record of those values.
+*.auto.tfvars
+.env
+.env.local

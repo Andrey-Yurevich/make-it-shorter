@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Riassunto con IA: un riassunto o semplicemente più corto. Articolo lungo? Un clic, in ogni lingua."
+  },
+  "actionTitle": { "message": "Riassumi questa pagina" },
+  "contextMenuSelection": { "message": "Accorcia la selezione" },
+  "floatingIconTitle": { "message": "Accorcia la selezione" },
+  "menuTitle": { "message": "Menu" },
+  "historyTitle": { "message": "Cronologia" },
+  "historyEmpty": { "message": "Ancora nessun dialogo." },
+  "newDialog": { "message": "Nuovo dialogo" },
+  "clearHistory": { "message": "Cancella cronologia" },
+  "deleteDialog": { "message": "Elimina dialogo" },
+  "close": { "message": "Chiudi" },
+  "settingsTitle": { "message": "Impostazioni" },
+  "settingsLanguage": { "message": "Lingua del riassunto" },
+  "settingsRatio": { "message": "Quanto corto" },
+  "ratio_light": { "message": "Leggero" },
+  "ratio_normal": { "message": "Normale" },
+  "ratio_tight": { "message": "Massimo" },
+  "composerPlaceholder": { "message": "Incolla il testo da accorciare" },
+  "composerSend": { "message": "Accorcia" },
+  "composerTooShort": { "message": "Aggiungi altro testo: è troppo corto per un riassunto." },
+  "emptyTitle": { "message": "Seleziona un testo o incolla il tuo" },
+  "emptyBody": {
+    "message": "Clicca l'icona nella barra per accorciare l'intera pagina, oppure seleziona un testo."
+  },
+  "unreadableTitle": { "message": "Non è stato possibile leggere questa pagina" },
+  "unreadableBody": { "message": "Incolla il testo qui sotto e verrà accorciato." },
+  "sourceLabel": { "message": "Testo originale" },
+  "sourceTruncated": { "message": "Il testo era lungo, quindi ne è stata elaborata solo una parte." },
+  "working": { "message": "In corso…" },
+  "retry": { "message": "Riprova" },
+  "errorTooShort": { "message": "Questo testo è troppo corto per essere riassunto." },
+  "errorTooLong": { "message": "Questo testo è troppo lungo per essere riassunto." },
+  "errorRateLimited": { "message": "Il limite di oggi è esaurito. Torna domani." },
+  "errorUnsupportedLanguage": { "message": "Questa lingua non è ancora supportata." },
+  "errorInvalidRequest": { "message": "Qualcosa è andato storto. Riprova." },
+  "errorServiceDisabled": { "message": "Il servizio è temporaneamente non disponibile." },
+  "errorUpstream": { "message": "Non è stato possibile completare il riassunto. Riprova." },
+  "rateUs": { "message": "Valutaci" }
+}

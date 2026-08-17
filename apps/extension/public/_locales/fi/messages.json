@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "Tekoälytiivistys: tiivistelmä tai vain lyhyempi teksti. Pitkä artikkeli? Yksi klikkaus, millä kielellä vain."
+  },
+  "actionTitle": { "message": "Tiivistä tämä sivu" },
+  "contextMenuSelection": { "message": "Lyhennä valinta" },
+  "floatingIconTitle": { "message": "Lyhennä valinta" },
+  "menuTitle": { "message": "Valikko" },
+  "historyTitle": { "message": "Historia" },
+  "historyEmpty": { "message": "Ei vielä keskusteluja." },
+  "newDialog": { "message": "Uusi keskustelu" },
+  "clearHistory": { "message": "Tyhjennä historia" },
+  "deleteDialog": { "message": "Poista keskustelu" },
+  "close": { "message": "Sulje" },
+  "settingsTitle": { "message": "Asetukset" },
+  "settingsLanguage": { "message": "Tiivistelmän kieli" },
+  "settingsRatio": { "message": "Kuinka lyhyt" },
+  "ratio_light": { "message": "Kevyt" },
+  "ratio_normal": { "message": "Tavallinen" },
+  "ratio_tight": { "message": "Tiivein" },
+  "composerPlaceholder": { "message": "Liitä lyhennettävä teksti" },
+  "composerSend": { "message": "Lyhennä" },
+  "composerTooShort": { "message": "Lisää tekstiä — tämä on liian lyhyt tiivistettäväksi." },
+  "emptyTitle": { "message": "Valitse tekstiä tai liitä omasi" },
+  "emptyBody": {
+    "message": "Napsauta työkalurivin kuvaketta lyhentääksesi koko sivun, tai valitse tekstiä sivulta."
+  },
+  "unreadableTitle": { "message": "Tätä sivua ei voitu lukea" },
+  "unreadableBody": { "message": "Liitä teksti alle, niin se lyhennetään." },
+  "sourceLabel": { "message": "Lähdeteksti" },
+  "sourceTruncated": { "message": "Teksti oli pitkä, joten vain osa siitä käsiteltiin." },
+  "working": { "message": "Työstetään…" },
+  "retry": { "message": "Yritä uudelleen" },
+  "errorTooShort": { "message": "Teksti on liian lyhyt tiivistettäväksi." },
+  "errorTooLong": { "message": "Teksti on liian pitkä tiivistettäväksi." },
+  "errorRateLimited": { "message": "Päivän raja on käytetty. Palaa huomenna." },
+  "errorUnsupportedLanguage": { "message": "Tätä kieltä ei vielä tueta." },
+  "errorInvalidRequest": { "message": "Jokin meni pieleen. Yritä uudelleen." },
+  "errorServiceDisabled": { "message": "Palvelu ei ole tilapäisesti käytettävissä." },
+  "errorUpstream": { "message": "Tiivistelmää ei saatu valmiiksi. Yritä uudelleen." },
+  "rateUs": { "message": "Arvioi meidät" }
+}

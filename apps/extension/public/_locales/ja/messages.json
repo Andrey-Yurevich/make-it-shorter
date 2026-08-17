@@ -1,0 +1,43 @@
+{
+  "extName": { "message": "make it shorter" },
+  "extDescription": {
+    "message": "AI要約：要約するか、ただ短くするか。長い記事もワンクリックで、どの言語でも。"
+  },
+  "actionTitle": { "message": "このページを要約" },
+  "contextMenuSelection": { "message": "選択範囲を短く" },
+  "floatingIconTitle": { "message": "選択範囲を短く" },
+  "menuTitle": { "message": "メニュー" },
+  "historyTitle": { "message": "履歴" },
+  "historyEmpty": { "message": "まだ履歴はありません。" },
+  "newDialog": { "message": "新しい対話" },
+  "clearHistory": { "message": "履歴を消去" },
+  "deleteDialog": { "message": "この対話を削除" },
+  "close": { "message": "閉じる" },
+  "settingsTitle": { "message": "設定" },
+  "settingsLanguage": { "message": "要約の言語" },
+  "settingsRatio": { "message": "短さ" },
+  "ratio_light": { "message": "軽め" },
+  "ratio_normal": { "message": "標準" },
+  "ratio_tight": { "message": "最大" },
+  "composerPlaceholder": { "message": "短くしたい文章を貼り付け" },
+  "composerSend": { "message": "短くする" },
+  "composerTooShort": { "message": "文章を足してください。要約するには短すぎます。" },
+  "emptyTitle": { "message": "文章を選択するか、貼り付けてください" },
+  "emptyBody": {
+    "message": "ツールバーのアイコンでページ全体を短く、またはページ上の文章を選択してください。"
+  },
+  "unreadableTitle": { "message": "このページは読み取れませんでした" },
+  "unreadableBody": { "message": "下に文章を貼り付ければ短くします。" },
+  "sourceLabel": { "message": "元の文章" },
+  "sourceTruncated": { "message": "文章が長かったため、一部のみ処理しました。" },
+  "working": { "message": "処理中…" },
+  "retry": { "message": "もう一度" },
+  "errorTooShort": { "message": "この文章は要約するには短すぎます。" },
+  "errorTooLong": { "message": "この文章は要約するには長すぎます。" },
+  "errorRateLimited": { "message": "本日の上限に達しました。明日またどうぞ。" },
+  "errorUnsupportedLanguage": { "message": "この言語はまだ対応していません。" },
+  "errorInvalidRequest": { "message": "問題が発生しました。もう一度お試しください。" },
+  "errorServiceDisabled": { "message": "サービスは一時的に利用できません。" },
+  "errorUpstream": { "message": "要約を完了できませんでした。もう一度お試しください。" },
+  "rateUs": { "message": "評価する" }
+}
