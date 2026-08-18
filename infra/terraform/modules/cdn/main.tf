@@ -167,6 +167,22 @@ resource "aws_wafv2_web_acl" "api" {
       managed_rule_group_statement {
         vendor_name = "AWS"
         name        = "AWSManagedRulesCommonRuleSet"
+
+        # SizeRestrictions_BODY blocks any body over 8 KB, and this API exists to receive
+        # long text: 30 000 code points is up to ~90 KB on Cyrillic or CJK, so every
+        # compression of a real page would be refused at the edge. The viewer sees
+        # CloudFront's own "Request blocked" page, which names neither the rule nor a size.
+        #
+        # Counted rather than removed, so the hits still show up in metrics. The real gate
+        # on input size is the function's own MIN_INPUT/MAX_INPUT check, measured in code
+        # points and answering with a code the extension can show. The rest of the group
+        # keeps its blocking action; only the size cap is lifted.
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+          action_to_use {
+            count {}
+          }
+        }
       }
     }
 
@@ -243,6 +259,20 @@ resource "aws_lambda_permission" "cloudfront" {
   principal              = "cloudfront.amazonaws.com"
   source_arn             = aws_cloudfront_distribution.api.arn
   function_url_auth_type = "AWS_IAM"
+}
+
+# Two statements are required, not one, and this is the one that is easy to miss: with
+# only InvokeFunctionUrl above, CloudFront's signed request is denied and the viewer gets
+# the Function URL's own 403 with AccessDeniedException. Nothing in that error points at a
+# missing permission — the distribution, the OAC and the signature are all fine — so the
+# hours go into the signature instead. AWS documents both calls side by side under
+# "Restrict access to an AWS Lambda function URL origin".
+resource "aws_lambda_permission" "cloudfront_invoke" {
+  statement_id  = "AllowCloudFrontInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = var.function_name
+  principal     = "cloudfront.amazonaws.com"
+  source_arn    = aws_cloudfront_distribution.api.arn
 }
 
 resource "aws_route53_record" "api" {

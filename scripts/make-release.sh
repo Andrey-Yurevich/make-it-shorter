@@ -8,7 +8,7 @@ set -euo pipefail
 
 bucket="${ARTIFACTS_BUCKET:-mis-artifacts}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-build="${root}/build"
+build="${root}/build/backend"
 
 if [ -n "$(git -C "${root}" status --porcelain)" ]; then
   echo "working tree is dirty: the sha in the key would not describe what is in the zip" >&2
@@ -16,6 +16,9 @@ if [ -n "$(git -C "${root}" status --porcelain)" ]; then
 fi
 sha="$(git -C "${root}" rev-parse --short HEAD)"
 
+# Each package owns a subdirectory of build/ and wipes only its own: the Lambda binary
+# and the extension archive have nothing to do with each other, and a release of one must
+# not take out what the other just produced.
 rm -rf "${build}"
 mkdir -p "${build}"
 

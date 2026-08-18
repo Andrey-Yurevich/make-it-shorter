@@ -12,7 +12,7 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 extension="${root}/apps/extension"
-build="${root}/build"
+build="${root}/build/extension"
 
 version="$(node -p "require('${extension}/package.json').version")"
 archive="${build}/extension-${version}.zip"
