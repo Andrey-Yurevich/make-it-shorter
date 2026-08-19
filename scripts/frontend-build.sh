@@ -3,7 +3,9 @@
 # It uploads nothing and deploys nothing: the store upload is manual, because the store
 # has its own review of several days and there is nothing to automate around that.
 #
-# Prints the path of the zip. The version inside it comes from apps/extension/package.json.
+# Prints the path of the zip. The version inside it comes from git: a tag on HEAD is a
+# release and its name is the version, anything else is a working build named by its sha.
+# manifest.ts works that out during the build, and this file reads back what it wrote.
 #
 #   EXTENSION_KEY   public key of the store item. Without it the unpacked build gets a
 #                   random extension id, its Origin is not the one the WAF allows, and
@@ -13,9 +15,6 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 extension="${root}/apps/extension"
 build="${root}/build/extension"
-
-version="$(node -p "require('${extension}/package.json').version")"
-archive="${build}/extension-${version}.zip"
 
 # npm ci when there is a lockfile to obey: the artifact that goes to the store should not
 # depend on whatever happens to be in node_modules today.
@@ -38,6 +37,11 @@ if [ ! -f "${extension}/dist/manifest.json" ]; then
   echo "no manifest in dist: the build produced nothing to pack" >&2
   exit 1
 fi
+
+# version_name and not version: on an untagged build the latter is 0.0.0 for every
+# commit, and two builds must not land on the same file name.
+version="$(node -p "require('${extension}/dist/manifest.json').version_name")"
+archive="${build}/extension-${version}.zip"
 
 mkdir -p "${build}"
 rm -f "${archive}"

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import tailwind from "@tailwindcss/vite";
@@ -14,14 +14,12 @@ import { buildManifest } from "./manifest.ts";
 // forty-line plugin is cheaper to own than a plugin whose maintenance has stalled
 // before.
 
-const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, "package.json"), "utf8"));
-
 function emitManifest(): Plugin {
   return {
     name: "make-it-shorter:manifest",
     apply: "build",
     closeBundle() {
-      const manifest = buildManifest(packageJson.version);
+      const manifest = buildManifest();
       if (!manifest.key) {
         this.warn(
           "manifest has no key: this build gets a random extension id and the API will answer 403. " +
