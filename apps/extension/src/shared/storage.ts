@@ -1,4 +1,3 @@
-import { HISTORY_LIMIT } from "./limits.ts";
 import { normalizeLang } from "./lang.ts";
 import type { Ratio, Source } from "./protocol.ts";
 
@@ -15,6 +14,9 @@ export type DialogAction = {
   text: string;
 };
 
+// One run of the panel. It lives in memory for as long as the panel shows it and is
+// written nowhere: the panel holds one dialog, the current one, and the refresh button
+// replaces it. Nothing about the user's text touches storage on either side of the wire.
 export type Dialog = {
   id: string;
   createdAt: number;
@@ -24,8 +26,7 @@ export type Dialog = {
   truncated: boolean;
   summary: string;
   // Every answer is kept, expanded or not: they were generated and paid for, and the
-  // user may open them a month later out of the history. A dialog restored from
-  // history works fully offline — that is the whole point of generating them upfront.
+  // user can open any of them without going back to the network.
   actions: DialogAction[];
 };
 
@@ -56,33 +57,6 @@ export async function getSettings(): Promise<Settings> {
 
 export async function saveSettings(patch: Partial<Settings>): Promise<void> {
   await chrome.storage.local.set(patch);
-}
-
-export async function loadHistory(): Promise<Dialog[]> {
-  const stored = await chrome.storage.local.get("history");
-  return Array.isArray(stored.history) ? (stored.history as Dialog[]) : [];
-}
-
-// Newest first, oldest dropped past the limit. unlimitedStorage is not requested: a
-// dialog weighs what its source text weighs, up to 30 000 characters, and fifty of
-// those still fit the standard quota with room to spare.
-export async function saveDialog(dialog: Dialog): Promise<Dialog[]> {
-  const history = await loadHistory();
-  const without = history.filter((entry) => entry.id !== dialog.id);
-  const updated = [dialog, ...without].slice(0, HISTORY_LIMIT);
-  await chrome.storage.local.set({ history: updated });
-  return updated;
-}
-
-export async function deleteDialog(id: string): Promise<Dialog[]> {
-  const history = await loadHistory();
-  const updated = history.filter((entry) => entry.id !== id);
-  await chrome.storage.local.set({ history: updated });
-  return updated;
-}
-
-export async function clearHistory(): Promise<void> {
-  await chrome.storage.local.set({ history: [] });
 }
 
 export async function isRatingHidden(): Promise<boolean> {

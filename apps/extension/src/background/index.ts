@@ -1,6 +1,7 @@
 import { UNINSTALL_URL, WELCOME_URL } from "../shared/limits.ts";
-import { PANEL_PORT, type ExtractResult, type PanelJob, type PanelState } from "../shared/messaging.ts";
+import { PANEL_PORT, type PanelJob, type PanelState } from "../shared/messaging.ts";
 import { rememberCatalogVersion } from "../shared/storage.ts";
+import { extractFromTab } from "../shared/tab.ts";
 
 // The service worker owns three things and nothing else: it opens the panel, it decides
 // what is going to be compressed, and it gets the text out of the tab. It never talks
@@ -28,6 +29,10 @@ chrome.runtime.onInstalled.addListener((details) => {
     });
   });
   void rememberCatalogVersion(__CATALOG_VERSION__);
+  // Installs from before the panel dropped its history still hold up to fifty dialogs,
+  // source texts included. The feature is gone, so the data goes with it rather than
+  // sitting in storage forever with nothing to read it.
+  void chrome.storage.local.remove("history");
 });
 
 chrome.runtime.setUninstallURL(UNINSTALL_URL);
@@ -91,9 +96,10 @@ async function run(tab: chrome.tabs.Tab, mode: "page" | "selection"): Promise<vo
   }
 
   // A second click on the icon while the panel already holds a summary of this very
-  // page just focuses the panel. Without the rule, opening the panel to reread a
-  // summary or to look into the history would burn a request from the daily quota and
-  // real money — with answers generated upfront a request is not cheap.
+  // page just focuses the panel. Without the rule, opening the panel to reread a summary
+  // would burn a request from the daily quota and real money — with answers generated
+  // upfront a request is not cheap. Rereading the page on purpose is what the refresh
+  // button in the panel is for.
   const repeatOnSamePage =
     mode === "page" && panelPort !== null && panelState.hasSummary && panelState.pageUrl === tab.url;
 
@@ -102,34 +108,12 @@ async function run(tab: chrome.tabs.Tab, mode: "page" | "selection"): Promise<vo
     return;
   }
 
-  const extracted = await extract(tab.id, mode);
+  const extracted = await extractFromTab(tab.id, mode);
   const job: PanelJob = extracted.ok
     ? { kind: "text", text: extracted.text, source: mode, truncated: extracted.truncated, pageUrl: tab.url }
-    : { kind: "manual", reason: "unreadable", pageUrl: tab.url };
+    : { kind: "unreadable", pageUrl: tab.url };
 
   sendToPanel(job);
-}
-
-// Asks the content script for the text. Tabs that were open before the extension was
-// installed or updated hold no content script, and sendMessage fails there with
-// "Receiving end does not exist" — that is what the scripting permission is for. Without
-// this the extension looks broken right after installation until the tab is reloaded,
-// and the user files that as a defect.
-async function extract(tabId: number, mode: "page" | "selection"): Promise<ExtractResult> {
-  try {
-    return await chrome.tabs.sendMessage<unknown, ExtractResult>(tabId, { type: "extract", mode });
-  } catch {
-    // Nothing here, so try to put it there.
-  }
-
-  try {
-    await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
-    return await chrome.tabs.sendMessage<unknown, ExtractResult>(tabId, { type: "extract", mode });
-  } catch {
-    // A restricted page: chrome://, the web store, the PDF viewer, file:// without the
-    // checkbox. Not an error and not reported as one — the panel opens on manual input.
-    return { ok: false };
-  }
 }
 
 function sendToPanel(job: PanelJob): void {

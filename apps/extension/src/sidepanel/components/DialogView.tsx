@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { t } from "../../shared/i18n.ts";
 import type { ErrorCode } from "../../shared/protocol.ts";
-import { Button } from "./ui.tsx";
+import { Button, cn } from "./ui.tsx";
 import type { RunState } from "../state.ts";
 
 // One dialog: source, summary, buttons, expansions. Everything below the summary is
@@ -17,15 +17,27 @@ export function DialogView({
 }) {
   const [expanded, setExpanded] = useState<string[]>([]);
 
+  // Nothing to show yet and something on its way: the tab is being read, or the request
+  // is out and the first token has not arrived. Both are the same wait to the user, and
+  // both get the outline of the text that is coming.
+  if (state.streaming && !state.dialog?.summary) {
+    return <Skeleton />;
+  }
+  if (state.error && !state.dialog) {
+    return (
+      <div className="px-3 py-3">
+        <ErrorNotice error={state.error} onRetry={onRetry} />
+      </div>
+    );
+  }
   if (state.unreadablePage) {
-    return <Notice title={t("unreadableTitle")} body={t("unreadableBody")} />;
+    return <Notice title={t("unreadableTitle")} body={t("emptyBody")} />;
   }
   if (!state.dialog) {
-    return <Notice title={t("emptyTitle")} body={t("emptyBody")} />;
+    return <Notice body={t("emptyBody")} />;
   }
 
   const { dialog } = state;
-  const waitingForFirstDelta = state.streaming && dialog.summary === "";
 
   function toggle(id: string): void {
     setExpanded((current) =>
@@ -37,11 +49,7 @@ export function DialogView({
     <div className="flex flex-col gap-3 px-3 py-3">
       <SourceLine text={dialog.sourceText} truncated={dialog.truncated} />
 
-      {waitingForFirstDelta ? (
-        <Skeleton />
-      ) : (
-        <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-ink">{dialog.summary}</p>
-      )}
+      <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-ink">{dialog.summary}</p>
 
       {/* Buttons show up under the summary while their texts are still being written.
           A disabled button means the expansion is on its way: the label is readable,
@@ -101,17 +109,30 @@ function SourceLine({ text, truncated }: { text: string; truncated: boolean }) {
   );
 }
 
+// The outline of the answer while it is being written: the shape of the summary, then
+// the shape of the buttons under it. It is the whole of the panel body, so that the wait
+// looks like the page filling in rather than like nothing happening.
+const SKELETON_LINES = ["w-full", "w-11/12", "w-full", "w-10/12", "w-full", "w-8/12"];
+
 function Skeleton() {
   return (
-    <div className="flex flex-col gap-2" aria-hidden="true">
-      <div className="h-3 w-full animate-pulse rounded bg-surface-muted" />
-      <div className="h-3 w-11/12 animate-pulse rounded bg-surface-muted" />
-      <div className="h-3 w-8/12 animate-pulse rounded bg-surface-muted" />
+    <div className="flex animate-pulse flex-col gap-4 px-3 py-3" aria-hidden="true">
+      <div className="flex flex-col gap-2">
+        {SKELETON_LINES.map((width, index) => (
+          <div key={index} className={cn("h-3 rounded bg-surface-muted", width)} />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <div className="h-7 w-24 rounded-lg bg-surface-muted" />
+        <div className="h-7 w-20 rounded-lg bg-surface-muted" />
+        <div className="h-7 w-28 rounded-lg bg-surface-muted" />
+      </div>
     </div>
   );
 }
 
-// Comes off on `done` or `error`, and on nothing else.
+// Under a summary that is still being written. Before the first token there is the
+// skeleton instead, so this line never shows on an empty panel.
 function Indicator() {
   return <p className="text-xs text-ink-soft">{t("working")}</p>;
 }
@@ -157,10 +178,10 @@ function messageKey(code: ErrorCode): string {
   }
 }
 
-function Notice({ title, body }: { title: string; body: string }) {
+function Notice({ title, body }: { title?: string; body: string }) {
   return (
     <div className="flex flex-col gap-1 px-4 py-8 text-center">
-      <p className="text-sm font-medium text-ink">{title}</p>
+      {title && <p className="text-sm font-medium text-ink">{title}</p>}
       <p className="text-sm text-ink-soft">{body}</p>
     </div>
   );

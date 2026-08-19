@@ -22,12 +22,13 @@ export type SelectionMessage = {
   text: string;
 };
 
-// What the panel is asked to work on. `kind: "manual"` is the page we could not read —
-// a restricted page, or a page Readability came back from with less than minInput. That
-// is not an error: the panel opens on the manual input with a line of explanation.
+// What the panel is asked to work on. `kind: "unreadable"` is the page we could not
+// read — a restricted page, or a page Readability came back from with less than
+// minInput. That is not an error: the panel says so and waits for the next thing the
+// user does.
 export type PanelJob =
   | { kind: "text"; text: string; source: Source; truncated: boolean; pageUrl?: string }
-  | { kind: "manual"; reason: "unreadable"; pageUrl?: string };
+  | { kind: "unreadable"; pageUrl?: string };
 
 // panel → service worker, over the long-lived port. The worker needs it for one rule:
 // a second click on the toolbar icon while the panel already holds a summary of this

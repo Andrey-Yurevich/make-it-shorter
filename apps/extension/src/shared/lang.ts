@@ -119,3 +119,44 @@ export function localeDirForUI(uiLanguage: string): string {
   }
   return base in UI_LOCALES ? base : "en";
 }
+
+// The short badge on the language button: an ISO 639-2 code and a flag. Written out by
+// hand rather than derived, because there is nothing to derive it from — a language is
+// not a country, and for English, Spanish and Arabic the flag below is a convention,
+// not a fact. Chrome on Windows has no flag font and draws the pair as two letters.
+export const LANG_BADGES: Record<string, string> = {
+  en: "ENG🇺🇸",
+  es: "SPA🇪🇸",
+  "zh-Hans": "CHS🇨🇳",
+  "zh-Hant": "CHT🇹🇼",
+  hi: "HIN🇮🇳",
+  ar: "ARA🇸🇦",
+  "pt-BR": "POR🇧🇷",
+  ru: "RUS🇷🇺",
+  ja: "JPN🇯🇵",
+  de: "DEU🇩🇪",
+  fr: "FRA🇫🇷",
+  ko: "KOR🇰🇷",
+  it: "ITA🇮🇹",
+  tr: "TUR🇹🇷",
+  pl: "POL🇵🇱",
+  nl: "NLD🇳🇱",
+  id: "IND🇮🇩",
+  vi: "VIE🇻🇳",
+  th: "THA🇹🇭",
+  uk: "UKR🇺🇦",
+  sv: "SWE🇸🇪",
+  cs: "CES🇨🇿",
+  ro: "RON🇷🇴",
+  el: "ELL🇬🇷",
+  hu: "HUN🇭🇺",
+  da: "DAN🇩🇰",
+  fi: "FIN🇫🇮",
+  he: "HEB🇮🇱",
+};
+
+// Endonyms from the browser, so the list reads the same whatever the interface language
+// is. Intl.DisplayNames is in Chrome and needs no data of ours.
+export function languageName(code: string): string {
+  return new Intl.DisplayNames([code], { type: "language" }).of(code) ?? code;
+}

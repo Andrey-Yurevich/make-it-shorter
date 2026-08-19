@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* The panel is a narrow column that never scrolls as a whole — only the dialog area
-   inside it does, so the composer and the header stay put. */
+   inside it does, so the two controls on top and the refresh button below stay put. */
 html,
 body,
 #root {

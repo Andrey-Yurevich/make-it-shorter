@@ -12,7 +12,7 @@ export type RunState = {
   streaming: boolean;
   error: { code: ErrorCode; message?: string } | null;
   // The page could not be read: a restricted page, or too little text. Not an error —
-  // the panel just says so and waits for pasted text.
+  // the panel just says so and waits for the next thing the user does.
   unreadablePage: boolean;
 };
 
@@ -25,18 +25,23 @@ export const initialRunState: RunState = {
 };
 
 export type RunAction =
+  | { type: "pending" }
   | { type: "start"; dialog: Dialog }
   | { type: "delta"; text: string }
   | { type: "actions"; ids: string[] }
   | { type: "answer"; id: string; text: string }
   | { type: "done" }
   | { type: "error"; code: ErrorCode; message?: string }
-  | { type: "unreadable-page" }
-  | { type: "open"; dialog: Dialog }
-  | { type: "reset" };
+  | { type: "unreadable-page" };
 
 export function runReducer(state: RunState, action: RunAction): RunState {
   switch (action.type) {
+    // Refresh pressed: the tab is being read and there is no dialog yet. The panel is
+    // already showing the placeholder from here, so the wait for the extraction and the
+    // wait for the first token look like one thing, which is what they are to the user.
+    case "pending":
+      return { ...initialRunState, streaming: true };
+
     case "start":
       return { dialog: action.dialog, pending: [], streaming: true, error: null, unreadablePage: false };
 
@@ -83,13 +88,6 @@ export function runReducer(state: RunState, action: RunAction): RunState {
 
     case "unreadable-page":
       return { ...initialRunState, unreadablePage: true };
-
-    case "open":
-      // Out of the history: fully working, every button live, no network needed.
-      return { dialog: action.dialog, pending: [], streaming: false, error: null, unreadablePage: false };
-
-    case "reset":
-      return initialRunState;
   }
 }
 

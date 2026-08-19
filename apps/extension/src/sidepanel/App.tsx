@@ -5,51 +5,40 @@ import { MIN_INPUT } from "../shared/limits.ts";
 import { PANEL_PORT, type PanelJob, type PanelMessage } from "../shared/messaging.ts";
 import type { Source } from "../shared/protocol.ts";
 import {
-  clearHistory,
-  deleteDialog,
   getSettings,
   hideRating,
   isRatingHidden,
-  loadHistory,
-  saveDialog,
   saveSettings,
   type Dialog,
   type Settings,
 } from "../shared/storage.ts";
+import { activeTab, extractFromTab } from "../shared/tab.ts";
 import { countCodePoints } from "../shared/text.ts";
 import { summarize } from "./api.ts";
-import { Composer } from "./components/Composer.tsx";
 import { DialogView } from "./components/DialogView.tsx";
-import { Header } from "./components/Header.tsx";
-import { MenuDrawer } from "./components/MenuDrawer.tsx";
-import { SettingsView } from "./components/SettingsView.tsx";
+import { RefreshBar } from "./components/RefreshBar.tsx";
 import { StarRating } from "./components/StarRating.tsx";
+import { Toolbar } from "./components/Toolbar.tsx";
 import { initialRunState, runReducer } from "./state.ts";
 
-type Screen = "dialog" | "menu" | "settings";
-
+// The panel holds one dialog: the one on screen. There is no history behind it and no
+// second screen over it — the summary, the buttons under it, and one button that goes
+// and reads the tab again.
 export function App() {
   const [run, dispatch] = useReducer(runReducer, initialRunState);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [history, setHistory] = useState<Dialog[]>([]);
   const [labels, setLabels] = useState<Record<string, string>>({});
-  const [screen, setScreen] = useState<Screen>("dialog");
   const [ratingHidden, setRatingHidden] = useState(true);
 
   // Read inside callbacks that outlive the render they were created in.
   const settingsRef = useRef<Settings | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
-  const lastJobRef = useRef<PanelJob | null>(null);
-  // The dialog currently being generated. Only that one gets written to the history,
-  // once, when its stream ends — opening an old dialog must not reshuffle the list.
-  const runningIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     void (async () => {
       const loaded = await getSettings();
       settingsRef.current = loaded;
       setSettings(loaded);
-      setHistory(await loadHistory());
       setLabels(await loadButtonLabels());
       setRatingHidden(await isRatingHidden());
 
@@ -90,23 +79,11 @@ export function App() {
     });
   }, [run.dialog]);
 
-  useEffect(() => {
-    const dialog = run.dialog;
-    if (run.streaming || !dialog || dialog.id !== runningIdRef.current || !dialog.summary) {
-      return;
-    }
-    runningIdRef.current = null;
-    void saveDialog(dialog).then(setHistory);
-  }, [run.streaming, run.dialog]);
-
   function handleJob(job: PanelJob): void {
-    setScreen("dialog");
-    lastJobRef.current = job;
-
     // Readability came back with less than the minimum, or the page could not be read
     // at all. Neither is an error: no request goes out, no quota is spent, the panel
-    // just says the page could not be read and waits for pasted text.
-    if (job.kind === "manual" || countCodePoints(job.text) < MIN_INPUT) {
+    // just says the page could not be read.
+    if (job.kind === "unreadable" || countCodePoints(job.text) < MIN_INPUT) {
       dispatch({ type: "unreadable-page" });
       return;
     }
@@ -125,7 +102,6 @@ export function App() {
       summary: "",
       actions: [],
     };
-    runningIdRef.current = dialog.id;
     dispatch({ type: "start", dialog });
 
     await summarize(
@@ -140,13 +116,33 @@ export function App() {
     );
   }
 
-  function retry(): void {
-    const job = lastJobRef.current;
-    const dialog = run.dialog;
-    if (job && job.kind === "text") {
-      void start(job.text, job.source, job.truncated, job.pageUrl);
+  // Refresh reads the active tab from scratch, every time, whatever is on screen: the
+  // point of the button is a page whose content has moved on, and the only way to know
+  // that it has is to go and read it. The panel does the reading itself rather than
+  // asking the worker for it — the worker may be asleep, and a message to a port that
+  // is being re-established would be lost with nothing on screen to say so.
+  async function refresh(): Promise<void> {
+    dispatch({ type: "pending" });
+
+    const tab = await activeTab();
+    if (tab?.id === undefined) {
+      dispatch({ type: "unreadable-page" });
       return;
     }
+
+    const extracted = await extractFromTab(tab.id, "page");
+    if (!extracted.ok || countCodePoints(extracted.text) < MIN_INPUT) {
+      dispatch({ type: "unreadable-page" });
+      return;
+    }
+    await start(extracted.text, "page", extracted.truncated, tab.url);
+  }
+
+  // What the retry button under an error message repeats: the same text as last time,
+  // without going back to the tab for it. An error can only be shown under a dialog, so
+  // there is always a text to repeat.
+  function retry(): void {
+    const dialog = run.dialog;
     if (dialog) {
       void start(dialog.sourceText, dialog.source, dialog.truncated, dialog.pageUrl);
     }
@@ -160,22 +156,17 @@ export function App() {
   }
 
   // The service is switched off: no request goes out until the user asks again, which
-  // the retry button under the message is. Streaming blocks the composer for the
-  // ordinary reason — one dialog at a time.
-  const inputBlocked = run.streaming || run.error?.code === "service_disabled";
+  // the retry button under the message is. Streaming blocks refresh for the ordinary
+  // reason — one dialog at a time.
+  const refreshBlocked = run.streaming || run.error?.code === "service_disabled";
 
   return (
     <div className="relative flex h-full flex-col bg-surface">
-      <Header onMenu={() => setScreen("menu")} />
+      {settings && <Toolbar settings={settings} onChange={(patch) => void changeSettings(patch)} />}
 
       <main className="flex-1 overflow-y-auto">
         <DialogView state={run} labels={labels} onRetry={retry} />
       </main>
-
-      <Composer
-        disabled={inputBlocked}
-        onSubmit={(text, truncated) => void start(text, "manual", truncated)}
-      />
 
       {!ratingHidden && (
         <StarRating
@@ -186,31 +177,7 @@ export function App() {
         />
       )}
 
-      {screen === "menu" && (
-        <MenuDrawer
-          history={history}
-          onOpen={(dialog) => {
-            dispatch({ type: "open", dialog });
-            setScreen("dialog");
-          }}
-          onDelete={(id) => void deleteDialog(id).then(setHistory)}
-          onClear={() => void clearHistory().then(() => setHistory([]))}
-          onNew={() => {
-            dispatch({ type: "reset" });
-            setScreen("dialog");
-          }}
-          onSettings={() => setScreen("settings")}
-          onClose={() => setScreen("dialog")}
-        />
-      )}
-
-      {screen === "settings" && settings && (
-        <SettingsView
-          settings={settings}
-          onChange={(patch) => void changeSettings(patch)}
-          onClose={() => setScreen("menu")}
-        />
-      )}
+      <RefreshBar disabled={refreshBlocked} onRefresh={() => void refresh()} />
     </div>
   );
 }

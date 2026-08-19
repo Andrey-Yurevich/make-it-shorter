@@ -16,8 +16,6 @@ export const REQUEST_TIMEOUT_MS = 60_000;
 
 export const API_URL = "https://api.make-it-shorter.net/v1/summarize";
 
-export const HISTORY_LIMIT = 50;
-
 export const RATE_US_URL = "https://make-it-shorter.net/rate-us";
 export const WELCOME_URL = "https://make-it-shorter.net/welcome";
 export const UNINSTALL_URL = "https://make-it-shorter.net/uninstall";
