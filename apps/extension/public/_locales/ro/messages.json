@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Rezumă această pagină" },
   "contextMenuSelection": { "message": "Scurtează selecția" },
-  "floatingIconTitle": { "message": "Scurtează selecția" },
-  "close": { "message": "Închide" },
-  "settingsLanguage": { "message": "Limba rezumatului" },
-  "settingsRatio": { "message": "Cât de scurt" },
-  "ratio_light": { "message": "Ușor" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "Maxim" },
-  "emptyBody": {
-    "message": "Faceți clic pe pictograma din bară pentru a scurta toată pagina, sau selectați text pe pagină."
-  },
-  "unreadableTitle": { "message": "Această pagină nu a putut fi citită" },
-  "sourceLabel": { "message": "Text sursă" },
-  "sourceTruncated": { "message": "Textul era lung, așa că a fost procesată doar o parte." },
-  "working": { "message": "Se lucrează…" },
-  "retry": { "message": "Încercați din nou" },
-  "errorTooShort": { "message": "Acest text e prea scurt pentru un rezumat." },
-  "errorTooLong": { "message": "Acest text e prea lung pentru un rezumat." },
-  "errorRateLimited": { "message": "Limita de azi s-a epuizat. Reveniți mâine." },
-  "errorUnsupportedLanguage": { "message": "Această limbă nu este încă acceptată." },
-  "errorInvalidRequest": { "message": "Ceva n-a mers. Încercați din nou." },
-  "errorServiceDisabled": { "message": "Serviciul este temporar indisponibil." },
-  "errorUpstream": { "message": "Rezumatul nu a putut fi finalizat. Încercați din nou." },
-  "rateUs": { "message": "Evaluați-ne" }
+  "floatingIconTitle": { "message": "Scurtează selecția" }
 }

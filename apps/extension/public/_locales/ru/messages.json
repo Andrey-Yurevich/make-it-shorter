@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Сжать эту страницу" },
   "contextMenuSelection": { "message": "Сжать выделенное" },
-  "floatingIconTitle": { "message": "Сжать выделенное" },
-  "close": { "message": "Закрыть" },
-  "settingsLanguage": { "message": "Язык резюме" },
-  "settingsRatio": { "message": "Насколько коротко" },
-  "ratio_light": { "message": "Слегка" },
-  "ratio_normal": { "message": "Обычно" },
-  "ratio_tight": { "message": "Максимально" },
-  "emptyBody": {
-    "message": "Нажмите иконку на панели, чтобы сжать всю страницу, или выделите текст на странице."
-  },
-  "unreadableTitle": { "message": "Эту страницу не удалось прочитать" },
-  "sourceLabel": { "message": "Исходный текст" },
-  "sourceTruncated": { "message": "Текст оказался длинным, обработана только его часть." },
-  "working": { "message": "Работаем…" },
-  "retry": { "message": "Попробовать снова" },
-  "errorTooShort": { "message": "Этот текст слишком короткий для резюме." },
-  "errorTooLong": { "message": "Этот текст слишком длинный для резюме." },
-  "errorRateLimited": { "message": "Лимит на сегодня исчерпан. Возвращайтесь завтра." },
-  "errorUnsupportedLanguage": { "message": "Этот язык пока не поддерживается." },
-  "errorInvalidRequest": { "message": "Что-то пошло не так. Попробуйте ещё раз." },
-  "errorServiceDisabled": { "message": "Сервис временно недоступен." },
-  "errorUpstream": { "message": "Не удалось закончить резюме. Попробуйте ещё раз." },
-  "rateUs": { "message": "Оцените нас" }
+  "floatingIconTitle": { "message": "Сжать выделенное" }
 }

@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Ringkas halaman ini" },
   "contextMenuSelection": { "message": "Perpendek teks terpilih" },
-  "floatingIconTitle": { "message": "Perpendek teks terpilih" },
-  "close": { "message": "Tutup" },
-  "settingsLanguage": { "message": "Bahasa ringkasan" },
-  "settingsRatio": { "message": "Seberapa pendek" },
-  "ratio_light": { "message": "Ringan" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "Maksimal" },
-  "emptyBody": {
-    "message": "Klik ikon di bilah alat untuk memperpendek seluruh halaman, atau pilih teks di halaman."
-  },
-  "unreadableTitle": { "message": "Halaman ini tidak dapat dibaca" },
-  "sourceLabel": { "message": "Teks asli" },
-  "sourceTruncated": { "message": "Teksnya panjang, jadi hanya sebagian yang diproses." },
-  "working": { "message": "Sedang bekerja…" },
-  "retry": { "message": "Coba lagi" },
-  "errorTooShort": { "message": "Teks ini terlalu pendek untuk diringkas." },
-  "errorTooLong": { "message": "Teks ini terlalu panjang untuk diringkas." },
-  "errorRateLimited": { "message": "Kuota hari ini habis. Kembalilah besok." },
-  "errorUnsupportedLanguage": { "message": "Bahasa ini belum didukung." },
-  "errorInvalidRequest": { "message": "Terjadi kesalahan. Coba lagi." },
-  "errorServiceDisabled": { "message": "Layanan sementara tidak tersedia." },
-  "errorUpstream": { "message": "Ringkasan tidak dapat diselesaikan. Coba lagi." },
-  "rateUs": { "message": "Beri nilai" }
+  "floatingIconTitle": { "message": "Perpendek teks terpilih" }
 }

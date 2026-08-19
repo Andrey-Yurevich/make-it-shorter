@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "สรุปหน้านี้" },
   "contextMenuSelection": { "message": "ย่อข้อความที่เลือก" },
-  "floatingIconTitle": { "message": "ย่อข้อความที่เลือก" },
-  "close": { "message": "ปิด" },
-  "settingsLanguage": { "message": "ภาษาของบทสรุป" },
-  "settingsRatio": { "message": "สั้นแค่ไหน" },
-  "ratio_light": { "message": "เบา" },
-  "ratio_normal": { "message": "ปกติ" },
-  "ratio_tight": { "message": "สั้นที่สุด" },
-  "emptyBody": {
-    "message": "คลิกไอคอนบนแถบเครื่องมือเพื่อย่อทั้งหน้า หรือเลือกข้อความบนหน้าเว็บ"
-  },
-  "unreadableTitle": { "message": "อ่านหน้านี้ไม่ได้" },
-  "sourceLabel": { "message": "ข้อความต้นฉบับ" },
-  "sourceTruncated": { "message": "ข้อความยาว จึงประมวลผลเพียงบางส่วน" },
-  "working": { "message": "กำลังทำงาน…" },
-  "retry": { "message": "ลองอีกครั้ง" },
-  "errorTooShort": { "message": "ข้อความนี้สั้นเกินกว่าจะสรุปได้" },
-  "errorTooLong": { "message": "ข้อความนี้ยาวเกินกว่าจะสรุปได้" },
-  "errorRateLimited": { "message": "โควตาวันนี้หมดแล้ว กลับมาใหม่พรุ่งนี้" },
-  "errorUnsupportedLanguage": { "message": "ยังไม่รองรับภาษานี้" },
-  "errorInvalidRequest": { "message": "มีบางอย่างผิดพลาด ลองอีกครั้ง" },
-  "errorServiceDisabled": { "message": "บริการไม่พร้อมใช้งานชั่วคราว" },
-  "errorUpstream": { "message": "ทำบทสรุปไม่สำเร็จ ลองอีกครั้ง" },
-  "rateUs": { "message": "ให้คะแนนเรา" }
+  "floatingIconTitle": { "message": "ย่อข้อความที่เลือก" }
 }

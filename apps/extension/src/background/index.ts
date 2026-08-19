@@ -1,6 +1,5 @@
 import { UNINSTALL_URL, WELCOME_URL } from "../shared/limits.ts";
 import { PANEL_PORT, type PanelJob, type PanelState } from "../shared/messaging.ts";
-import { rememberCatalogVersion } from "../shared/storage.ts";
 import { extractFromTab } from "../shared/tab.ts";
 
 // The service worker owns three things and nothing else: it opens the panel, it decides
@@ -28,11 +27,11 @@ chrome.runtime.onInstalled.addListener((details) => {
       contexts: ["selection"],
     });
   });
-  void rememberCatalogVersion(__CATALOG_VERSION__);
-  // Installs from before the panel dropped its history still hold up to fifty dialogs,
-  // source texts included. The feature is gone, so the data goes with it rather than
-  // sitting in storage forever with nothing to read it.
-  void chrome.storage.local.remove("history");
+  // Leftovers from features that are gone: up to fifty dialogs with their source
+  // texts, and the catalog version the follow-up buttons were filtered by. The data
+  // goes with the feature rather than sitting in storage forever with nothing to read
+  // it.
+  void chrome.storage.local.remove(["history", "catalogVersion"]);
 });
 
 chrome.runtime.setUninstallURL(UNINSTALL_URL);
@@ -97,9 +96,9 @@ async function run(tab: chrome.tabs.Tab, mode: "page" | "selection"): Promise<vo
 
   // A second click on the icon while the panel already holds a summary of this very
   // page just focuses the panel. Without the rule, opening the panel to reread a summary
-  // would burn a request from the daily quota and real money — with answers generated
-  // upfront a request is not cheap. Rereading the page on purpose is what the refresh
-  // button in the panel is for.
+  // would burn a request from the daily quota and real money for a text the reader
+  // already has. Compressing the page again on purpose is what the panel's own button
+  // is for.
   const repeatOnSamePage =
     mode === "page" && panelPort !== null && panelState.hasSummary && panelState.pageUrl === tab.url;
 

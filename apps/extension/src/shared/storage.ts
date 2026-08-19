@@ -9,11 +9,6 @@ export type Settings = {
   ratio: Ratio;
 };
 
-export type DialogAction = {
-  id: string;
-  text: string;
-};
-
 // One run of the panel. It lives in memory for as long as the panel shows it and is
 // written nowhere: the panel holds one dialog, the current one, and the refresh button
 // replaces it. Nothing about the user's text touches storage on either side of the wire.
@@ -25,9 +20,6 @@ export type Dialog = {
   sourceText: string;
   truncated: boolean;
   summary: string;
-  // Every answer is kept, expanded or not: they were generated and paid for, and the
-  // user can open any of them without going back to the network.
-  actions: DialogAction[];
 };
 
 // crypto.randomUUID() at install time. Gone from storage — recreated silently on the
@@ -66,10 +58,4 @@ export async function isRatingHidden(): Promise<boolean> {
 
 export async function hideRating(): Promise<void> {
   await chrome.storage.local.set({ rated: true });
-}
-
-// Written at startup for diagnostics only. The header is filled from the build-time
-// constant, never from here — storage could hold a value from an older build.
-export async function rememberCatalogVersion(version: number): Promise<void> {
-  await chrome.storage.local.set({ catalogVersion: version });
 }

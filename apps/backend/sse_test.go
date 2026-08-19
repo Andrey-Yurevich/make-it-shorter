@@ -14,10 +14,7 @@ func TestFramesAreSingleLine(t *testing.T) {
 	stream := newSSEWriter(recorder)
 
 	stream.sendDelta("first line\nsecond line\r\nthird")
-	stream.sendAnswer("whats_the_catch", "line\nbreak")
-	stream.sendActions(nil)
 	stream.sendDone(10, 20)
-	stream.comment("ping")
 
 	body := recorder.Body.String()
 	for _, line := range strings.Split(body, "\n") {
@@ -28,12 +25,9 @@ func TestFramesAreSingleLine(t *testing.T) {
 
 	want := []string{
 		"event: delta\ndata: {\"text\":\"first line\\nsecond line\\r\\nthird\"}\n\n",
-		"event: answer\ndata: {\"id\":\"whats_the_catch\",\"text\":\"line\\nbreak\"}\n\n",
-		// An empty list must serialize as [], never null: the client tells "no buttons"
-		// from a dropped connection by this event alone.
-		"event: actions\ndata: {\"ids\":[]}\n\n",
+		// done always goes out on the normal path: the client tells "finished" from a
+		// dropped connection by this event alone.
 		"event: done\ndata: {\"tokensIn\":10,\"tokensOut\":20}\n\n",
-		": ping\n\n",
 	}
 	for _, frame := range want {
 		if !strings.Contains(body, frame) {
@@ -47,7 +41,7 @@ func TestFramesAreSingleLine(t *testing.T) {
 }
 
 // Errors travel as an SSE event under HTTP 200. Only service_disabled carries a
-// message; every other code takes its wording from the extension's _locales.
+// message; every other code takes its wording from the extension.
 func TestErrorFrames(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	stream := newSSEWriter(recorder)

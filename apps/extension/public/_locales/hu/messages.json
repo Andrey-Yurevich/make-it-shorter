@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Oldal összefoglalása" },
   "contextMenuSelection": { "message": "Kijelölés rövidítése" },
-  "floatingIconTitle": { "message": "Kijelölés rövidítése" },
-  "close": { "message": "Bezárás" },
-  "settingsLanguage": { "message": "Az összefoglaló nyelve" },
-  "settingsRatio": { "message": "Mennyire rövid" },
-  "ratio_light": { "message": "Enyhe" },
-  "ratio_normal": { "message": "Normál" },
-  "ratio_tight": { "message": "Maximális" },
-  "emptyBody": {
-    "message": "Kattintson az eszköztár ikonjára az egész oldal rövidítéséhez, vagy jelöljön ki szöveget az oldalon."
-  },
-  "unreadableTitle": { "message": "Ezt az oldalt nem sikerült elolvasni" },
-  "sourceLabel": { "message": "Forrásszöveg" },
-  "sourceTruncated": { "message": "A szöveg hosszú volt, ezért csak egy része lett feldolgozva." },
-  "working": { "message": "Dolgozom…" },
-  "retry": { "message": "Újra" },
-  "errorTooShort": { "message": "Ez a szöveg túl rövid az összefoglaláshoz." },
-  "errorTooLong": { "message": "Ez a szöveg túl hosszú az összefoglaláshoz." },
-  "errorRateLimited": { "message": "A mai keret elfogyott. Térjen vissza holnap." },
-  "errorUnsupportedLanguage": { "message": "Ez a nyelv még nem támogatott." },
-  "errorInvalidRequest": { "message": "Valami hiba történt. Próbálja újra." },
-  "errorServiceDisabled": { "message": "A szolgáltatás átmenetileg nem érhető el." },
-  "errorUpstream": { "message": "Az összefoglalót nem sikerült befejezni. Próbálja újra." },
-  "rateUs": { "message": "Értékeljen minket" }
+  "floatingIconTitle": { "message": "Kijelölés rövidítése" }
 }

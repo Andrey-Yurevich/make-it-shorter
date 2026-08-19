@@ -20,18 +20,10 @@ type config struct {
 
 	languages map[string]bool // lowercased normalized codes
 
-	answerTimeout time.Duration
 	quotaLocation *time.Location
 
 	tableName       string
 	metricNamespace string
-
-	// maxActions is the number the prompt asks the model to stay under. It is global
-	// and has no per-tier form: the prompt sits before the first cache breakpoint, so
-	// a per-tier number would give each tier its own prefix and split the prompt
-	// cache. A tier wanting fewer buttons gets them from the trim in filterActionIDs,
-	// and no tier may ask for more than this.
-	maxActions int
 
 	tier1Countries map[string]bool
 	tier1          requestParams
@@ -40,15 +32,13 @@ type config struct {
 	modelPrices map[string]modelPrice
 }
 
-// requestParams is the complete set for one request: model, both token ceilings,
-// button count and daily quota. Both tier sets are complete, spelled out in the
-// environment down to the last field — reading the function's environment is
-// enough to know what a request from either tier is answered with.
+// requestParams is the complete set for one request: model, the token ceiling and the
+// daily quota. Both tier sets are complete, spelled out in the environment down to the
+// last field — reading the function's environment is enough to know what a request
+// from either tier is answered with.
 type requestParams struct {
 	model            string
 	maxSummaryTokens int
-	maxAnswerTokens  int
-	maxActions       int
 	dailyQuota       int
 }
 
@@ -59,14 +49,12 @@ type requestParams struct {
 type deviceOverride struct {
 	model            string
 	maxSummaryTokens int
-	maxAnswerTokens  int
-	maxActions       int
 	dailyQuota       int
 }
 
-// modelPrice is USD per million tokens. Cache reads are priced separately on
-// purpose: with pre-generated answers most of the input is read from cache, and
-// without that price the cost estimate is several times too high.
+// modelPrice is USD per million tokens. Cache reads and writes are priced separately
+// because Bedrock bills them separately; both are near zero today, since the only
+// static part of the prompt is too short to be cached at all.
 type modelPrice struct {
 	Input      float64 `json:"input"`
 	Output     float64 `json:"output"`
@@ -115,8 +103,6 @@ func loadConfig() (*config, error) {
 		}
 	}
 
-	c.answerTimeout = time.Duration(requiredInt("ANSWER_TIMEOUT_SECONDS")) * time.Second
-
 	// Go on provided.al2023 carries no timezone database; `_ "time/tzdata"` in
 	// main.go embeds one. Without it this call fails and a swallowed error would
 	// silently mean UTC, i.e. the wrong day boundary for every quota counter.
@@ -128,8 +114,6 @@ func loadConfig() (*config, error) {
 
 	c.tableName = requiredString("TABLE_NAME")
 	c.metricNamespace = requiredString("METRIC_NAMESPACE")
-
-	c.maxActions = requiredInt("MAX_ACTIONS")
 
 	c.tier1Countries = map[string]bool{}
 	for _, country := range strings.Split(os.Getenv("TIER1_COUNTRIES"), ",") {
@@ -145,15 +129,11 @@ func loadConfig() (*config, error) {
 	c.tier1 = requestParams{
 		model:            requiredString("TIER1_MODEL"),
 		maxSummaryTokens: requiredInt("TIER1_MAX_SUMMARY_TOKENS"),
-		maxAnswerTokens:  requiredInt("TIER1_MAX_ANSWER_TOKENS"),
-		maxActions:       requiredInt("TIER1_MAX_ACTIONS"),
 		dailyQuota:       requiredInt("TIER1_DAILY_QUOTA"),
 	}
 	c.rest = requestParams{
 		model:            requiredString("REST_MODEL"),
 		maxSummaryTokens: requiredInt("REST_MAX_SUMMARY_TOKENS"),
-		maxAnswerTokens:  requiredInt("REST_MAX_ANSWER_TOKENS"),
-		maxActions:       requiredInt("REST_MAX_ACTIONS"),
 		dailyQuota:       requiredInt("REST_DAILY_QUOTA"),
 	}
 
@@ -168,16 +148,6 @@ func loadConfig() (*config, error) {
 
 	if c.minInput > 0 && c.maxInput > 0 && c.minInput >= c.maxInput {
 		problems = append(problems, "MIN_INPUT is not below MAX_INPUT")
-	}
-
-	// MAX_ACTIONS is the number that goes into the prompt, and it is static across all
-	// requests, so a tier asking for more buttons than that would never get them: the
-	// model is not told it may propose more.
-	if c.tier1.maxActions > c.maxActions {
-		problems = append(problems, "TIER1_MAX_ACTIONS is above MAX_ACTIONS")
-	}
-	if c.rest.maxActions > c.maxActions {
-		problems = append(problems, "REST_MAX_ACTIONS is above MAX_ACTIONS")
 	}
 
 	if len(problems) > 0 {
@@ -203,12 +173,6 @@ func resolveParams(device deviceOverride, country string) requestParams {
 	}
 	if device.maxSummaryTokens > 0 {
 		resolved.maxSummaryTokens = device.maxSummaryTokens
-	}
-	if device.maxAnswerTokens > 0 {
-		resolved.maxAnswerTokens = device.maxAnswerTokens
-	}
-	if device.maxActions > 0 {
-		resolved.maxActions = device.maxActions
 	}
 	if device.dailyQuota > 0 {
 		resolved.dailyQuota = device.dailyQuota

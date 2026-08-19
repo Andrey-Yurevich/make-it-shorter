@@ -1,14 +1,15 @@
-// Three separate things live in this file, and the spec keeps them apart on purpose:
+// Two separate things live in this file, and they are kept apart on purpose:
 //
 //   interface language  — chrome.i18n, picks a _locales directory
-//   button labels       — same language as the interface, _locales/<dir>/buttons.json
-//   summary language    — the `lang` field of the request, chosen in settings
+//   summary language    — the `lang` field of the request, chosen in the panel
 //
-// The first two are Chrome's business and use Chrome's directory names (zh_CN, pt_BR).
-// The third travels over the wire and uses BCP-47 (zh-Hans, pt-BR). The two spellings
-// are not the same, hence the map.
+// The first is Chrome's business and uses Chrome's directory names (zh_CN, pt_BR). The
+// second travels over the wire and uses BCP-47 (zh-Hans, pt-BR). The two spellings are
+// not the same, hence the map.
 
-// The 30 interface locales of the spec, keyed by the _locales directory name.
+// The 30 interface locales, keyed by the _locales directory name. This is the language
+// of the store listing and of the strings Chrome itself shows — the extension name, the
+// context menu item, the icon tooltip. The panel is English and is not in here.
 export const UI_LOCALES: Record<string, string> = {
   en: "en",
   es: "es",
@@ -42,52 +43,110 @@ export const UI_LOCALES: Record<string, string> = {
   he: "he",
 };
 
-// The languages offered for the summary itself. This list must never be wider than the
-// server's LANGUAGES, or the extension offers a language the server answers with
-// unsupported_language. fa and ms are interface languages but are not on the server
-// list today; a Persian interface therefore summarises in English until they are added
-// there, which is the harmless direction of the disagreement.
+// The languages offered for the summary itself. This list is a copy of the server's
+// LANGUAGES and must never be wider than it, or the extension offers a language the
+// server answers with unsupported_language. Narrower is harmless: the worst case is a
+// language the server would have served and nobody was offered.
+//
+// The line is drawn where the model stops being reliable rather than where speakers run
+// out — a summary in a language it half-knows is worse than no summary. Variants are
+// split only where the texts genuinely differ: Portuguese and Chinese. Serbian is not
+// split by script, and neither is any regional English or Spanish.
 export const SUMMARY_LANGS: string[] = [
+  // western Europe
   "en",
   "es",
+  "pt-BR",
+  "pt-PT",
+  "fr",
+  "de",
+  "it",
+  "nl",
+  "ca",
+  "gl",
+  // the Nordics
+  "sv",
+  "da",
+  "nb",
+  "fi",
+  "is",
+  // central, eastern and southeastern Europe
+  "pl",
+  "cs",
+  "sk",
+  "sl",
+  "hr",
+  "sr",
+  "bg",
+  "ro",
+  "hu",
+  "el",
+  "sq",
+  "mk",
+  // eastern Europe and the Baltics
+  "ru",
+  "uk",
+  "be",
+  "lt",
+  "lv",
+  "et",
+  // the Caucasus and central Asia
+  "ka",
+  "hy",
+  "az",
+  "kk",
+  "uz",
+  // the Middle East
+  "tr",
+  "he",
+  "ar",
+  "fa",
+  "ur",
+  // south Asia
+  "hi",
+  "bn",
+  "pa",
+  "gu",
+  "mr",
+  "ta",
+  "te",
+  "kn",
+  "ml",
+  // southeast Asia
+  "th",
+  "vi",
+  "id",
+  "ms",
+  "tl",
+  // east Asia
   "zh-Hans",
   "zh-Hant",
-  "hi",
-  "ar",
-  "pt-BR",
-  "ru",
   "ja",
-  "de",
-  "fr",
   "ko",
-  "it",
-  "tr",
-  "pl",
-  "nl",
-  "id",
-  "vi",
-  "th",
-  "uk",
-  "sv",
-  "cs",
-  "ro",
-  "el",
-  "hu",
-  "da",
-  "fi",
-  "he",
+  // Africa
+  "sw",
+  "af",
 ];
 
-export const RTL_LANGS = new Set(["ar", "fa", "he"]);
+export const RTL_LANGS = new Set(["ar", "fa", "he", "ur"]);
 
-// BCP-47 folded onto the whitelist, with a fallback. Portuguese and Chinese keep their
-// variants; English, Spanish and French ones do not. The server normalises separately
+// Codes some browsers still emit for languages the list above spells the modern way.
+// Folding them here rather than adding both spellings to the list keeps one entry per
+// language in the picker.
+const LEGACY_CODES: Record<string, string> = {
+  no: "nb", // the macrolanguage, written as Bokmål in practice
+  iw: "he", // the pre-1989 code for Hebrew
+  fil: "tl",
+};
+
+// BCP-47 folded onto the whitelist, with a fallback. The server normalises separately
 // and by its own copy of these rules — the two are allowed to disagree as long as this
 // list stays inside the server's.
 export function normalizeLang(tag: string): string {
   const parts = tag.trim().split("-");
-  const base = parts[0].toLowerCase();
   const subtags = new Set(parts.slice(1).map((part) => part.toLowerCase()));
+  const lowered = parts[0].toLowerCase();
+  const base = LEGACY_CODES[lowered] ?? lowered;
 
   if (base === "zh") {
     return subtags.has("hant") || subtags.has("tw") || subtags.has("hk") || subtags.has("mo")
@@ -95,7 +154,7 @@ export function normalizeLang(tag: string): string {
       : "zh-Hans";
   }
   if (base === "pt") {
-    return "pt-BR";
+    return subtags.has("pt") ? "pt-PT" : "pt-BR";
   }
   // Unknown falls back to English rather than being reported: an interface language we
   // do not serve is not an error the user can act on.
@@ -103,7 +162,7 @@ export function normalizeLang(tag: string): string {
 }
 
 // The _locales directory the interface is running in. Chrome resolves messages.json on
-// its own, but buttons.json is our file and nobody resolves it for us.
+// its own; this is for the code that needs to know which one it picked.
 export function localeDirForUI(uiLanguage: string): string {
   const parts = uiLanguage.trim().split("-");
   const base = parts[0].toLowerCase();
@@ -120,43 +179,10 @@ export function localeDirForUI(uiLanguage: string): string {
   return base in UI_LOCALES ? base : "en";
 }
 
-// The short badge on the language button: an ISO 639-2 code and a flag. Written out by
-// hand rather than derived, because there is nothing to derive it from — a language is
-// not a country, and for English, Spanish and Arabic the flag below is a convention,
-// not a fact. Chrome on Windows has no flag font and draws the pair as two letters.
-export const LANG_BADGES: Record<string, string> = {
-  en: "ENG🇺🇸",
-  es: "SPA🇪🇸",
-  "zh-Hans": "CHS🇨🇳",
-  "zh-Hant": "CHT🇹🇼",
-  hi: "HIN🇮🇳",
-  ar: "ARA🇸🇦",
-  "pt-BR": "POR🇧🇷",
-  ru: "RUS🇷🇺",
-  ja: "JPN🇯🇵",
-  de: "DEU🇩🇪",
-  fr: "FRA🇫🇷",
-  ko: "KOR🇰🇷",
-  it: "ITA🇮🇹",
-  tr: "TUR🇹🇷",
-  pl: "POL🇵🇱",
-  nl: "NLD🇳🇱",
-  id: "IND🇮🇩",
-  vi: "VIE🇻🇳",
-  th: "THA🇹🇭",
-  uk: "UKR🇺🇦",
-  sv: "SWE🇸🇪",
-  cs: "CES🇨🇿",
-  ro: "RON🇷🇴",
-  el: "ELL🇬🇷",
-  hu: "HUN🇭🇺",
-  da: "DAN🇩🇰",
-  fi: "FIN🇫🇮",
-  he: "HEB🇮🇱",
-};
-
-// Endonyms from the browser, so the list reads the same whatever the interface language
-// is. Intl.DisplayNames is in Chrome and needs no data of ours.
+// English names, because the panel is English: a list that reads "Deutsch, Français,
+// 日本語" in an otherwise English interface is a list the reader cannot scan. Chrome
+// supplies the names and needs no data of ours, and it knows the variants the list
+// splits — pt-BR is "Brazilian Portuguese", zh-Hant is "Traditional Chinese".
 export function languageName(code: string): string {
-  return new Intl.DisplayNames([code], { type: "language" }).of(code) ?? code;
+  return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
 }

@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "خلاصهٔ این صفحه" },
   "contextMenuSelection": { "message": "کوتاه کردن متن انتخابی" },
-  "floatingIconTitle": { "message": "کوتاه کردن متن انتخابی" },
-  "close": { "message": "بستن" },
-  "settingsLanguage": { "message": "زبان خلاصه" },
-  "settingsRatio": { "message": "چقدر کوتاه" },
-  "ratio_light": { "message": "سبک" },
-  "ratio_normal": { "message": "عادی" },
-  "ratio_tight": { "message": "بیشترین" },
-  "emptyBody": {
-    "message": "برای کوتاه کردن کل صفحه روی نماد نوار ابزار بزنید، یا در صفحه متنی انتخاب کنید."
-  },
-  "unreadableTitle": { "message": "این صفحه خوانده نشد" },
-  "sourceLabel": { "message": "متن اصلی" },
-  "sourceTruncated": { "message": "متن بلند بود، بنابراین تنها بخشی از آن پردازش شد." },
-  "working": { "message": "در حال کار…" },
-  "retry": { "message": "دوباره تلاش کنید" },
-  "errorTooShort": { "message": "این متن برای خلاصه کوتاه است." },
-  "errorTooLong": { "message": "این متن برای خلاصه بلند است." },
-  "errorRateLimited": { "message": "سهم امروز تمام شد. فردا برگردید." },
-  "errorUnsupportedLanguage": { "message": "این زبان هنوز پشتیبانی نمی‌شود." },
-  "errorInvalidRequest": { "message": "مشکلی پیش آمد. دوباره تلاش کنید." },
-  "errorServiceDisabled": { "message": "سرویس موقتاً در دسترس نیست." },
-  "errorUpstream": { "message": "خلاصه کامل نشد. دوباره تلاش کنید." },
-  "rateUs": { "message": "به ما امتیاز دهید" }
+  "floatingIconTitle": { "message": "کوتاه کردن متن انتخابی" }
 }

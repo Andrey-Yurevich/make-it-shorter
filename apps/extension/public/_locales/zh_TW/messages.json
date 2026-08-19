@@ -1,29 +1,7 @@
 {
   "extName": { "message": "make it shorter" },
-  "extDescription": {
-    "message": "AI 摘要：可以總結，也可以只是變短。文章太長？一鍵完成，支援各種語言。"
-  },
+  "extDescription": { "message": "AI 摘要：可以總結，也可以只是變短。文章太長？一鍵完成，支援各種語言。" },
   "actionTitle": { "message": "總結這個頁面" },
   "contextMenuSelection": { "message": "縮短所選內容" },
-  "floatingIconTitle": { "message": "縮短所選內容" },
-  "close": { "message": "關閉" },
-  "settingsLanguage": { "message": "摘要語言" },
-  "settingsRatio": { "message": "縮短程度" },
-  "ratio_light": { "message": "輕度" },
-  "ratio_normal": { "message": "標準" },
-  "ratio_tight": { "message": "最短" },
-  "emptyBody": { "message": "點擊工具列圖示縮短整個頁面，或在頁面上選取文字。" },
-  "unreadableTitle": { "message": "無法讀取這個頁面" },
-  "sourceLabel": { "message": "原文" },
-  "sourceTruncated": { "message": "文字較長，只處理了其中一部分。" },
-  "working": { "message": "處理中…" },
-  "retry": { "message": "重試" },
-  "errorTooShort": { "message": "這段文字太短，無法總結。" },
-  "errorTooLong": { "message": "這段文字太長，無法總結。" },
-  "errorRateLimited": { "message": "今天的次數已用完，明天再來。" },
-  "errorUnsupportedLanguage": { "message": "暫不支援這種語言。" },
-  "errorInvalidRequest": { "message": "出了點問題，請再試一次。" },
-  "errorServiceDisabled": { "message": "服務暫時無法使用。" },
-  "errorUpstream": { "message": "摘要未能完成，請再試一次。" },
-  "rateUs": { "message": "給我們評分" }
+  "floatingIconTitle": { "message": "縮短所選內容" }
 }

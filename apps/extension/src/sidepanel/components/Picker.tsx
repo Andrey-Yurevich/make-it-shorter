@@ -3,35 +3,40 @@ import { cn } from "./ui.tsx";
 
 export type PickerOption = { value: string; label: string };
 
-// The two controls in the top row are the same thing twice: a button showing the current
-// value and a list that drops out of it. A native <select> would have been shorter, but
-// it can only show the option text on the button, and the button has to read "RUS🇷🇺"
-// while the list reads "русский".
+// The two controls under the input field are the same thing twice: a button showing the
+// value the user picked and a list that drops out of it. A native <select> would have
+// been shorter, but it cannot be styled to match the rest of the panel, and on Windows
+// it draws a list this narrow with its own scrollbar and its own font.
 export function Picker({
-  badge,
-  title,
+  label,
   value,
   options,
   onChange,
 }: {
-  badge: string;
-  title: string;
+  label: string;
   value: string;
   options: PickerOption[];
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
 
+  // The button says exactly what the user chose. A value with no option behind it can
+  // only come from settings written by an older build, and its own code reads better
+  // than a blank button.
+  const selected = options.find((option) => option.value === value)?.label ?? value;
+
   return (
     <div className="relative flex-1">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        title={title}
-        aria-label={title}
+        // The value is the whole of the button, so the name of the control has to come
+        // from here — a <label> cannot name a button.
+        aria-label={`${label}: ${selected}`}
         aria-expanded={open}
-        className="flex w-full items-center justify-center gap-1 rounded-lg border border-line px-2 py-1.5 text-sm font-medium text-ink hover:bg-surface-muted"
+        className="flex w-full items-center justify-between gap-1 rounded-lg border border-line px-2.5 py-1.5 text-sm text-ink hover:bg-surface-muted"
       >
-        <span className="truncate">{badge}</span>
+        <span className="truncate">{selected}</span>
         <ChevronIcon className={cn("shrink-0", open && "rotate-180")} />
       </button>
 
@@ -43,6 +48,7 @@ export function Picker({
             {options.map((option) => (
               <li key={option.value}>
                 <button
+                  type="button"
                   onClick={() => {
                     onChange(option.value);
                     setOpen(false);

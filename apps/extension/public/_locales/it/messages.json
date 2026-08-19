@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Riassumi questa pagina" },
   "contextMenuSelection": { "message": "Accorcia la selezione" },
-  "floatingIconTitle": { "message": "Accorcia la selezione" },
-  "close": { "message": "Chiudi" },
-  "settingsLanguage": { "message": "Lingua del riassunto" },
-  "settingsRatio": { "message": "Quanto corto" },
-  "ratio_light": { "message": "Leggero" },
-  "ratio_normal": { "message": "Normale" },
-  "ratio_tight": { "message": "Massimo" },
-  "emptyBody": {
-    "message": "Clicca l'icona nella barra per accorciare l'intera pagina, oppure seleziona un testo."
-  },
-  "unreadableTitle": { "message": "Non è stato possibile leggere questa pagina" },
-  "sourceLabel": { "message": "Testo originale" },
-  "sourceTruncated": { "message": "Il testo era lungo, quindi ne è stata elaborata solo una parte." },
-  "working": { "message": "In corso…" },
-  "retry": { "message": "Riprova" },
-  "errorTooShort": { "message": "Questo testo è troppo corto per essere riassunto." },
-  "errorTooLong": { "message": "Questo testo è troppo lungo per essere riassunto." },
-  "errorRateLimited": { "message": "Il limite di oggi è esaurito. Torna domani." },
-  "errorUnsupportedLanguage": { "message": "Questa lingua non è ancora supportata." },
-  "errorInvalidRequest": { "message": "Qualcosa è andato storto. Riprova." },
-  "errorServiceDisabled": { "message": "Il servizio è temporaneamente non disponibile." },
-  "errorUpstream": { "message": "Non è stato possibile completare il riassunto. Riprova." },
-  "rateUs": { "message": "Valutaci" }
+  "floatingIconTitle": { "message": "Accorcia la selezione" }
 }

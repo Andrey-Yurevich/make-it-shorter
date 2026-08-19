@@ -14,7 +14,7 @@ export const MAX_INPUT = 30_000;
 // almost never before this one.
 export const REQUEST_TIMEOUT_MS = 60_000;
 
-export const API_URL = "https://api.make-it-shorter.net/v1/summarize";
+export const API_URL = "https://api.make-it-shorter.net/v1/shorten";
 
 export const RATE_US_URL = "https://make-it-shorter.net/rate-us";
 export const WELCOME_URL = "https://make-it-shorter.net/welcome";

@@ -4,19 +4,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 )
 
-type summarizeRequest struct {
-	text           string
-	lang           string // normalized, canonical case
-	ratio          string
-	source         string
-	deviceID       string
-	catalogVersion int
-	country        string
+type shortenRequest struct {
+	text     string
+	lang     string // normalized, canonical case
+	ratio    string
+	source   string
+	deviceID string
+	country  string
 }
 
 // requestBody uses pointers so that a missing field and an empty one are different
@@ -31,26 +29,20 @@ type requestBody struct {
 
 var uuidV4Pattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
 
-// parseSummarizeRequest is step 1 of the pipeline: body and headers. It returns
+// parseShortenRequest is step 1 of the pipeline: body and headers. It returns
 // invalid_request for anything malformed and unsupported_language for a language
 // the server does not serve — those two are deliberately different codes.
 //
 // Origin is not checked here. The WAF on CloudFront does that, and a request with a
 // foreign Origin never reaches the function at all.
-func parseSummarizeRequest(r *http.Request) (summarizeRequest, errorCode) {
-	parsed := summarizeRequest{country: r.Header.Get("CloudFront-Viewer-Country")}
+func parseShortenRequest(r *http.Request) (shortenRequest, errorCode) {
+	parsed := shortenRequest{country: r.Header.Get("CloudFront-Viewer-Country")}
 
 	deviceID := r.Header.Get("X-Device-Id")
 	if !uuidV4Pattern.MatchString(deviceID) {
 		return parsed, errInvalidRequest
 	}
 	parsed.deviceID = deviceID
-
-	catalogVersion, err := strconv.Atoi(r.Header.Get("X-Catalog-Version"))
-	if err != nil || catalogVersion < 1 {
-		return parsed, errInvalidRequest
-	}
-	parsed.catalogVersion = catalogVersion
 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -102,10 +94,14 @@ func checkLength(text string) errorCode {
 }
 
 // normalizeLang folds a BCP-47 tag onto the shape the whitelist uses. Portuguese and
-// Chinese keep their variants because the texts genuinely differ; English, Spanish
-// and French variants do not. An unknown tag is returned as its base subtag and then
-// fails the whitelist check — the client-side fallback to English does not apply here,
-// where an unserved language must be reported rather than silently swapped.
+// Chinese keep their variants because the texts genuinely differ; nothing else is
+// split, so Serbian in either script and every regional English land on their base
+// subtag. The three legacy aliases below are codes browsers still emit for languages
+// the whitelist spells the modern way.
+//
+// An unknown tag is returned as its base subtag and then fails the whitelist check —
+// the client-side fallback to English does not apply here, where an unserved language
+// must be reported rather than silently swapped.
 func normalizeLang(tag string) string {
 	parts := strings.Split(strings.TrimSpace(tag), "-")
 	base := strings.ToLower(parts[0])
@@ -126,6 +122,12 @@ func normalizeLang(tag string) string {
 			return "pt-PT"
 		}
 		return "pt-BR"
+	case "no":
+		return "nb" // the macrolanguage, written as Bokmål in practice
+	case "iw":
+		return "he" // the pre-1989 code for Hebrew, still emitted by some browsers
+	case "fil":
+		return "tl"
 	}
 	return base
 }

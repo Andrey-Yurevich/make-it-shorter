@@ -18,7 +18,7 @@ import json, sys, uuid
 body = open(sys.argv[1]).read()
 json.dump({
     "version": "2.0",
-    "rawPath": "/v1/summarize",
+    "rawPath": "/v1/shorten",
     "rawQueryString": "",
     "headers": {
         "content-type": "application/json",
@@ -29,7 +29,7 @@ json.dump({
     },
     "requestContext": {
         "domainName": "smoke-test.lambda-url.us-east-1.on.aws",
-        "http": {"method": "POST", "path": "/v1/summarize", "sourceIp": "127.0.0.1"},
+        "http": {"method": "POST", "path": "/v1/shorten", "sourceIp": "127.0.0.1"},
     },
     "body": body,
     "isBase64Encoded": False,

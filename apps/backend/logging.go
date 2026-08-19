@@ -8,9 +8,8 @@ import (
 
 // One structured JSON record per request, written when the handler returns.
 //
-// No user text ever appears here: not the source, not the summary, not the follow-up
-// answers, not fragments of any of them. Bedrock errors are logged without echoing the
-// request they came from.
+// No user text ever appears here: not the source and not the summary, nor fragments of
+// either. Bedrock errors are logged without echoing the request they came from.
 
 type requestLog struct {
 	Event string `json:"event"`
@@ -21,15 +20,8 @@ type requestLog struct {
 	Ratio       string `json:"ratio,omitempty"`
 	Country     string `json:"country,omitempty"`
 
-	DocType      string   `json:"docType,omitempty"`
-	SrcLang      string   `json:"srcLang,omitempty"`
-	ActionIDs    []string `json:"actionIds,omitempty"`
-	EmptyActions bool     `json:"emptyActions"`
-
 	Model            string `json:"model,omitempty"`
 	MaxSummaryTokens int    `json:"maxSummaryTokens,omitempty"`
-	MaxAnswerTokens  int    `json:"maxAnswerTokens,omitempty"`
-	MaxActions       int    `json:"maxActions,omitempty"`
 	DailyQuota       int    `json:"dailyQuota,omitempty"`
 
 	FirstTokenMs int64 `json:"firstTokenMs,omitempty"`
@@ -42,20 +34,17 @@ type requestLog struct {
 	CacheReadShare   float64 `json:"cacheReadShare"`
 	EstimatedCostUsd float64 `json:"estimatedCostUsd"`
 
-	AnswersStarted int   `json:"answersStarted"`
-	AnswersFailed  int   `json:"answersFailedCount"`
-	AllAnswersFail bool  `json:"answersFailed"`
-	SlowestAnswer  int64 `json:"slowestAnswerMs,omitempty"`
-
 	ErrorCode string `json:"errorCode,omitempty"`
 }
 
 func (entry *requestLog) write() {
-	entry.Event = "summarize"
+	// The metric filter behind the daily cost alarm selects on this value. Renaming it
+	// without renaming the filter zeroes the alarm silently.
+	entry.Event = "shorten"
 
-	// The share of input read from cache is the only thing that shows the second cache
-	// breakpoint still works. A share near zero means the input is being paid for six
-	// times over, and the bill would say so only days later.
+	// The share of input read from cache. It is zero today — the static part of the
+	// prompt is below the length Bedrock will cache — and this is the field that will
+	// say so the moment that stops being true.
 	total := entry.TokensIn + entry.CacheReadTokens
 	if total > 0 {
 		entry.CacheReadShare = float64(entry.CacheReadTokens) / float64(total)

@@ -22,15 +22,14 @@ sha="$(git -C "${root}" rev-parse --short HEAD)"
 rm -rf "${build}"
 mkdir -p "${build}"
 
-# provided.al2023 runs a binary named bootstrap. catalog.json rides along beside it:
-# the function reads it from the working directory at start and refuses to start without it.
+# provided.al2023 runs a binary named bootstrap, and that is the whole of the artifact:
+# the function reads nothing from its working directory.
 cd "${root}/apps/backend"
 go test ./...
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o "${build}/bootstrap" .
-cp "${root}/catalog.json" "${build}/catalog.json"
 
 cd "${build}"
-zip -q "lambda-${sha}.zip" bootstrap catalog.json
+zip -q "lambda-${sha}.zip" bootstrap
 aws s3 cp "lambda-${sha}.zip" "s3://${bucket}/lambda/${sha}.zip"
 
 # The extension. Terraform has no use for this archive; it is kept because the store does

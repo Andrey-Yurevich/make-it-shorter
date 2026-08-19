@@ -5,29 +5,5 @@
   },
   "actionTitle": { "message": "Diese Seite zusammenfassen" },
   "contextMenuSelection": { "message": "Auswahl kürzen" },
-  "floatingIconTitle": { "message": "Auswahl kürzen" },
-  "close": { "message": "Schließen" },
-  "settingsLanguage": { "message": "Sprache der Zusammenfassung" },
-  "settingsRatio": { "message": "Wie kurz" },
-  "ratio_light": { "message": "Leicht" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "Maximal" },
-  "emptyBody": {
-    "message": "Auf das Symbol in der Leiste klicken, um die ganze Seite zu kürzen, oder Text auf der Seite markieren."
-  },
-  "unreadableTitle": { "message": "Diese Seite konnte nicht gelesen werden" },
-  "sourceLabel": { "message": "Ausgangstext" },
-  "sourceTruncated": { "message": "Der Text war lang, deshalb wurde nur ein Teil verarbeitet." },
-  "working": { "message": "Arbeitet…" },
-  "retry": { "message": "Erneut versuchen" },
-  "errorTooShort": { "message": "Dieser Text ist zu kurz für eine Zusammenfassung." },
-  "errorTooLong": { "message": "Dieser Text ist zu lang für eine Zusammenfassung." },
-  "errorRateLimited": { "message": "Das Limit für heute ist aufgebraucht. Morgen wieder." },
-  "errorUnsupportedLanguage": { "message": "Diese Sprache wird noch nicht unterstützt." },
-  "errorInvalidRequest": { "message": "Etwas ist schiefgelaufen. Bitte erneut versuchen." },
-  "errorServiceDisabled": { "message": "Der Dienst ist vorübergehend nicht verfügbar." },
-  "errorUpstream": {
-    "message": "Die Zusammenfassung konnte nicht beendet werden. Bitte erneut versuchen."
-  },
-  "rateUs": { "message": "Bewerten" }
+  "floatingIconTitle": { "message": "Auswahl kürzen" }
 }

@@ -4,20 +4,15 @@ import "testing"
 
 func TestResolveParams(t *testing.T) {
 	cfg = &config{
-		maxActions:     5,
 		tier1Countries: map[string]bool{"US": true, "DE": true},
 		tier1: requestParams{
 			model:            "tier1-model",
 			maxSummaryTokens: 400,
-			maxAnswerTokens:  250,
-			maxActions:       5,
 			dailyQuota:       80,
 		},
 		rest: requestParams{
 			model:            "rest-model",
 			maxSummaryTokens: 300,
-			maxAnswerTokens:  200,
-			maxActions:       3,
 			dailyQuota:       20,
 		},
 	}

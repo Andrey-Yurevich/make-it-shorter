@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "تلخيص هذه الصفحة" },
   "contextMenuSelection": { "message": "اختصار النص المحدد" },
-  "floatingIconTitle": { "message": "اختصار النص المحدد" },
-  "close": { "message": "إغلاق" },
-  "settingsLanguage": { "message": "لغة الملخّص" },
-  "settingsRatio": { "message": "درجة الاختصار" },
-  "ratio_light": { "message": "خفيف" },
-  "ratio_normal": { "message": "عادي" },
-  "ratio_tight": { "message": "الأقصى" },
-  "emptyBody": {
-    "message": "اضغط أيقونة الشريط لاختصار الصفحة كاملة، أو حدّد نصًا في الصفحة."
-  },
-  "unreadableTitle": { "message": "تعذّرت قراءة هذه الصفحة" },
-  "sourceLabel": { "message": "النص الأصلي" },
-  "sourceTruncated": { "message": "كان النص طويلًا، لذا عولج جزء منه فقط." },
-  "working": { "message": "جارٍ العمل…" },
-  "retry": { "message": "حاول مجددًا" },
-  "errorTooShort": { "message": "هذا النص أقصر من أن يُلخَّص." },
-  "errorTooLong": { "message": "هذا النص أطول من أن يُلخَّص." },
-  "errorRateLimited": { "message": "انتهى حد اليوم. عد غدًا." },
-  "errorUnsupportedLanguage": { "message": "هذه اللغة غير مدعومة بعد." },
-  "errorInvalidRequest": { "message": "حدث خطأ ما. حاول مجددًا." },
-  "errorServiceDisabled": { "message": "الخدمة غير متاحة مؤقتًا." },
-  "errorUpstream": { "message": "تعذّر إكمال الملخّص. حاول مجددًا." },
-  "rateUs": { "message": "قيّمنا" }
+  "floatingIconTitle": { "message": "اختصار النص المحدد" }
 }

@@ -37,8 +37,6 @@ func fetchDeviceOverride(ctx context.Context, deviceID string) (deviceOverride, 
 		override.model = item.Value
 	}
 	override.maxSummaryTokens = numberAttribute(out.Item, "maxSummaryTokens")
-	override.maxAnswerTokens = numberAttribute(out.Item, "maxAnswerTokens")
-	override.maxActions = numberAttribute(out.Item, "maxActions")
 	override.dailyQuota = numberAttribute(out.Item, "dailyQuota")
 	return override, nil
 }

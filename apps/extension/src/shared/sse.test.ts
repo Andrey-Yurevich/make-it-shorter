@@ -29,19 +29,21 @@ test("several frames in one chunk come out in order", () => {
   const parser = new SSEParser();
   const events = parser.push(
     encoder.encode(
-      'event: actions\ndata: {"ids":["key_facts"]}\n\n' +
-        'event: answer\ndata: {"id":"key_facts","text":"1998"}\n\n' +
+      'event: delta\ndata: {"text":"first "}\n\n' +
+        'event: delta\ndata: {"text":"second"}\n\n' +
         'event: done\ndata: {"tokensIn":10,"tokensOut":20}\n\n',
     ),
   );
   assert.deepEqual(events, [
-    { type: "actions", ids: ["key_facts"] },
-    { type: "answer", id: "key_facts", text: "1998" },
+    { type: "delta", text: "first " },
+    { type: "delta", text: "second" },
     { type: "done" },
   ]);
 });
 
-test("heartbeat comments and unknown events are dropped silently", () => {
+// Comment lines and event names the client does not know are ignored by the SSE
+// standard, and this is what lets the server add an event without breaking old builds.
+test("comment lines and unknown events are dropped silently", () => {
   const parser = new SSEParser();
   const events = parser.push(
     encoder.encode(
@@ -51,13 +53,6 @@ test("heartbeat comments and unknown events are dropped silently", () => {
     ),
   );
   assert.deepEqual(events, [{ type: "delta", text: "x" }]);
-});
-
-test("an empty actions list is a valid event, not a dropped one", () => {
-  const parser = new SSEParser();
-  assert.deepEqual(parser.push(encoder.encode('event: actions\ndata: {"ids":[]}\n\n')), [
-    { type: "actions", ids: [] },
-  ]);
 });
 
 test("done without token fields still parses", () => {

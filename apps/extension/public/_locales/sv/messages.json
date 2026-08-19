@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Sammanfatta den här sidan" },
   "contextMenuSelection": { "message": "Korta ner markeringen" },
-  "floatingIconTitle": { "message": "Korta ner markeringen" },
-  "close": { "message": "Stäng" },
-  "settingsLanguage": { "message": "Sammanfattningens språk" },
-  "settingsRatio": { "message": "Hur kort" },
-  "ratio_light": { "message": "Lätt" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "Maximalt" },
-  "emptyBody": {
-    "message": "Klicka på ikonen i verktygsfältet för att korta ner hela sidan, eller markera text på sidan."
-  },
-  "unreadableTitle": { "message": "Sidan gick inte att läsa" },
-  "sourceLabel": { "message": "Källtext" },
-  "sourceTruncated": { "message": "Texten var lång, så bara en del av den behandlades." },
-  "working": { "message": "Arbetar…" },
-  "retry": { "message": "Försök igen" },
-  "errorTooShort": { "message": "Texten är för kort för att sammanfattas." },
-  "errorTooLong": { "message": "Texten är för lång för att sammanfattas." },
-  "errorRateLimited": { "message": "Dagens gräns är slut. Kom tillbaka i morgon." },
-  "errorUnsupportedLanguage": { "message": "Det här språket stöds inte ännu." },
-  "errorInvalidRequest": { "message": "Något gick fel. Försök igen." },
-  "errorServiceDisabled": { "message": "Tjänsten är tillfälligt otillgänglig." },
-  "errorUpstream": { "message": "Sammanfattningen kunde inte slutföras. Försök igen." },
-  "rateUs": { "message": "Betygsätt oss" }
+  "floatingIconTitle": { "message": "Korta ner markeringen" }
 }

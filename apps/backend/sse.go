@@ -57,13 +57,6 @@ func (s *sseWriter) send(event string, payload any) {
 	s.flush()
 }
 
-// comment is the heartbeat. Clients ignore comment lines per the SSE standard; the
-// proxies that close silent connections do not.
-func (s *sseWriter) comment(text string) {
-	fmt.Fprintf(s.writer, ": %s\n\n", text)
-	s.flush()
-}
-
 func (s *sseWriter) flush() {
 	if s.flusher != nil {
 		s.flusher.Flush()
@@ -74,26 +67,13 @@ func (s *sseWriter) sendDelta(text string) {
 	s.send("delta", map[string]string{"text": text})
 }
 
-// sendActions always fires, empty list included. Without it the client cannot tell
-// "no buttons here" from a dropped connection.
-func (s *sseWriter) sendActions(ids []string) {
-	if ids == nil {
-		ids = []string{}
-	}
-	s.send("actions", map[string][]string{"ids": ids})
-}
-
-func (s *sseWriter) sendAnswer(id, text string) {
-	s.send("answer", map[string]string{"id": id, "text": text})
-}
-
 func (s *sseWriter) sendDone(tokensIn, tokensOut int) {
 	s.send("done", map[string]int{"tokensIn": tokensIn, "tokensOut": tokensOut})
 }
 
 // sendError replaces done. The message is only ever set for service_disabled: it is
 // hand-written English shown as is. Every other code carries no text, because the
-// wording for it lives in the extension's _locales.
+// wording for it lives in the extension.
 func (s *sseWriter) sendError(code errorCode, message string) {
 	payload := map[string]string{"code": string(code)}
 	if message != "" {

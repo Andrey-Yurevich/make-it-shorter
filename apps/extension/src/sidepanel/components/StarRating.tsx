@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { t } from "../../shared/i18n.ts";
 import { RATE_US_URL } from "../../shared/limits.ts";
 import { CloseIcon, StarIcon, cn } from "./ui.tsx";
 
-// Five stars, bottom right. A click hands the number to the landing page and the widget
-// is gone for good; what the landing page does with it is not this extension's business.
+// Five stars, above the button at the bottom. A click hands the number to the landing
+// page and the widget is gone for good; what the landing page does with it is not this
+// extension's business.
 export function StarRating({ onHide }: { onHide: () => void }) {
   const [hovered, setHovered] = useState(0);
 
@@ -15,19 +15,20 @@ export function StarRating({ onHide }: { onHide: () => void }) {
 
   return (
     <div className="flex items-center gap-0.5 px-3 py-1.5" onMouseLeave={() => setHovered(0)}>
-      <span className="flex-1 text-xs text-ink-soft">{t("rateUs")}</span>
+      <span className="flex-1 text-xs text-ink-soft">Rate us</span>
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
+          type="button"
           onMouseEnter={() => setHovered(star)}
           onClick={() => rate(star)}
-          aria-label={`${t("rateUs")} ${star}`}
+          aria-label={`Rate us ${star} out of 5`}
           className={cn("p-0.5", star <= hovered ? "text-ink" : "text-line")}
         >
           <StarIcon />
         </button>
       ))}
-      <button onClick={onHide} aria-label={t("close")} className="p-0.5 text-ink-soft">
+      <button type="button" onClick={onHide} aria-label="Close" className="p-0.5 text-ink-soft">
         <CloseIcon className="size-3" />
       </button>
     </div>

@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Ringkaskan halaman ini" },
   "contextMenuSelection": { "message": "Pendekkan teks dipilih" },
-  "floatingIconTitle": { "message": "Pendekkan teks dipilih" },
-  "close": { "message": "Tutup" },
-  "settingsLanguage": { "message": "Bahasa ringkasan" },
-  "settingsRatio": { "message": "Sependek mana" },
-  "ratio_light": { "message": "Ringan" },
-  "ratio_normal": { "message": "Biasa" },
-  "ratio_tight": { "message": "Maksimum" },
-  "emptyBody": {
-    "message": "Klik ikon pada bar alat untuk memendekkan seluruh halaman, atau pilih teks pada halaman."
-  },
-  "unreadableTitle": { "message": "Halaman ini tidak dapat dibaca" },
-  "sourceLabel": { "message": "Teks asal" },
-  "sourceTruncated": { "message": "Teksnya panjang, jadi sebahagian sahaja diproses." },
-  "working": { "message": "Sedang bekerja…" },
-  "retry": { "message": "Cuba lagi" },
-  "errorTooShort": { "message": "Teks ini terlalu pendek untuk diringkaskan." },
-  "errorTooLong": { "message": "Teks ini terlalu panjang untuk diringkaskan." },
-  "errorRateLimited": { "message": "Had hari ini sudah habis. Kembali esok." },
-  "errorUnsupportedLanguage": { "message": "Bahasa ini belum disokong." },
-  "errorInvalidRequest": { "message": "Ada masalah berlaku. Cuba lagi." },
-  "errorServiceDisabled": { "message": "Perkhidmatan tidak tersedia buat sementara." },
-  "errorUpstream": { "message": "Ringkasan tidak dapat diselesaikan. Cuba lagi." },
-  "rateUs": { "message": "Nilai kami" }
+  "floatingIconTitle": { "message": "Pendekkan teks dipilih" }
 }

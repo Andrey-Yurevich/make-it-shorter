@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Tóm tắt trang này" },
   "contextMenuSelection": { "message": "Rút gọn phần đã chọn" },
-  "floatingIconTitle": { "message": "Rút gọn phần đã chọn" },
-  "close": { "message": "Đóng" },
-  "settingsLanguage": { "message": "Ngôn ngữ tóm tắt" },
-  "settingsRatio": { "message": "Ngắn đến mức nào" },
-  "ratio_light": { "message": "Nhẹ" },
-  "ratio_normal": { "message": "Bình thường" },
-  "ratio_tight": { "message": "Tối đa" },
-  "emptyBody": {
-    "message": "Nhấp biểu tượng trên thanh công cụ để rút gọn cả trang, hoặc chọn văn bản trên trang."
-  },
-  "unreadableTitle": { "message": "Không đọc được trang này" },
-  "sourceLabel": { "message": "Văn bản gốc" },
-  "sourceTruncated": { "message": "Văn bản dài, nên chỉ một phần được xử lý." },
-  "working": { "message": "Đang xử lý…" },
-  "retry": { "message": "Thử lại" },
-  "errorTooShort": { "message": "Văn bản này quá ngắn để tóm tắt." },
-  "errorTooLong": { "message": "Văn bản này quá dài để tóm tắt." },
-  "errorRateLimited": { "message": "Đã hết lượt hôm nay. Hãy quay lại ngày mai." },
-  "errorUnsupportedLanguage": { "message": "Ngôn ngữ này chưa được hỗ trợ." },
-  "errorInvalidRequest": { "message": "Đã có lỗi xảy ra. Hãy thử lại." },
-  "errorServiceDisabled": { "message": "Dịch vụ tạm thời không khả dụng." },
-  "errorUpstream": { "message": "Không hoàn thành được bản tóm tắt. Hãy thử lại." },
-  "rateUs": { "message": "Đánh giá" }
+  "floatingIconTitle": { "message": "Rút gọn phần đã chọn" }
 }

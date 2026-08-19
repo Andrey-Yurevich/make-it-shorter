@@ -1,6 +1,6 @@
 // The wire types. They are written here by hand and not generated from a shared schema:
 // the two sides share data, not code, and a generator would be a build dependency
-// spanning Go and TypeScript for six small shapes. Compatibility is a contract test's
+// spanning Go and TypeScript for four small shapes. Compatibility is a contract test's
 // job, against a real response.
 
 export type ErrorCode =
@@ -36,13 +36,10 @@ export type SummarizeRequest = {
   source: Source;
 };
 
-// The order is fixed: delta* → actions → answer* → done. `actions` and `done` always
-// arrive, the empty list included — without them the client cannot tell "no buttons"
-// and "finished" from a dropped connection.
+// The order is fixed: delta* → done. `done` always arrives on the normal path —
+// without it the client cannot tell "finished" from a dropped connection.
 export type ServerEvent =
   | { type: "delta"; text: string }
-  | { type: "actions"; ids: string[] }
-  | { type: "answer"; id: string; text: string }
   | { type: "done" }
   | { type: "error"; code: ErrorCode; message?: string };
 
@@ -64,14 +61,6 @@ export function toServerEvent(name: string, data: string): ServerEvent | null {
   switch (name) {
     case "delta":
       return typeof fields.text === "string" ? { type: "delta", text: fields.text } : null;
-    case "actions":
-      return Array.isArray(fields.ids) && fields.ids.every((id) => typeof id === "string")
-        ? { type: "actions", ids: fields.ids as string[] }
-        : null;
-    case "answer":
-      return typeof fields.id === "string" && typeof fields.text === "string"
-        ? { type: "answer", id: fields.id, text: fields.text }
-        : null;
     case "done":
       // {tokensIn, tokensOut} is server bookkeeping. Showing it to the user is
       // forbidden, and the panel must not break when the fields are absent.

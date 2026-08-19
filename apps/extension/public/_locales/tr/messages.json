@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Bu sayfayı özetle" },
   "contextMenuSelection": { "message": "Seçimi kısalt" },
-  "floatingIconTitle": { "message": "Seçimi kısalt" },
-  "close": { "message": "Kapat" },
-  "settingsLanguage": { "message": "Özet dili" },
-  "settingsRatio": { "message": "Ne kadar kısa" },
-  "ratio_light": { "message": "Hafif" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "En kısa" },
-  "emptyBody": {
-    "message": "Tüm sayfayı kısaltmak için araç çubuğundaki simgeye tıklayın ya da sayfada metin seçin."
-  },
-  "unreadableTitle": { "message": "Bu sayfa okunamadı" },
-  "sourceLabel": { "message": "Kaynak metin" },
-  "sourceTruncated": { "message": "Metin uzundu, bu yüzden yalnızca bir kısmı işlendi." },
-  "working": { "message": "Çalışıyor…" },
-  "retry": { "message": "Tekrar dene" },
-  "errorTooShort": { "message": "Bu metin özetlenemeyecek kadar kısa." },
-  "errorTooLong": { "message": "Bu metin özetlenemeyecek kadar uzun." },
-  "errorRateLimited": { "message": "Bugünkü limit doldu. Yarın tekrar gelin." },
-  "errorUnsupportedLanguage": { "message": "Bu dil henüz desteklenmiyor." },
-  "errorInvalidRequest": { "message": "Bir şeyler ters gitti. Tekrar deneyin." },
-  "errorServiceDisabled": { "message": "Hizmet geçici olarak kullanılamıyor." },
-  "errorUpstream": { "message": "Özet tamamlanamadı. Tekrar deneyin." },
-  "rateUs": { "message": "Bizi puanlayın" }
+  "floatingIconTitle": { "message": "Seçimi kısalt" }
 }

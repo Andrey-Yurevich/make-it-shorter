@@ -17,16 +17,12 @@ locals {
   tier1_params = {
     model              = var.tier1.model != "" ? var.tier1.model : var.default_model
     max_summary_tokens = var.tier1.max_summary_tokens > 0 ? var.tier1.max_summary_tokens : var.default_max_summary_tokens
-    max_answer_tokens  = var.tier1.max_answer_tokens > 0 ? var.tier1.max_answer_tokens : var.default_max_answer_tokens
-    max_actions        = var.tier1.max_actions > 0 ? var.tier1.max_actions : var.max_actions
     daily_quota        = var.tier1.daily_quota > 0 ? var.tier1.daily_quota : var.default_daily_quota
   }
 
   rest_params = {
     model              = var.rest.model != "" ? var.rest.model : var.default_model
     max_summary_tokens = var.rest.max_summary_tokens > 0 ? var.rest.max_summary_tokens : var.default_max_summary_tokens
-    max_answer_tokens  = var.rest.max_answer_tokens > 0 ? var.rest.max_answer_tokens : var.default_max_answer_tokens
-    max_actions        = var.rest.max_actions > 0 ? var.rest.max_actions : var.max_actions
     daily_quota        = var.rest.daily_quota > 0 ? var.rest.daily_quota : var.default_daily_quota
   }
 }
@@ -63,29 +59,18 @@ module "api" {
     SERVICE_ENABLED  = var.service_enabled ? "true" : "false"
     DISABLED_MESSAGE = var.disabled_message
 
-    MIN_INPUT              = tostring(var.min_input)
-    MAX_INPUT              = tostring(var.max_input)
-    LANGUAGES              = join(",", var.languages)
-    MAX_ACTIONS            = tostring(var.max_actions)
-    ANSWER_TIMEOUT_SECONDS = tostring(var.answer_timeout_seconds)
-    QUOTA_TIMEZONE         = var.quota_timezone
-
-    # make-release.sh packages catalog.json next to the binary, so this is the value the
-    # function falls back to on its own. Stated anyway: the deployed environment is then
-    # the whole configuration, with nothing left to read out of the code.
-    CATALOG_PATH = "catalog.json"
+    MIN_INPUT      = tostring(var.min_input)
+    MAX_INPUT      = tostring(var.max_input)
+    LANGUAGES      = join(",", var.languages)
+    QUOTA_TIMEZONE = var.quota_timezone
 
     TIER1_COUNTRIES          = join(",", var.tier1_countries)
     TIER1_MODEL              = local.tier1_params.model
     TIER1_MAX_SUMMARY_TOKENS = tostring(local.tier1_params.max_summary_tokens)
-    TIER1_MAX_ANSWER_TOKENS  = tostring(local.tier1_params.max_answer_tokens)
-    TIER1_MAX_ACTIONS        = tostring(local.tier1_params.max_actions)
     TIER1_DAILY_QUOTA        = tostring(local.tier1_params.daily_quota)
 
     REST_MODEL              = local.rest_params.model
     REST_MAX_SUMMARY_TOKENS = tostring(local.rest_params.max_summary_tokens)
-    REST_MAX_ANSWER_TOKENS  = tostring(local.rest_params.max_answer_tokens)
-    REST_MAX_ACTIONS        = tostring(local.rest_params.max_actions)
     REST_DAILY_QUOTA        = tostring(local.rest_params.daily_quota)
 
     MODEL_PRICES = jsonencode(var.model_prices)

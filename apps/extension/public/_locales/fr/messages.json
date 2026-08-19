@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Résumer cette page" },
   "contextMenuSelection": { "message": "Raccourcir la sélection" },
-  "floatingIconTitle": { "message": "Raccourcir la sélection" },
-  "close": { "message": "Fermer" },
-  "settingsLanguage": { "message": "Langue du résumé" },
-  "settingsRatio": { "message": "Niveau de concision" },
-  "ratio_light": { "message": "Léger" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "Maximal" },
-  "emptyBody": {
-    "message": "Cliquez sur l'icône de la barre pour raccourcir toute la page, ou sélectionnez du texte."
-  },
-  "unreadableTitle": { "message": "Cette page n'a pas pu être lue" },
-  "sourceLabel": { "message": "Texte source" },
-  "sourceTruncated": { "message": "Le texte était long : seule une partie a été traitée." },
-  "working": { "message": "En cours…" },
-  "retry": { "message": "Réessayer" },
-  "errorTooShort": { "message": "Ce texte est trop court pour être résumé." },
-  "errorTooLong": { "message": "Ce texte est trop long pour être résumé." },
-  "errorRateLimited": { "message": "La limite du jour est atteinte. Revenez demain." },
-  "errorUnsupportedLanguage": { "message": "Cette langue n'est pas encore prise en charge." },
-  "errorInvalidRequest": { "message": "Une erreur est survenue. Réessayez." },
-  "errorServiceDisabled": { "message": "Le service est temporairement indisponible." },
-  "errorUpstream": { "message": "Le résumé n'a pas pu être terminé. Réessayez." },
-  "rateUs": { "message": "Notez-nous" }
+  "floatingIconTitle": { "message": "Raccourcir la sélection" }
 }

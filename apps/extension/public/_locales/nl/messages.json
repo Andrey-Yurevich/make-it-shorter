@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Deze pagina samenvatten" },
   "contextMenuSelection": { "message": "Selectie inkorten" },
-  "floatingIconTitle": { "message": "Selectie inkorten" },
-  "close": { "message": "Sluiten" },
-  "settingsLanguage": { "message": "Taal van de samenvatting" },
-  "settingsRatio": { "message": "Hoe kort" },
-  "ratio_light": { "message": "Licht" },
-  "ratio_normal": { "message": "Normaal" },
-  "ratio_tight": { "message": "Maximaal" },
-  "emptyBody": {
-    "message": "Klik op het icoon in de balk om de hele pagina in te korten, of selecteer tekst op de pagina."
-  },
-  "unreadableTitle": { "message": "Deze pagina kon niet worden gelezen" },
-  "sourceLabel": { "message": "Brontekst" },
-  "sourceTruncated": { "message": "De tekst was lang, dus alleen een deel is verwerkt." },
-  "working": { "message": "Bezig…" },
-  "retry": { "message": "Opnieuw proberen" },
-  "errorTooShort": { "message": "Deze tekst is te kort om samen te vatten." },
-  "errorTooLong": { "message": "Deze tekst is te lang om samen te vatten." },
-  "errorRateLimited": { "message": "De limiet van vandaag is op. Kom morgen terug." },
-  "errorUnsupportedLanguage": { "message": "Deze taal wordt nog niet ondersteund." },
-  "errorInvalidRequest": { "message": "Er ging iets mis. Probeer het opnieuw." },
-  "errorServiceDisabled": { "message": "De dienst is tijdelijk niet beschikbaar." },
-  "errorUpstream": { "message": "De samenvatting kon niet worden afgemaakt. Probeer het opnieuw." },
-  "rateUs": { "message": "Beoordeel ons" }
+  "floatingIconTitle": { "message": "Selectie inkorten" }
 }

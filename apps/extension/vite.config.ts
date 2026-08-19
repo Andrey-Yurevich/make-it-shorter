@@ -15,7 +15,6 @@ import { buildManifest } from "./manifest.ts";
 // before.
 
 const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, "package.json"), "utf8"));
-const catalog = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../catalog.json"), "utf8"));
 
 function emitManifest(): Plugin {
   return {
@@ -36,11 +35,6 @@ function emitManifest(): Plugin {
 
 export default defineConfig({
   plugins: [react(), tailwind(), emitManifest()],
-  define: {
-    // The catalog version travels in a request header, and the spec forbids typing it
-    // in by hand: catalog.json is the one place the number lives.
-    __CATALOG_VERSION__: JSON.stringify(catalog.version),
-  },
   build: {
     outDir: "dist",
     emptyOutDir: true,

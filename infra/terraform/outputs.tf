@@ -1,5 +1,5 @@
 output "api_endpoint" {
-  value = "https://${local.api_domain}/v1/summarize"
+  value = "https://${local.api_domain}/v1/shorten"
 }
 
 output "function_name" {

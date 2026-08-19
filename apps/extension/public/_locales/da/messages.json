@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Opsummer denne side" },
   "contextMenuSelection": { "message": "Forkort det markerede" },
-  "floatingIconTitle": { "message": "Forkort det markerede" },
-  "close": { "message": "Luk" },
-  "settingsLanguage": { "message": "Resuméets sprog" },
-  "settingsRatio": { "message": "Hvor kort" },
-  "ratio_light": { "message": "Let" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "Maksimalt" },
-  "emptyBody": {
-    "message": "Klik på ikonet i værktøjslinjen for at forkorte hele siden, eller markér tekst på siden."
-  },
-  "unreadableTitle": { "message": "Siden kunne ikke læses" },
-  "sourceLabel": { "message": "Kildetekst" },
-  "sourceTruncated": { "message": "Teksten var lang, så kun en del af den blev behandlet." },
-  "working": { "message": "Arbejder…" },
-  "retry": { "message": "Prøv igen" },
-  "errorTooShort": { "message": "Teksten er for kort til et resumé." },
-  "errorTooLong": { "message": "Teksten er for lang til et resumé." },
-  "errorRateLimited": { "message": "Dagens grænse er brugt op. Kom igen i morgen." },
-  "errorUnsupportedLanguage": { "message": "Dette sprog understøttes ikke endnu." },
-  "errorInvalidRequest": { "message": "Noget gik galt. Prøv igen." },
-  "errorServiceDisabled": { "message": "Tjenesten er midlertidigt utilgængelig." },
-  "errorUpstream": { "message": "Resuméet kunne ikke gøres færdigt. Prøv igen." },
-  "rateUs": { "message": "Bedøm os" }
+  "floatingIconTitle": { "message": "Forkort det markerede" }
 }

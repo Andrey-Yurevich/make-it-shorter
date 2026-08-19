@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "סכם את הדף הזה" },
   "contextMenuSelection": { "message": "קצר את הטקסט המסומן" },
-  "floatingIconTitle": { "message": "קצר את הטקסט המסומן" },
-  "close": { "message": "סגור" },
-  "settingsLanguage": { "message": "שפת הסיכום" },
-  "settingsRatio": { "message": "כמה קצר" },
-  "ratio_light": { "message": "קל" },
-  "ratio_normal": { "message": "רגיל" },
-  "ratio_tight": { "message": "מקסימלי" },
-  "emptyBody": {
-    "message": "לחצו על הסמל בסרגל כדי לקצר את כל הדף, או סמנו טקסט בדף."
-  },
-  "unreadableTitle": { "message": "לא ניתן היה לקרוא את הדף הזה" },
-  "sourceLabel": { "message": "הטקסט המקורי" },
-  "sourceTruncated": { "message": "הטקסט היה ארוך, ולכן עובד רק חלק ממנו." },
-  "working": { "message": "עובד…" },
-  "retry": { "message": "נסו שוב" },
-  "errorTooShort": { "message": "הטקסט הזה קצר מדי לסיכום." },
-  "errorTooLong": { "message": "הטקסט הזה ארוך מדי לסיכום." },
-  "errorRateLimited": { "message": "המכסה להיום נגמרה. חזרו מחר." },
-  "errorUnsupportedLanguage": { "message": "השפה הזו עדיין לא נתמכת." },
-  "errorInvalidRequest": { "message": "משהו השתבש. נסו שוב." },
-  "errorServiceDisabled": { "message": "השירות אינו זמין באופן זמני." },
-  "errorUpstream": { "message": "לא ניתן היה לסיים את הסיכום. נסו שוב." },
-  "rateUs": { "message": "דרגו אותנו" }
+  "floatingIconTitle": { "message": "קצר את הטקסט המסומן" }
 }

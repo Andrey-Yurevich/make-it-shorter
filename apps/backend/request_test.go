@@ -24,6 +24,15 @@ func TestNormalizeLang(t *testing.T) {
 		{"pt", "pt-BR"},
 		{"pt-BR", "pt-BR"},
 		{"pt-PT", "pt-PT"},
+		// Serbian is not split by script: both scripts summarize the same language.
+		{"sr-Latn", "sr"},
+		{"sr-Cyrl-RS", "sr"},
+		// Legacy codes browsers still emit for languages the whitelist spells the
+		// modern way.
+		{"no", "nb"},
+		{"nb-NO", "nb"},
+		{"iw", "he"},
+		{"fil-PH", "tl"},
 	}
 	for _, testCase := range cases {
 		if got := normalizeLang(testCase.tag); got != testCase.want {
@@ -56,7 +65,7 @@ func TestCheckLengthCountsCodePoints(t *testing.T) {
 	}
 }
 
-func TestParseSummarizeRequest(t *testing.T) {
+func TestParseShortenRequest(t *testing.T) {
 	cfg = &config{
 		minInput:  1,
 		maxInput:  100,
@@ -81,9 +90,6 @@ func TestParseSummarizeRequest(t *testing.T) {
 		{name: "source outside the set", body: `{"text":"t","lang":"ru","ratio":"normal","source":"clipboard"}`, want: errInvalidRequest},
 		{name: "device id missing", body: validBody, headers: map[string]string{"X-Device-Id": ""}, want: errInvalidRequest},
 		{name: "device id is not UUIDv4", body: validBody, headers: map[string]string{"X-Device-Id": "not-a-uuid"}, want: errInvalidRequest},
-		{name: "catalog version missing", body: validBody, headers: map[string]string{"X-Catalog-Version": ""}, want: errInvalidRequest},
-		{name: "catalog version not an integer", body: validBody, headers: map[string]string{"X-Catalog-Version": "one"}, want: errInvalidRequest},
-		{name: "catalog version below 1", body: validBody, headers: map[string]string{"X-Catalog-Version": "0"}, want: errInvalidRequest},
 		// A language the server does not serve is its own code, not invalid_request:
 		// the client is not broken, the language is simply not offered.
 		{name: "language outside the list", body: `{"text":"t","lang":"is","ratio":"normal","source":"page"}`, want: errUnsupportedLanguage},
@@ -91,14 +97,13 @@ func TestParseSummarizeRequest(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodPost, "/v1/summarize", strings.NewReader(testCase.body))
+			request := httptest.NewRequest(http.MethodPost, "/v1/shorten", strings.NewReader(testCase.body))
 			request.Header.Set("X-Device-Id", deviceID)
-			request.Header.Set("X-Catalog-Version", "1")
 			for name, value := range testCase.headers {
 				request.Header.Set(name, value)
 			}
 
-			_, got := parseSummarizeRequest(request)
+			_, got := parseShortenRequest(request)
 			if got != testCase.want {
 				t.Fatalf("got %q, want %q", got, testCase.want)
 			}
@@ -106,16 +111,15 @@ func TestParseSummarizeRequest(t *testing.T) {
 	}
 }
 
-func TestParseSummarizeRequestNormalizesAndTrims(t *testing.T) {
+func TestParseShortenRequestNormalizesAndTrims(t *testing.T) {
 	cfg = &config{minInput: 1, maxInput: 100, languages: map[string]bool{"ru": true}}
 
-	request := httptest.NewRequest(http.MethodPost, "/v1/summarize",
+	request := httptest.NewRequest(http.MethodPost, "/v1/shorten",
 		strings.NewReader(`{"text":"  padded  ","lang":"ru-RU","ratio":"tight","source":"manual"}`))
 	request.Header.Set("X-Device-Id", "3f1a6b2c-9d4e-4a1b-8c2d-5e6f7a8b9c0d")
-	request.Header.Set("X-Catalog-Version", "7")
 	request.Header.Set("CloudFront-Viewer-Country", "DE")
 
-	parsed, code := parseSummarizeRequest(request)
+	parsed, code := parseShortenRequest(request)
 	if code != "" {
 		t.Fatalf("unexpected error code %q", code)
 	}
@@ -124,9 +128,6 @@ func TestParseSummarizeRequestNormalizesAndTrims(t *testing.T) {
 	}
 	if parsed.lang != "ru" {
 		t.Errorf("lang = %q, want %q", parsed.lang, "ru")
-	}
-	if parsed.catalogVersion != 7 {
-		t.Errorf("catalogVersion = %d, want 7", parsed.catalogVersion)
 	}
 	if parsed.country != "DE" {
 		t.Errorf("country = %q, want DE", parsed.country)

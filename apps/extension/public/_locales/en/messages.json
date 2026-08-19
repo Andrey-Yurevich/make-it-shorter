@@ -3,29 +3,7 @@
   "extDescription": {
     "message": "AI summarizer: get a summary or just shorten it. Long article? Make it shorter — in one click, in any language."
   },
-  "actionTitle": { "message": "Summarize this page" },
+  "actionTitle": { "message": "Shorten entire page content" },
   "contextMenuSelection": { "message": "Make the selection shorter" },
-  "floatingIconTitle": { "message": "Make the selection shorter" },
-  "close": { "message": "Close" },
-  "settingsLanguage": { "message": "Summary language" },
-  "settingsRatio": { "message": "How short" },
-  "ratio_light": { "message": "Light" },
-  "ratio_normal": { "message": "Normal" },
-  "ratio_tight": { "message": "Tight" },
-  "emptyBody": {
-    "message": "Click the toolbar icon to shorten the whole page, or select text on the page."
-  },
-  "unreadableTitle": { "message": "This page could not be read" },
-  "sourceLabel": { "message": "Source text" },
-  "sourceTruncated": { "message": "The text was long, so only part of it was processed." },
-  "working": { "message": "Working…" },
-  "retry": { "message": "Try again" },
-  "errorTooShort": { "message": "This text is too short to summarize." },
-  "errorTooLong": { "message": "This text is too long to summarize." },
-  "errorRateLimited": { "message": "Today's limit is used up. Come back tomorrow." },
-  "errorUnsupportedLanguage": { "message": "This language is not supported yet." },
-  "errorInvalidRequest": { "message": "Something went wrong. Please try again." },
-  "errorServiceDisabled": { "message": "The service is temporarily unavailable." },
-  "errorUpstream": { "message": "The summary could not be finished. Please try again." },
-  "rateUs": { "message": "Rate us" }
+  "floatingIconTitle": { "message": "Make the selection shorter" }
 }

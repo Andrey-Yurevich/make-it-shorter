@@ -5,27 +5,5 @@
   },
   "actionTitle": { "message": "Σύνοψη αυτής της σελίδας" },
   "contextMenuSelection": { "message": "Συντόμευση επιλογής" },
-  "floatingIconTitle": { "message": "Συντόμευση επιλογής" },
-  "close": { "message": "Κλείσιμο" },
-  "settingsLanguage": { "message": "Γλώσσα περίληψης" },
-  "settingsRatio": { "message": "Πόσο σύντομα" },
-  "ratio_light": { "message": "Ελαφρύ" },
-  "ratio_normal": { "message": "Κανονικό" },
-  "ratio_tight": { "message": "Μέγιστο" },
-  "emptyBody": {
-    "message": "Κάντε κλικ στο εικονίδιο της γραμμής για να συντομεύσετε όλη τη σελίδα, ή επιλέξτε κείμενο."
-  },
-  "unreadableTitle": { "message": "Η σελίδα δεν μπόρεσε να διαβαστεί" },
-  "sourceLabel": { "message": "Αρχικό κείμενο" },
-  "sourceTruncated": { "message": "Το κείμενο ήταν μεγάλο, οπότε επεξεργάστηκε μόνο ένα μέρος του." },
-  "working": { "message": "Σε εξέλιξη…" },
-  "retry": { "message": "Δοκιμάστε ξανά" },
-  "errorTooShort": { "message": "Αυτό το κείμενο είναι πολύ μικρό για περίληψη." },
-  "errorTooLong": { "message": "Αυτό το κείμενο είναι πολύ μεγάλο για περίληψη." },
-  "errorRateLimited": { "message": "Το σημερινό όριο εξαντλήθηκε. Επιστρέψτε αύριο." },
-  "errorUnsupportedLanguage": { "message": "Αυτή η γλώσσα δεν υποστηρίζεται ακόμη." },
-  "errorInvalidRequest": { "message": "Κάτι πήγε στραβά. Δοκιμάστε ξανά." },
-  "errorServiceDisabled": { "message": "Η υπηρεσία είναι προσωρινά μη διαθέσιμη." },
-  "errorUpstream": { "message": "Η περίληψη δεν ολοκληρώθηκε. Δοκιμάστε ξανά." },
-  "rateUs": { "message": "Αξιολογήστε μας" }
+  "floatingIconTitle": { "message": "Συντόμευση επιλογής" }
 }

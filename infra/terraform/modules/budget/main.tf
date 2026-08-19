@@ -24,7 +24,7 @@ resource "aws_sns_topic_subscription" "email" {
 resource "aws_cloudwatch_log_metric_filter" "requests" {
   name           = "mis-requests"
   log_group_name = var.log_group_name
-  pattern        = "{ $.event = \"summarize\" }"
+  pattern        = "{ $.event = \"shorten\" }"
 
   metric_transformation {
     name          = "Requests"

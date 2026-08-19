@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Steps 0 to 2 run before anything is called: no DynamoDB, no Bedrock. This test walks
@@ -57,12 +59,11 @@ func TestPipelineRejectsBeforeCallingAnything(t *testing.T) {
 				languages:       map[string]bool{"ru": true},
 			}
 
-			request := httptest.NewRequest(http.MethodPost, "/v1/summarize", strings.NewReader(testCase.body))
+			request := httptest.NewRequest(http.MethodPost, "/v1/shorten", strings.NewReader(testCase.body))
 			request.Header.Set("X-Device-Id", deviceID)
-			request.Header.Set("X-Catalog-Version", "1")
 			recorder := httptest.NewRecorder()
 
-			handleSummarize(recorder, request)
+			handleShorten(recorder, request)
 
 			if recorder.Code != http.StatusOK {
 				t.Errorf("status = %d, want 200: a rejected request is not a transport failure", recorder.Code)
@@ -95,9 +96,37 @@ func TestUnknownPathIs404(t *testing.T) {
 // exceptions precisely because every endpoint is POST.
 func TestGetIsNotRouted(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	route(recorder, httptest.NewRequest(http.MethodGet, "/v1/summarize", nil))
+	route(recorder, httptest.NewRequest(http.MethodGet, "/v1/shorten", nil))
 
 	if recorder.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want 404", recorder.Code)
+	}
+}
+
+// The model call has to give the invocation back a moment before it dies, or a hung
+// call ends as a truncated stream instead of an error event.
+func TestSummaryLeavesRoomToFinishTheResponse(t *testing.T) {
+	ctx, cancelInvocation := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancelInvocation()
+
+	summaryCtx, cancel := summaryContext(ctx)
+	defer cancel()
+
+	deadline, ok := summaryCtx.Deadline()
+	if !ok {
+		t.Fatal("the call must be bounded when the invocation has a deadline")
+	}
+	if left := time.Until(deadline); left < 47*time.Second || left > 48*time.Second {
+		t.Errorf("the call got %v, want about 48s: 50 minus the 2s to write done", left)
+	}
+}
+
+// Locally there is no invocation deadline and nothing to divide.
+func TestSummaryIsUnboundedWithoutAnInvocationDeadline(t *testing.T) {
+	summaryCtx, cancel := summaryContext(context.Background())
+	defer cancel()
+
+	if _, ok := summaryCtx.Deadline(); ok {
+		t.Error("the call should not invent a deadline that the invocation does not have")
 	}
 }
