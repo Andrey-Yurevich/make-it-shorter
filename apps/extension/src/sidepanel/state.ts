@@ -20,8 +20,16 @@ export type RunState = {
   streaming: boolean;
   error: { code: ErrorCode; message?: string } | null;
   // The page could not be read: a restricted page, or nothing worth reading on it. Not
-  // an error — the panel says so and waits for the next thing the user does.
-  unreadablePage: boolean;
+  // an error — the panel says so, and the button that reads the page is disabled for as
+  // long as it says it: on a page Chrome does not let us into, pressing that button
+  // again can only produce the same message.
+  //
+  // `tabId` is what makes the message expire, and without it the disabled button would
+  // be a trap. The panel outlives the tab the message came from — it stays open across
+  // tab switches and page loads — so a message about a tab the user has left must not
+  // disable the button for the tab they are looking at now. Null when the tab is not
+  // known, and then the first switch anywhere clears it.
+  unreadable: { tabId: number | null } | null;
 };
 
 export const initialRunState: RunState = {
@@ -32,7 +40,7 @@ export const initialRunState: RunState = {
   result: "",
   streaming: false,
   error: null,
-  unreadablePage: false,
+  unreadable: null,
 };
 
 export type RunAction =
@@ -43,7 +51,9 @@ export type RunAction =
   | { type: "delta"; text: string }
   | { type: "done" }
   | { type: "error"; code: ErrorCode; message?: string }
-  | { type: "unreadable-page" };
+  | { type: "unreadable-page"; tabId: number | null }
+  | { type: "tab-activated"; tabId: number }
+  | { type: "tab-navigated"; tabId: number };
 
 export function runReducer(state: RunState, action: RunAction): RunState {
   switch (action.type) {
@@ -59,13 +69,13 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         // toolbar icon reads the page again instead of just focusing the panel.
         pageUrl: null,
         error: null,
-        unreadablePage: false,
+        unreadable: null,
       };
 
     // The tab is being read and there is no text yet. The wait for the extraction and
     // the wait for the first token are one wait to the user, so they look the same here.
     case "reading":
-      return { ...state, result: "", streaming: true, error: null, unreadablePage: false };
+      return { ...state, result: "", streaming: true, error: null, unreadable: null };
 
     case "loaded":
       return {
@@ -77,11 +87,11 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         result: "",
         streaming: false,
         error: null,
-        unreadablePage: false,
+        unreadable: null,
       };
 
     case "start":
-      return { ...state, result: "", streaming: true, error: null, unreadablePage: false };
+      return { ...state, result: "", streaming: true, error: null, unreadable: null };
 
     case "delta":
       return { ...state, result: state.result + action.text };
@@ -95,6 +105,18 @@ export function runReducer(state: RunState, action: RunAction): RunState {
     // The input field keeps whatever it held: a page that cannot be read is no reason to
     // throw away text the user pasted there.
     case "unreadable-page":
-      return { ...state, result: "", streaming: false, error: null, unreadablePage: true };
+      return { ...state, result: "", streaming: false, error: null, unreadable: { tabId: action.tabId } };
+
+    // Another tab is in front of the user now, and a message about the one they left has
+    // nothing left to say about a button that reads whichever tab is in front of them.
+    case "tab-activated":
+      return state.unreadable && state.unreadable.tabId !== action.tabId
+        ? { ...state, unreadable: null }
+        : state;
+
+    // The tab the message is about has loaded something else, and that may well be
+    // readable. Whether to try is the user's call, so the button comes back.
+    case "tab-navigated":
+      return state.unreadable?.tabId === action.tabId ? { ...state, unreadable: null } : state;
   }
 }

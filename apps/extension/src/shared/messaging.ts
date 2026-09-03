@@ -23,12 +23,17 @@ export type SelectionMessage = {
 };
 
 // What the panel is asked to work on. `kind: "unreadable"` is the page we could not
-// read — a restricted page, or a page Readability came back from with less than
-// minInput. That is not an error: the panel says so and waits for the next thing the
-// user does.
+// read — a restricted page, or a page that came back with no text at all. That is not an
+// error: the panel says so and waits for the next thing the user does.
+//
+// It carries the tab rather than the url, and the tab is the whole point of it: the
+// panel disables its read-the-page button while the message is up, and has to know
+// which tab the message is about so it can drop it when the user moves to another one.
+// The url would not do — Chrome withholds it on exactly the pages that produce this
+// message, since `<all_urls>` does not match `chrome://`.
 export type PanelJob =
   | { kind: "text"; text: string; source: Source; truncated: boolean; pageUrl?: string }
-  | { kind: "unreadable"; pageUrl?: string };
+  | { kind: "unreadable"; tabId?: number };
 
 // panel → service worker, over the long-lived port. The worker needs it for one rule:
 // a second click on the toolbar icon while the panel already holds a summary of this
@@ -71,9 +76,9 @@ export function readPanelMessage(message: unknown): PanelJob | null {
   }
 
   const job = envelope.job as Record<string, unknown> | null | undefined;
-  const pageUrl = typeof job?.pageUrl === "string" ? job.pageUrl : undefined;
 
   if (job?.kind === "text" && typeof job.text === "string") {
+    const pageUrl = typeof job.pageUrl === "string" ? job.pageUrl : undefined;
     return {
       kind: "text",
       text: job.text,
@@ -84,7 +89,10 @@ export function readPanelMessage(message: unknown): PanelJob | null {
       pageUrl,
     };
   }
-  return { kind: "unreadable", pageUrl };
+  // No tab id is a message that expires on the first tab switch instead of on the right
+  // one. That is the safe direction: the button comes back sooner than it had to, rather
+  // than staying dead on a tab the message was never about.
+  return { kind: "unreadable", tabId: typeof job?.tabId === "number" ? job.tabId : undefined };
 }
 
 // panel → service worker. A state that cannot be read is dropped: the worker's copy

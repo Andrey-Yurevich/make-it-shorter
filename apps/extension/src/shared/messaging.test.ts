@@ -25,7 +25,7 @@ test("a well-formed job passes through", () => {
 test("a text job with no text is an unreadable page, not a crash", () => {
   // The exact shape that blanked the panel.
   const job = readPanelMessage({ type: "job", job: { kind: "text", source: "page" } });
-  assert.deepEqual(job, { kind: "unreadable", pageUrl: undefined });
+  assert.deepEqual(job, { kind: "unreadable", tabId: undefined });
 });
 
 test("a text job whose text is not a string is unreadable too", () => {
@@ -35,11 +35,20 @@ test("a text job whose text is not a string is unreadable too", () => {
   }
 });
 
-test("an unreadable job keeps its page url", () => {
-  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "unreadable", pageUrl: "https://x" } }), {
+test("an unreadable job keeps its tab id", () => {
+  // The panel disables its read-the-page button while the message is up, and the tab id
+  // is what tells it when to stop: lose it here and the button expires on the wrong
+  // tab switch.
+  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "unreadable", tabId: 7 } }), {
     kind: "unreadable",
-    pageUrl: "https://x",
+    tabId: 7,
   });
+  for (const tabId of [null, "7", {}, undefined]) {
+    assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "unreadable", tabId } }), {
+      kind: "unreadable",
+      tabId: undefined,
+    });
+  }
 });
 
 test("an unknown source falls back rather than travelling on", () => {

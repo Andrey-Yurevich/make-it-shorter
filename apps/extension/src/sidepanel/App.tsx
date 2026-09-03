@@ -75,6 +75,27 @@ export function App() {
     });
   }
 
+  // The message about a page that could not be read disables the button at the bottom,
+  // so it must not outlive what it is about: the panel stays open while the user
+  // switches tabs and loads pages, and these two events are how it hears about that.
+  // Neither needs the `tabs` permission — the tab id arrives without it, and nothing
+  // here looks at a url. Adding that permission for this would be paid for in the
+  // install warning.
+  useEffect(() => {
+    const onActivated = (info: chrome.tabs.OnActivatedInfo) => {
+      dispatch({ type: "tab-activated", tabId: info.tabId });
+    };
+    const onUpdated = (tabId: number) => {
+      dispatch({ type: "tab-navigated", tabId });
+    };
+    chrome.tabs.onActivated.addListener(onActivated);
+    chrome.tabs.onUpdated.addListener(onUpdated);
+    return () => {
+      chrome.tabs.onActivated.removeListener(onActivated);
+      chrome.tabs.onUpdated.removeListener(onUpdated);
+    };
+  }, []);
+
   // What the worker needs for the "second click on the icon" rule.
   useEffect(() => {
     portRef.current?.postMessage({
@@ -89,7 +110,7 @@ export function App() {
   // field, and the user can correct it and run it again.
   function handleJob(job: PanelJob): void {
     if (job.kind === "unreadable") {
-      dispatch({ type: "unreadable-page" });
+      dispatch({ type: "unreadable-page", tabId: job.tabId ?? null });
       return;
     }
     load(job.text, job.source, job.truncated, job.pageUrl);
@@ -146,13 +167,13 @@ export function App() {
 
     const tab = await activeTab();
     if (tab?.id === undefined) {
-      dispatch({ type: "unreadable-page" });
+      dispatch({ type: "unreadable-page", tabId: null });
       return;
     }
 
     const extracted = await extractFromTab(tab.id, "page");
     if (!extracted.ok) {
-      dispatch({ type: "unreadable-page" });
+      dispatch({ type: "unreadable-page", tabId: tab.id });
       return;
     }
     load(extracted.text, "page", extracted.truncated, tab.url);
@@ -167,10 +188,14 @@ export function App() {
 
   const inputLength = countCodePoints(run.input);
   const canShorten = !run.streaming && inputLength >= MIN_INPUT && inputLength <= MAX_INPUT;
-  // The service is switched off: no request goes out until the user asks again. Reading
-  // the page is blocked while a run is in flight for the ordinary reason — one run at a
-  // time.
-  const pageBlocked = run.streaming || run.error?.code === "service_disabled";
+  // Three reasons the page cannot be read right now, and the panel says all three out
+  // loud below: a run is in flight (one at a time), the service is switched off (no
+  // request goes out until the user asks again), or this very tab has just been read and
+  // could not be. The last one lasts until the user moves to another tab, loads
+  // something else in this one, or puts text in the field by hand — the message and the
+  // button go together, and neither outlives the tab it was about.
+  const pageBlocked =
+    run.streaming || run.unreadable !== null || run.error?.code === "service_disabled";
 
   return (
     <div className="flex h-full flex-col bg-surface">
@@ -226,7 +251,7 @@ export function App() {
           <OutputBox text={run.result} streaming={run.streaming} />
         </section>
 
-        {run.unreadablePage && (
+        {run.unreadable && (
           <Notice>This page could not be read. Paste the text into the field above instead.</Notice>
         )}
         {run.error && <Notice>{errorText(run.error)}</Notice>}

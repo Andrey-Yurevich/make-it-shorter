@@ -117,7 +117,7 @@ async function run(tab: chrome.tabs.Tab, mode: "page" | "selection"): Promise<vo
   const extracted = await extractFromTab(tab.id, mode);
   const job: PanelJob = extracted.ok
     ? { kind: "text", text: extracted.text, source: mode, truncated: extracted.truncated, pageUrl: tab.url }
-    : { kind: "unreadable", pageUrl: tab.url };
+    : { kind: "unreadable", tabId: tab.id };
 
   sendToPanel(job);
 }
