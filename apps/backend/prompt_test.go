@@ -25,12 +25,12 @@ func TestSystemBlocksEndAtTheCacheBreakpoint(t *testing.T) {
 	}
 }
 
-// Everything variable — output language, compression, the user text and the task —
-// travels in one user block, after the breakpoint.
-func TestUserBlockCarriesLanguageCompressionTextAndTask(t *testing.T) {
-	block := buildUserBlock(shortenRequest{lang: "pt-BR", ratio: "tight", text: "the source text"})
+// Everything variable — output language, tone, the user text and the task — travels in
+// one user block, after the breakpoint.
+func TestUserBlockCarriesLanguageToneTextAndTask(t *testing.T) {
+	block := buildUserBlock(shortenRequest{lang: "pt-BR", tone: "formal", text: "the source text"})
 
-	for _, want := range []string{"Output language: pt-BR", "Compression: tight", "the source text"} {
+	for _, want := range []string{"Output language: pt-BR", "Tone: formal", "the source text"} {
 		if !strings.Contains(block, want) {
 			t.Errorf("user block is missing %q:\n%s", want, block)
 		}
@@ -42,6 +42,16 @@ func TestUserBlockCarriesLanguageCompressionTextAndTask(t *testing.T) {
 	}
 	if strings.Index(block, "the source text") > strings.Index(block, summaryTask) {
 		t.Errorf("the text must come before the task:\n%s", block)
+	}
+}
+
+// Every tone the parser lets through has to be explained to the model: a value the
+// prompt says nothing about would be guessed at, and the guess would differ per request.
+func TestPromptDescribesEveryKnownTone(t *testing.T) {
+	for tone := range knownTones {
+		if !strings.Contains(summaryPrompt, "\n- "+tone+" — ") {
+			t.Errorf("the prompt has no line for tone %q", tone)
+		}
 	}
 }
 

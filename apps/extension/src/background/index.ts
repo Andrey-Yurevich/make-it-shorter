@@ -34,10 +34,10 @@ chrome.runtime.onInstalled.addListener((details) => {
     });
   });
   // Leftovers from features that are gone: up to fifty dialogs with their source
-  // texts, and the catalog version the follow-up buttons were filtered by. The data
-  // goes with the feature rather than sitting in storage forever with nothing to read
-  // it.
-  void chrome.storage.local.remove(["history", "catalogVersion"]);
+  // texts, the catalog version the follow-up buttons were filtered by, and the
+  // compression level that the tone setting replaced. The data goes with the feature
+  // rather than sitting in storage forever with nothing to read it.
+  void chrome.storage.local.remove(["history", "catalogVersion", "ratio"]);
 });
 
 chrome.runtime.setUninstallURL(UNINSTALL_URL);

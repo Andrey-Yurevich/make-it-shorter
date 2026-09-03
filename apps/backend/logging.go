@@ -17,7 +17,7 @@ type requestLog struct {
 	InputLength int    `json:"inputLength"`
 	Source      string `json:"source,omitempty"`
 	Lang        string `json:"lang,omitempty"`
-	Ratio       string `json:"ratio,omitempty"`
+	Tone        string `json:"tone,omitempty"`
 	Country     string `json:"country,omitempty"`
 
 	Model            string `json:"model,omitempty"`

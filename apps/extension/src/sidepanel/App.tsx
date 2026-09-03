@@ -2,7 +2,7 @@ import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
 import { SUMMARY_LANGS, languageName } from "../shared/lang.ts";
 import { MAX_INPUT, MIN_INPUT } from "../shared/limits.ts";
 import { PANEL_PORT, readPanelMessage, type PanelJob } from "../shared/messaging.ts";
-import type { ErrorCode, Ratio, Source } from "../shared/protocol.ts";
+import { TONES, type ErrorCode, type Source, type Tone } from "../shared/protocol.ts";
 import {
   getSettings,
   hideRating,
@@ -26,11 +26,28 @@ import { initialRunState, runReducer } from "./state.ts";
 // only strings that go through chrome.i18n are the ones Chrome itself draws — the name,
 // the description, the context menu item and the icon tooltip.
 
-const RATIOS: { value: Ratio; label: string }[] = [
-  { value: "light", label: "Light" },
-  { value: "normal", label: "Normal" },
-  { value: "tight", label: "Tight" },
-];
+// One emoji per tone, in front of the name, so the list can be scanned by shape as well
+// as read. The order is the order of TONES: the default first, then the rest as the
+// product lists them. Every wire value has a label here — the type makes sure of it.
+const TONE_LABELS: Record<Tone, string> = {
+  original: "📄 Original",
+  diplomatic: "🤝 Diplomatic",
+  formal: "🎩 Formal",
+  professional: "💼 Professional",
+  confident: "💪 Confident",
+  friendly: "😊 Friendly",
+  academic: "🎓 Academic",
+  casual: "😎 Casual",
+  simplified: "🔤 Simplified",
+  bold: "🔥 Bold",
+  empathetic: "💛 Empathetic",
+  direct: "🎯 Direct",
+  luxury: "💎 Luxury",
+  persuasive: "🧲 Persuasive",
+  engaging: "✨ Engaging",
+};
+
+const TONE_OPTIONS = TONES.map((tone) => ({ value: tone, label: TONE_LABELS[tone] }));
 
 export function App() {
   const [run, dispatch] = useReducer(runReducer, initialRunState);
@@ -136,7 +153,7 @@ export function App() {
     const current = settingsRef.current ?? (await getSettings());
 
     await shorten(
-      { text, lang: current.lang, ratio: current.ratio, source },
+      { text, lang: current.lang, tone: current.tone, source },
       {
         onDelta: (chunk) => {
           if (id === runId.current) {
@@ -228,12 +245,12 @@ export function App() {
               />
             </section>
             <section className="flex flex-1 flex-col gap-1.5">
-              <FieldLabel>Compression level</FieldLabel>
+              <FieldLabel>Tone</FieldLabel>
               <Picker
-                label="Compression level"
-                value={settings.ratio}
-                options={RATIOS}
-                onChange={(ratio) => void changeSettings({ ratio: ratio as Ratio })}
+                label="Tone"
+                value={settings.tone}
+                options={TONE_OPTIONS}
+                onChange={(tone) => void changeSettings({ tone: tone as Tone })}
               />
             </section>
           </div>

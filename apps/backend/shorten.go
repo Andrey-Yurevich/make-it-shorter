@@ -58,7 +58,7 @@ func handleShorten(w http.ResponseWriter, r *http.Request) {
 	entry.Country = req.country
 	entry.Source = req.source
 	entry.Lang = req.lang
-	entry.Ratio = req.ratio
+	entry.Tone = req.tone
 	if code != "" {
 		fail(code, "")
 		return

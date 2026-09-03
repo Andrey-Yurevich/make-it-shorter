@@ -22,7 +22,7 @@ Press one and you get the answer to that question, pulled from the same text rat
 ⚙️ Two more things worth knowing:
 
 - Language. Read a page in any language and get the summary in yours. Translation and summarization happen in the same pass, so you do not need a second tab or a separate translation step.
-- Depth. If the result is not what you needed, you can adjust how strongly the source is compressed — a light trim, or enough to make it a short paragraph. The default suits most articles, so most days you will not touch it.
+- Tone. By default the summary keeps the voice of the original. Pick another tone when you need one — formal, friendly, simplified, direct, persuasive and more — and the same facts come back said the way you need them. The default suits most articles, so most days you will not touch it.
 
 The summaries keep names, numbers and dates from the original, because those are usually the reason you opened the article in the first place.
 
@@ -49,16 +49,16 @@ Whatever the request sounds like in your head — make it way shorter, make it v
 💡 Yes, that is the main case. Select the part you need, or run the summarizer on the whole page.
 
 ❓ The summary is still long. Can you make it even shorter?
-💡 Raise the compression and you can make it much shorter. Push it further and you can make it a lot shorter, down to a couple of lines.
+💡 Select the summary itself and run make it shorter on it again. Each pass makes it much shorter, down to a couple of lines.
 
 ❓ Can you make it short and simple, not just short?
-💡 Yes. Plain wording instead of jargon is part of the job when you ask it to make it simple and shorter.
+💡 Yes. Pick the Simplified tone and you get plain wording instead of jargon, in short sentences a newcomer can follow.
 
 ❓ Can u make it short enough for a chat message?
-💡 Usually. A strong cut leaves one or two sentences you can paste as they are.
+💡 Usually. Pick the Casual or Direct tone and you get a paragraph you can paste as it is, or run it once more to get it down to a sentence or two.
 
-❓ Can you make it a little shorter instead of a full summary?
-💡 Yes. Ask it to make it a bit shorter and a light cut keeps the structure of the original, trimming only the rest.
+❓ Can I change how the summary sounds, not just how long it is?
+💡 Yes. Choose a tone: Formal for a report, Friendly for a message to a colleague, Persuasive for a pitch, Diplomatic for a delicate reply. The facts stay the same; only the voice changes.
 
 ❓ Can you summarize text from image files or screenshots?
 💡 No. It works with text you can select on a page, not with pictures of text.

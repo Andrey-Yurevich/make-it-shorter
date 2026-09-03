@@ -26,13 +26,39 @@ export function isErrorCode(value: unknown): value is ErrorCode {
   return typeof value === "string" && (ERROR_CODES as string[]).includes(value);
 }
 
-export type Ratio = "light" | "normal" | "tight";
+// The voice the summary is written in. `original` keeps the register of the source; every
+// other value is a register to write in whatever the source sounds like. The server
+// validates against the same list, so a value that is not here is invalid_request.
+export const TONES = [
+  "original",
+  "diplomatic",
+  "formal",
+  "professional",
+  "confident",
+  "friendly",
+  "academic",
+  "casual",
+  "simplified",
+  "bold",
+  "empathetic",
+  "direct",
+  "luxury",
+  "persuasive",
+  "engaging",
+] as const;
+
+export type Tone = (typeof TONES)[number];
+
+export function isTone(value: unknown): value is Tone {
+  return typeof value === "string" && (TONES as readonly string[]).includes(value);
+}
+
 export type Source = "selection" | "page" | "manual";
 
 export type SummarizeRequest = {
   text: string;
   lang: string;
-  ratio: Ratio;
+  tone: Tone;
   source: Source;
 };
 

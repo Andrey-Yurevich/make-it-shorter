@@ -11,7 +11,7 @@ import (
 type shortenRequest struct {
 	text     string
 	lang     string // normalized, canonical case
-	ratio    string
+	tone     string
 	source   string
 	deviceID string
 	country  string
@@ -23,8 +23,29 @@ type shortenRequest struct {
 type requestBody struct {
 	Text   *string `json:"text"`
 	Lang   *string `json:"lang"`
-	Ratio  *string `json:"ratio"`
+	Tone   *string `json:"tone"`
 	Source *string `json:"source"`
+}
+
+// The tones the client may ask for. "original" keeps the register of the source; every
+// other value is a register to write in. The list is the same as the extension's, and
+// the prompt describes each of them by this exact name.
+var knownTones = map[string]bool{
+	"original":     true,
+	"diplomatic":   true,
+	"formal":       true,
+	"professional": true,
+	"confident":    true,
+	"friendly":     true,
+	"academic":     true,
+	"casual":       true,
+	"simplified":   true,
+	"bold":         true,
+	"empathetic":   true,
+	"direct":       true,
+	"luxury":       true,
+	"persuasive":   true,
+	"engaging":     true,
 }
 
 var uuidV4Pattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
@@ -53,13 +74,11 @@ func parseShortenRequest(r *http.Request) (shortenRequest, errorCode) {
 	if decoder.More() {
 		return parsed, errInvalidRequest // something follows the JSON object
 	}
-	if body.Text == nil || body.Lang == nil || body.Ratio == nil || body.Source == nil {
+	if body.Text == nil || body.Lang == nil || body.Tone == nil || body.Source == nil {
 		return parsed, errInvalidRequest
 	}
 
-	switch *body.Ratio {
-	case "light", "normal", "tight":
-	default:
+	if !knownTones[*body.Tone] {
 		return parsed, errInvalidRequest
 	}
 	switch *body.Source {
@@ -67,7 +86,7 @@ func parseShortenRequest(r *http.Request) (shortenRequest, errorCode) {
 	default:
 		return parsed, errInvalidRequest
 	}
-	parsed.ratio = *body.Ratio
+	parsed.tone = *body.Tone
 	parsed.source = *body.Source
 	parsed.text = strings.TrimSpace(*body.Text)
 

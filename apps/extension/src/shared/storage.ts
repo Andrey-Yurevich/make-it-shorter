@@ -1,12 +1,12 @@
 import { normalizeLang } from "./lang.ts";
-import type { Ratio, Source } from "./protocol.ts";
+import { isTone, type Source, type Tone } from "./protocol.ts";
 
 // Everything lives in chrome.storage.local. storage.sync is deliberately not used: the
 // quota is tied to the device on purpose, and syncing the device id would defeat it.
 
 export type Settings = {
   lang: string;
-  ratio: Ratio;
+  tone: Tone;
 };
 
 // One run of the panel. It lives in memory for as long as the panel shows it and is
@@ -38,13 +38,15 @@ export async function getDeviceId(): Promise<string> {
   return deviceId;
 }
 
+// Both settings are read from storage on every panel open and written on every change,
+// so a tone picked once stays picked: across panel opens, browser restarts and extension
+// updates. Only a value the current build does not know falls back to the default.
 export async function getSettings(): Promise<Settings> {
-  const stored = await chrome.storage.local.get(["lang", "ratio"]);
+  const stored = await chrome.storage.local.get(["lang", "tone"]);
   const lang =
     typeof stored.lang === "string" ? stored.lang : normalizeLang(chrome.i18n.getUILanguage());
-  const ratio: Ratio =
-    stored.ratio === "light" || stored.ratio === "tight" ? stored.ratio : "normal";
-  return { lang, ratio };
+  const tone: Tone = isTone(stored.tone) ? stored.tone : "original";
+  return { lang, tone };
 }
 
 export async function saveSettings(patch: Partial<Settings>): Promise<void> {

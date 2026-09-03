@@ -73,7 +73,7 @@ func TestParseShortenRequest(t *testing.T) {
 	}
 
 	const deviceID = "3f1a6b2c-9d4e-4a1b-8c2d-5e6f7a8b9c0d"
-	validBody := `{"text":"some text","lang":"ru-RU","ratio":"normal","source":"selection"}`
+	validBody := `{"text":"some text","lang":"ru-RU","tone":"original","source":"selection"}`
 
 	cases := []struct {
 		name    string
@@ -83,16 +83,16 @@ func TestParseShortenRequest(t *testing.T) {
 	}{
 		{name: "valid request", body: validBody, want: ""},
 		{name: "body is not JSON", body: `{`, want: errInvalidRequest},
-		{name: "text missing", body: `{"lang":"ru","ratio":"normal","source":"page"}`, want: errInvalidRequest},
-		{name: "text of the wrong type", body: `{"text":42,"lang":"ru","ratio":"normal","source":"page"}`, want: errInvalidRequest},
-		{name: "unknown field", body: `{"text":"t","lang":"ru","ratio":"normal","source":"page","extra":1}`, want: errInvalidRequest},
-		{name: "ratio outside the set", body: `{"text":"t","lang":"ru","ratio":"medium","source":"page"}`, want: errInvalidRequest},
-		{name: "source outside the set", body: `{"text":"t","lang":"ru","ratio":"normal","source":"clipboard"}`, want: errInvalidRequest},
+		{name: "text missing", body: `{"lang":"ru","tone":"original","source":"page"}`, want: errInvalidRequest},
+		{name: "text of the wrong type", body: `{"text":42,"lang":"ru","tone":"original","source":"page"}`, want: errInvalidRequest},
+		{name: "unknown field", body: `{"text":"t","lang":"ru","tone":"original","source":"page","extra":1}`, want: errInvalidRequest},
+		{name: "tone outside the set", body: `{"text":"t","lang":"ru","tone":"shouting","source":"page"}`, want: errInvalidRequest},
+		{name: "source outside the set", body: `{"text":"t","lang":"ru","tone":"original","source":"clipboard"}`, want: errInvalidRequest},
 		{name: "device id missing", body: validBody, headers: map[string]string{"X-Device-Id": ""}, want: errInvalidRequest},
 		{name: "device id is not UUIDv4", body: validBody, headers: map[string]string{"X-Device-Id": "not-a-uuid"}, want: errInvalidRequest},
 		// A language the server does not serve is its own code, not invalid_request:
 		// the client is not broken, the language is simply not offered.
-		{name: "language outside the list", body: `{"text":"t","lang":"is","ratio":"normal","source":"page"}`, want: errUnsupportedLanguage},
+		{name: "language outside the list", body: `{"text":"t","lang":"is","tone":"original","source":"page"}`, want: errUnsupportedLanguage},
 	}
 
 	for _, testCase := range cases {
@@ -115,7 +115,7 @@ func TestParseShortenRequestNormalizesAndTrims(t *testing.T) {
 	cfg = &config{minInput: 1, maxInput: 100, languages: map[string]bool{"ru": true}}
 
 	request := httptest.NewRequest(http.MethodPost, "/v1/shorten",
-		strings.NewReader(`{"text":"  padded  ","lang":"ru-RU","ratio":"tight","source":"manual"}`))
+		strings.NewReader(`{"text":"  padded  ","lang":"ru-RU","tone":"formal","source":"manual"}`))
 	request.Header.Set("X-Device-Id", "3f1a6b2c-9d4e-4a1b-8c2d-5e6f7a8b9c0d")
 	request.Header.Set("CloudFront-Viewer-Country", "DE")
 
