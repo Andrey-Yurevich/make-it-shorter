@@ -53,6 +53,10 @@ func runShorten(ctx context.Context, params requestParams, req shortenRequest, o
 		Messages: buildMessages(buildUserBlock(req)),
 		InferenceConfig: &types.InferenceConfiguration{
 			MaxTokens: aws.Int32(int32(params.maxSummaryTokens)),
+			// Anthropic's default is 1.0, which is a lot for a tool that should give the
+			// same text the same answer twice. Lower is steadier on borderline texts as
+			// well: fewer refusals, fewer runs that drop half the content.
+			Temperature: aws.Float32(0.3),
 		},
 	})
 	if err != nil {
