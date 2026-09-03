@@ -18,15 +18,32 @@ function git(...args: string[]): string {
   return execFileSync("git", args, { cwd: import.meta.dirname, encoding: "utf8" }).trim();
 }
 
-function buildVersion(): { version: string; versionName: string } {
-  // Several tags can point at one commit; the first one that looks like a version wins,
-  // and a tag that does not look like one is not a release of this extension.
-  const tag = git("tag", "--points-at", "HEAD")
-    .split("\n")
-    .find((candidate) => VERSION_TAG.test(candidate));
+// Numeric, part by part: 0.10.0 is above 0.2.0, which an alphabetical sort gets wrong.
+function compareVersions(a: string, b: string): number {
+  const partsA = a.split(".").map(Number);
+  const partsB = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+    const difference = (partsA[i] ?? 0) - (partsB[i] ?? 0);
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return 0;
+}
 
-  if (tag) {
-    const version = tag.replace(/^v/, "");
+function buildVersion(): { version: string; versionName: string } {
+  // Several tags can point at one commit — a release re-tagged under a new number with
+  // the old tag left behind — and the highest version wins. A tag that does not look like
+  // a version is not a release of this extension. make-release.sh applies the same rule,
+  // so the archive and the manifest inside it name the same version.
+  const versions = git("tag", "--points-at", "HEAD")
+    .split("\n")
+    .filter((candidate) => VERSION_TAG.test(candidate))
+    .map((tag) => tag.replace(/^v/, ""))
+    .sort(compareVersions);
+  const version = versions.at(-1);
+
+  if (version) {
     return { version, versionName: version };
   }
   // Not a release: 0.0.0 is a version the store will never accept, which is the point —

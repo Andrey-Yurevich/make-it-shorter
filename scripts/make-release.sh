@@ -17,7 +17,15 @@ backend_build="${root}/build/backend"
 # and the tag is the name; anything else is named by its short sha. The same rule decides
 # the extension version in apps/extension/manifest.ts, so one build is called one thing
 # everywhere.
-label="$(git -C "${root}" tag --points-at HEAD | sed -n 's/^v\{0,1\}\([0-9][0-9.]*\)$/\1/p' | head -1)"
+#
+# Several version tags on one commit happen — a release re-tagged under a new number with
+# the old tag left behind — and the highest wins. `git tag` lists them alphabetically, and
+# alphabetical is not numeric: it put v0.1.0 ahead of v0.2.0 once and shipped a 0.2.0 build
+# as 0.1.0-3. Hence the numeric sort on the four dot-separated parts; BSD sort has no -V.
+label="$(git -C "${root}" tag --points-at HEAD \
+  | sed -n 's/^v\{0,1\}\([0-9][0-9.]*\)$/\1/p' \
+  | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n \
+  | tail -1)"
 label="${label:-$(git -C "${root}" rev-parse --short HEAD)}"
 
 in_bucket() {
