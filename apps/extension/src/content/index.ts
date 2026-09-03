@@ -1,5 +1,5 @@
 import { MIN_INPUT } from "../shared/limits.ts";
-import type { ExtractRequest, ExtractResult } from "../shared/messaging.ts";
+import { readExtractRequest, type ExtractResult } from "../shared/messaging.ts";
 import { countCodePoints, normalizeText } from "../shared/text.ts";
 
 // The resident half of the content script. It runs on every page the user opens, heavy
@@ -25,11 +25,12 @@ document.addEventListener("mousedown", (event) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message: ExtractRequest, _sender, sendResponse) => {
-  if (message?.type !== "extract") {
+chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+  const request = readExtractRequest(message);
+  if (!request) {
     return false;
   }
-  void respondWithText(message.mode).then(sendResponse);
+  void respondWithText(request.mode).then(sendResponse);
   return true; // the response is asynchronous
 });
 

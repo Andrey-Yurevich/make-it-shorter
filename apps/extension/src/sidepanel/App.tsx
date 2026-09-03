@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
 import { SUMMARY_LANGS, languageName } from "../shared/lang.ts";
 import { MAX_INPUT, MIN_INPUT } from "../shared/limits.ts";
-import { PANEL_PORT, type PanelJob, type PanelMessage } from "../shared/messaging.ts";
+import { PANEL_PORT, readPanelMessage, type PanelJob } from "../shared/messaging.ts";
 import type { ErrorCode, Ratio, Source } from "../shared/protocol.ts";
 import {
   getSettings,
@@ -63,9 +63,10 @@ export function App() {
   function connect(): void {
     const port = chrome.runtime.connect({ name: PANEL_PORT });
     portRef.current = port;
-    port.onMessage.addListener((message: PanelMessage) => {
-      if (message.type === "job") {
-        handleJob(message.job);
+    port.onMessage.addListener((message: unknown) => {
+      const job = readPanelMessage(message);
+      if (job) {
+        handleJob(job);
       }
     });
     port.onDisconnect.addListener(() => {
@@ -182,8 +183,7 @@ export function App() {
             id="input-text"
             value={run.input}
             onChange={(event) => dispatch({ type: "edit", text: event.target.value })}
-            placeholder="Paste or type the text to shorten."
-            className="h-full w-full flex-1 resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm leading-relaxed text-ink placeholder:text-ink-soft focus:border-ink focus:outline-none"
+            className="h-full w-full flex-1 resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm leading-relaxed text-ink focus:border-ink focus:outline-none"
           />
           <InputHint length={inputLength} truncated={run.truncated} />
         </section>

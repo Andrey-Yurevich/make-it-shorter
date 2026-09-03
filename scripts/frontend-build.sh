@@ -3,15 +3,19 @@
 # It uploads nothing and deploys nothing: the store upload is manual, because the store
 # has its own review of several days and there is nothing to automate around that.
 #
-# Prints the path of the zip. The version inside it comes from git: a tag on HEAD is a
-# release and its name is the version, anything else is a working build named by its sha.
-# manifest.ts works that out during the build, and this file reads back what it wrote.
+# Leaves both shapes of the build in build/extension: the zip the store takes and the
+# unpacked folder next to it. Prints the path of the zip.
+#
+# The name of both comes from the label: the argument if there is one — make-release.sh
+# passes the name it settled on for the whole build — and otherwise the version the build
+# stamped into the manifest, which is the tag on HEAD or its short sha.
 #
 #   EXTENSION_KEY   public key of the store item. Without it the unpacked build gets a
 #                   random extension id, its Origin is not the one the WAF allows, and
 #                   every API request comes back 403.
 set -euo pipefail
 
+label="${1:-}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 extension="${root}/apps/extension"
 build="${root}/build/extension"
@@ -40,11 +44,20 @@ fi
 
 # version_name and not version: on an untagged build the latter is 0.0.0 for every
 # commit, and two builds must not land on the same file name.
-version="$(node -p "require('${extension}/dist/manifest.json').version_name")"
-archive="${build}/extension-${version}.zip"
+label="${label:-$(node -p "require('${extension}/dist/manifest.json').version_name")}"
+archive="${build}/extension-${label}.zip"
+unpacked="${build}/extension-${label}"
 
 mkdir -p "${build}"
 rm -f "${archive}"
+rm -rf "${unpacked}"
+
+# The unpacked copy is what "Load unpacked" takes, and it is kept because a zip has to be
+# unpacked somewhere before it can be looked at or loaded. It is an archive of the build
+# and not the development build: Chrome derives the id of an unpacked extension from the
+# absolute path it was loaded from, so this copy answers to an id of its own, and the one
+# the WAF admits belongs to apps/extension/dist.
+cp -R "${extension}/dist" "${unpacked}"
 
 # -X drops the extra file attributes; the store ignores them and they make two builds of
 # the same tree differ for no reason. The manifest has to sit at the root of the zip,

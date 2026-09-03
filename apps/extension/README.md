@@ -6,7 +6,7 @@ file only records what the spec left to the implementation.
 ## Build
 
 ```
-../../scripts/frontend-build.sh          # everything below, plus the store zip
+../../scripts/frontend-build.sh          # everything below, plus the zip and an unpacked copy
 npm run build                            # dist/ only
 npm test                                 # shared modules
 ```

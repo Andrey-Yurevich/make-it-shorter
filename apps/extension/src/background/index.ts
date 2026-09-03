@@ -1,5 +1,11 @@
 import { UNINSTALL_URL, WELCOME_URL } from "../shared/limits.ts";
-import { PANEL_PORT, type PanelJob, type PanelState } from "../shared/messaging.ts";
+import {
+  PANEL_PORT,
+  readPanelState,
+  readSelectionMessage,
+  type PanelJob,
+  type PanelState,
+} from "../shared/messaging.ts";
 import { extractFromTab } from "../shared/tab.ts";
 
 // The service worker owns three things and nothing else: it opens the panel, it decides
@@ -60,8 +66,8 @@ chrome.contextMenus.onClicked.addListener((_info, tab) => {
 // message, and the spec flags this as the thing to verify first on a real browser. If
 // it ever stops working, the fallback is to open the panel from the toolbar only and
 // let the floating icon hand text to a panel that is already open.
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message?.type === "selection-clicked" && sender.tab?.id !== undefined) {
+chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+  if (readSelectionMessage(message) && sender.tab?.id !== undefined) {
     void run(sender.tab, "selection");
   }
   return false;
@@ -72,9 +78,10 @@ chrome.runtime.onConnect.addListener((port) => {
     return;
   }
   panelPort = port;
-  port.onMessage.addListener((message: PanelState) => {
-    if (message.type === "state") {
-      panelState = message;
+  port.onMessage.addListener((message: unknown) => {
+    const state = readPanelState(message);
+    if (state) {
+      panelState = state;
     }
   });
   port.onDisconnect.addListener(() => {

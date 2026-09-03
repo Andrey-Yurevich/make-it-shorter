@@ -13,6 +13,12 @@ alarm_email = "andrei@yurevich.it"
 # unpacked build answer to the released id instead of to its path.
 extension_id = "bgidfchfjfnfebcoadoanjhhmcbkehhe"
 
-# Temporary key: the working tree is not committed yet, so there is no git sha
-# that describes this build. Re-release through make-release.sh after committing.
-lambda_version = "dev-3f78a2cd8e5a"
+# Which build production runs: the key of the artifact in S3, under lambda/ and without
+# the .zip. make-release.sh prints that name when it finishes uploading — the
+# version-shaped tag on the built commit, its short sha when there is no tag, and a -1,
+# -2 on the end of either when the name was taken already.
+#
+# Deploying is editing this line and running terraform apply; the script does neither. A
+# rollback is the same edit naming an older key, and works as long as that key is still
+# in the bucket.
+lambda_version = "eb3003d-1"

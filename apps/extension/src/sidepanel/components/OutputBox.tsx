@@ -32,8 +32,7 @@ export function OutputBox({ text, streaming }: { text: string; streaming: boolea
         ref={field}
         readOnly
         value={text}
-        placeholder="The shortened text will appear here."
-        className="h-full w-full flex-1 resize-none rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm leading-relaxed text-ink placeholder:text-ink-soft focus:outline-none"
+        className="h-full w-full flex-1 resize-none rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm leading-relaxed text-ink focus:outline-none"
       />
       {text !== "" && (
         <button

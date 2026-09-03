@@ -23,7 +23,7 @@
 
 ```
 go test ./...                    # включая проверку catalog.json
-../../scripts/make-release.sh    # сборка под arm64, zip, выгрузка в S3, печать <short-sha>
+../../scripts/make-release.sh    # сборка под arm64, zip, выгрузка в S3, печать метки сборки
 ```
 
 Локально — тот же обработчик обычным HTTP-сервером, против настоящих Bedrock и DynamoDB:

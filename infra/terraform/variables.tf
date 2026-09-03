@@ -8,8 +8,8 @@ variable "artifacts_bucket" {
   default = "mis-artifacts"
 }
 
-# The build to run, as the short git sha printed by make-release.sh. Deploying is
-# changing this value; rolling back is changing it back.
+# The build to run, as the name printed by make-release.sh: the tag on the built commit,
+# or its short sha. Deploying is changing this value; rolling back is changing it back.
 variable "lambda_version" {
   type = string
 }

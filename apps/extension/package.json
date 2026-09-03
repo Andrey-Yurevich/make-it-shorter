@@ -5,8 +5,9 @@
   "scripts": {
     "check:locales": "node scripts/check-locales.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"src/shared/*.test.ts\"",
-    "build": "npm run check:locales && npm run typecheck && npm test && vite build && vite build --config vite.extract.config.ts && vite build --config vite.content.config.ts"
+    "test": "node --test \"src/**/*.test.ts\"",
+    "build": "npm run check:locales && npm run check:boundaries && npm run typecheck && npm test && vite build && vite build --config vite.extract.config.ts && vite build --config vite.content.config.ts",
+    "check:boundaries": "node scripts/check-boundaries.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
