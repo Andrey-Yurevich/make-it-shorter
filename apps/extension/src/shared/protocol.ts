@@ -10,7 +10,8 @@ export type ErrorCode =
   | "unsupported_language"
   | "upstream_error"
   | "invalid_request"
-  | "service_disabled";
+  | "service_disabled"
+  | "nothing_to_shorten";
 
 export const ERROR_CODES: ErrorCode[] = [
   "too_short",
@@ -20,13 +21,14 @@ export const ERROR_CODES: ErrorCode[] = [
   "upstream_error",
   "invalid_request",
   "service_disabled",
+  "nothing_to_shorten",
 ];
 
 export function isErrorCode(value: unknown): value is ErrorCode {
   return typeof value === "string" && (ERROR_CODES as string[]).includes(value);
 }
 
-// The voice the summary is written in. `original` keeps the register of the source; every
+// The voice the shorter text is written in. `original` keeps the register of the source; every
 // other value is a register to write in whatever the source sounds like. The server
 // validates against the same list, so a value that is not here is invalid_request.
 export const TONES = [

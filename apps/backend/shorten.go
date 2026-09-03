@@ -14,7 +14,7 @@ import (
 //  1. body and headers
 //  2. length
 //  3. quota
-//  4. the summary, streamed out as delta events
+//  4. the shorter text, streamed out as delta events
 //  5. done
 //
 // Steps 0-3 happen before Bedrock is touched. A failure at any of them is an SSE
@@ -98,25 +98,34 @@ func handleShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 4. The summary streams out as delta events while it is written.
-	summaryCtx, cancelSummary := summaryContext(ctx)
-	defer cancelSummary()
+	// Step 4. The shorter text streams out as delta events while it is written.
+	modelCtx, cancelModelCall := modelCallContext(ctx)
+	defer cancelModelCall()
 
-	summary, err := runSummary(summaryCtx, params, req, stream.sendDelta)
-	recordUsage(&entry, params.model, summary.usage)
+	shortened, err := runShorten(modelCtx, params, req, stream.sendDelta)
+	recordUsage(&entry, params.model, shortened.usage)
 	if err != nil {
 		// Logged without echoing any part of the request.
 		log.Printf("bedrock failed: %v", err)
 		fail(errUpstreamError, "")
 		return
 	}
-	if !summary.firstTokenAt.IsZero() {
-		entry.FirstTokenMs = summary.firstTokenAt.Sub(startedAt).Milliseconds()
+	if !shortened.firstTokenAt.IsZero() {
+		entry.FirstTokenMs = shortened.firstTokenAt.Sub(startedAt).Milliseconds()
+	}
+
+	// The model's own verdict, not the server's: the input was not a text. Nothing has
+	// been forwarded, so the error event is the whole answer. The quota was spent and
+	// stays spent — the model was asked and did its job.
+	if shortened.nothingToShorten {
+		entry.NothingToShorten = true
+		fail(errNothingToShorten, "")
+		return
 	}
 
 	// Step 5. Done, which always goes out on the normal path: without it the client
 	// cannot tell a finished answer from a dropped connection.
-	stream.sendDone(summary.usage.input+summary.usage.cacheRead+summary.usage.cacheWrite, summary.usage.output)
+	stream.sendDone(shortened.usage.input+shortened.usage.cacheRead+shortened.usage.cacheWrite, shortened.usage.output)
 	answered = true
 }
 
@@ -134,8 +143,8 @@ func recordUsage(entry *requestLog, model string, usage tokenUsage) {
 // all instead of upstream_error.
 const timeToFinishResponse = 2 * time.Second
 
-// summaryContext bounds the model call so that margin survives.
-func summaryContext(ctx context.Context) (context.Context, context.CancelFunc) {
+// modelCallContext bounds the model call so that margin survives.
+func modelCallContext(ctx context.Context) (context.Context, context.CancelFunc) {
 	deadline, ok := ctx.Deadline()
 	if !ok {
 		return context.WithCancel(ctx) // no invocation deadline, so a local run

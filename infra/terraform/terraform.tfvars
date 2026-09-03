@@ -21,4 +21,4 @@ extension_id = "bgidfchfjfnfebcoadoanjhhmcbkehhe"
 # Deploying is editing this line and running terraform apply; the script does neither. A
 # rollback is the same edit naming an older key, and works as long as that key is still
 # in the bucket.
-lambda_version = "eb3003d-1"
+lambda_version = "76d34fb"

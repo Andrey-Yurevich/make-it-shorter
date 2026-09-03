@@ -269,7 +269,9 @@ export function App() {
         </section>
 
         {run.unreadable && (
-          <Notice>This page could not be read. Paste the text into the field above instead.</Notice>
+          <Notice>
+            This page has no readable text to shorten. Paste the text into the field above instead.
+          </Notice>
         )}
         {run.error && <Notice>{errorText(run.error)}</Notice>}
       </main>
@@ -349,6 +351,10 @@ function errorText(error: { code: ErrorCode; message?: string }): string {
       return "The service is temporarily unavailable.";
     case "upstream_error":
       return "The text could not be shortened. Please try again.";
+    // The model's verdict, not a failure: what came in was not a text — search results,
+    // a menu, noise. The input stays in the field for the user to fix or replace.
+    case "nothing_to_shorten":
+      return "There is nothing to shorten here: this does not look like a text.";
   }
 }
 

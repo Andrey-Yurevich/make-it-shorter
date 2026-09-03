@@ -8,8 +8,8 @@ import (
 
 // One structured JSON record per request, written when the handler returns.
 //
-// No user text ever appears here: not the source and not the summary, nor fragments of
-// either. Bedrock errors are logged without echoing the request they came from.
+// No user text ever appears here: not the source and not the shorter text, nor
+// fragments of either. Bedrock errors are logged without echoing the request they came from.
 
 type requestLog struct {
 	Event string `json:"event"`
@@ -33,6 +33,11 @@ type requestLog struct {
 	CacheWriteTokens int     `json:"cacheWriteTokens"`
 	CacheReadShare   float64 `json:"cacheReadShare"`
 	EstimatedCostUsd float64 `json:"estimatedCostUsd"`
+
+	// The model judged the input not to be a text. Kept apart from ErrorCode, which also
+	// says nothing_to_shorten, because this is the one "error" that is the model's call
+	// and not the server's: a rising share here means the prompt, not the pipeline.
+	NothingToShorten bool `json:"nothingToShorten,omitempty"`
 
 	ErrorCode string `json:"errorCode,omitempty"`
 }

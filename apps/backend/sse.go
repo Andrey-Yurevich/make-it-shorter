@@ -26,6 +26,7 @@ const (
 	errUpstreamError       errorCode = "upstream_error"
 	errInvalidRequest      errorCode = "invalid_request"
 	errServiceDisabled     errorCode = "service_disabled"
+	errNothingToShorten    errorCode = "nothing_to_shorten"
 )
 
 type sseWriter struct {

@@ -105,11 +105,11 @@ func TestGetIsNotRouted(t *testing.T) {
 
 // The model call has to give the invocation back a moment before it dies, or a hung
 // call ends as a truncated stream instead of an error event.
-func TestSummaryLeavesRoomToFinishTheResponse(t *testing.T) {
+func TestModelCallLeavesRoomToFinishTheResponse(t *testing.T) {
 	ctx, cancelInvocation := context.WithTimeout(context.Background(), 50*time.Second)
 	defer cancelInvocation()
 
-	summaryCtx, cancel := summaryContext(ctx)
+	summaryCtx, cancel := modelCallContext(ctx)
 	defer cancel()
 
 	deadline, ok := summaryCtx.Deadline()
@@ -122,8 +122,8 @@ func TestSummaryLeavesRoomToFinishTheResponse(t *testing.T) {
 }
 
 // Locally there is no invocation deadline and nothing to divide.
-func TestSummaryIsUnboundedWithoutAnInvocationDeadline(t *testing.T) {
-	summaryCtx, cancel := summaryContext(context.Background())
+func TestModelCallIsUnboundedWithoutAnInvocationDeadline(t *testing.T) {
+	summaryCtx, cancel := modelCallContext(context.Background())
 	defer cancel()
 
 	if _, ok := summaryCtx.Deadline(); ok {
