@@ -32,6 +32,14 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
   );
 }
 
+// A grey bar that pulses where text is about to appear. Shape and size come from the
+// caller; this only knows how to look like a placeholder. The colour is darker than the
+// border grey on purpose: the bars sit on the muted surface, and the pulse halves their
+// opacity, so anything lighter disappears into the field.
+export function Skeleton({ className }: { className?: string }) {
+  return <div aria-hidden="true" className={cn("animate-pulse rounded-md bg-ink/15", className)} />;
+}
+
 type IconProps = { className?: string };
 
 export function CloseIcon({ className }: IconProps) {
