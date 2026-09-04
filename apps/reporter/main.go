@@ -197,8 +197,12 @@ func buildReport(ctx context.Context, logGroup, wafLogGroup, function, window st
 		built.TotalCostUsd = &total
 	}
 
-	waf, err := readWafActivity(ctx, wafLogGroup, start, end)
-	if err != nil {
+	// An empty name is how Terraform says the WebACL is not writing logs at all. Left as
+	// a null section with a reason rather than as a zero: a report that showed nothing
+	// blocked while nothing was counting would be a lie in the most reassuring direction.
+	if wafLogGroup == "" {
+		built.Problems = append(built.Problems, "waf activity: logging is switched off (waf_logs_enabled)")
+	} else if waf, err := readWafActivity(ctx, wafLogGroup, start, end); err != nil {
 		built.Problems = append(built.Problems, "waf activity: "+err.Error())
 	} else {
 		section := wafSection{Blocked: waf.blocked, TopRules: []ruleHit{}}

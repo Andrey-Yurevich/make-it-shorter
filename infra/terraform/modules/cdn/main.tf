@@ -2,9 +2,10 @@ variable "api_domain" { type = string }
 variable "zone_id" { type = string }
 variable "function_url" { type = string }
 variable "function_name" { type = string }
-variable "extension_id" { type = string }
 variable "waf_rate_limit" { type = number }
 variable "log_retention_days" { type = number }
+variable "waf_logs_enabled" { type = bool }
+variable "cloudfront_logs_enabled" { type = bool }
 
 locals {
   origin_host = replace(replace(var.function_url, "https://", ""), "/", "")
@@ -92,8 +93,20 @@ resource "aws_wafv2_web_acl" "api" {
     allow {}
   }
 
-  # Only the extension may call the API. This rule needs no path exceptions
+  # Only a Chrome extension may call the API. This rule needs no path exceptions
   # because every endpoint is POST, and browsers always set Origin on POST.
+  #
+  # Any extension, not one specific id. What this rule actually buys is the exclusion of
+  # web pages: the browser sets Origin itself from the page it runs on, and no script can
+  # forge it, so the API cannot be embedded in a site. Naming one id on top of that
+  # bought less than it looked like — an unpacked build derives its id from the absolute
+  # path of its folder, so every development machine is a different extension, while a
+  # scripted client sends whatever Origin it likes and the store id is public anyway.
+  #
+  # So the id check turned dev machines away and let determined callers through. It is
+  # gone, and the extension_id variable with it: a knob that no longer moves anything is
+  # worse than no knob. Pinning identity properly is EXTENSION_KEY in the manifest, which
+  # gives every build one stable id; when that lands, this can go back to a list of them.
   rule {
     name     = "origin-must-be-the-extension"
     priority = 1
@@ -106,8 +119,8 @@ resource "aws_wafv2_web_acl" "api" {
       not_statement {
         statement {
           byte_match_statement {
-            positional_constraint = "EXACTLY"
-            search_string         = "chrome-extension://${var.extension_id}"
+            positional_constraint = "STARTS_WITH"
+            search_string         = "chrome-extension://"
 
             field_to_match {
               single_header {
@@ -215,6 +228,8 @@ resource "aws_cloudwatch_log_group" "waf" {
 }
 
 resource "aws_wafv2_web_acl_logging_configuration" "api" {
+  count = var.waf_logs_enabled ? 1 : 0
+
   resource_arn = aws_wafv2_web_acl.api.arn
 
   # The log group ARN carries a trailing ":*" that WAF rejects.
@@ -345,5 +360,57 @@ resource "aws_route53_record" "api" {
 }
 
 output "distribution_arn" { value = aws_cloudfront_distribution.api.arn }
-output "waf_log_group_name" { value = aws_cloudwatch_log_group.waf.name }
+# Empty when logging is off, and that is the point: the reporter reads this to decide
+# between "nothing was blocked" and "nobody was counting". A name that stayed valid while
+# the delivery was switched off would turn the second into the first.
+output "waf_log_group_name" {
+  value = var.waf_logs_enabled ? aws_cloudwatch_log_group.waf.name : ""
+}
+
+output "cloudfront_log_group_name" {
+  value = var.cloudfront_logs_enabled ? aws_cloudwatch_log_group.cloudfront[0].name : ""
+}
 output "distribution_domain" { value = aws_cloudfront_distribution.api.domain_name }
+
+# --- CloudFront access logs ---
+#
+# Standard logging v2, delivered to CloudWatch Logs. Not the distribution's own
+# logging_config block: that one writes to S3 and needs a bucket with ACLs enabled, which
+# is off by default on every bucket made this decade and is the wrong thing to turn back
+# on for a log nobody reads from S3 anyway.
+#
+# WAF logs say what was stopped. These say what arrived — every request, allowed ones
+# included, which is the difference and also the cost: they are billed per gigabyte
+# ingested, and unlike the WAF group there is no filter narrowing them. Hence the toggle.
+resource "aws_cloudwatch_log_group" "cloudfront" {
+  count = var.cloudfront_logs_enabled ? 1 : 0
+
+  name              = "/aws/cloudfront/mis-api"
+  retention_in_days = var.log_retention_days
+}
+
+resource "aws_cloudwatch_log_delivery_source" "cloudfront" {
+  count = var.cloudfront_logs_enabled ? 1 : 0
+
+  name         = "mis-api-access-logs"
+  log_type     = "ACCESS_LOGS"
+  resource_arn = aws_cloudfront_distribution.api.arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "cloudfront" {
+  count = var.cloudfront_logs_enabled ? 1 : 0
+
+  name          = "mis-api-access-logs"
+  output_format = "json"
+
+  delivery_destination_configuration {
+    destination_resource_arn = aws_cloudwatch_log_group.cloudfront[0].arn
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "cloudfront" {
+  count = var.cloudfront_logs_enabled ? 1 : 0
+
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.cloudfront[0].name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.cloudfront[0].arn
+}

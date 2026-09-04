@@ -14,11 +14,6 @@ variable "lambda_version" {
   type = string
 }
 
-variable "extension_id" {
-  type        = string
-  description = "Chrome extension id. The WAF only lets chrome-extension://<id> through."
-}
-
 # --- limits and switches, all readable by the function as environment variables ---
 
 variable "service_enabled" {
@@ -91,6 +86,26 @@ variable "reserved_concurrency" {
   nullable    = true
   default     = null
   description = "Counted against Bedrock, not Lambda: one client request is one model call. Null while the account ceiling is 10 — AWS rejects any reservation that leaves fewer than 10 unreserved, so the account limit binds tighter than the reservation would."
+}
+
+# --- logging switches ---
+#
+# Both are per-gigabyte-ingested, and they answer different questions: the WAF group says
+# what was stopped and by which rule, the CloudFront group says what arrived at all. The
+# first is cheap — a logging filter drops allowed requests before they are written — and
+# is meant to stay on. The second has no such filter and logs every request, so it is the
+# one to turn off again once whatever it was opened for has been answered.
+
+variable "waf_logs_enabled" {
+  type        = bool
+  default     = true
+  description = "Blocked and counted requests, with the rule that decided and the headers that arrived. Off means the reporter says the WAF section is unavailable rather than reporting zero."
+}
+
+variable "cloudfront_logs_enabled" {
+  type        = bool
+  default     = true
+  description = "Every request the distribution serves, allowed ones included. Volume, and therefore money, scales with traffic rather than with incidents."
 }
 
 variable "waf_rate_limit" {

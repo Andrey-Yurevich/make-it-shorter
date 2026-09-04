@@ -84,10 +84,11 @@ module "cdn" {
   zone_id        = data.aws_route53_zone.root.zone_id
   function_url   = module.api.function_url
   function_name  = module.api.function_name
-  extension_id   = var.extension_id
   waf_rate_limit = var.waf_rate_limit
 
-  log_retention_days = var.log_retention_days
+  log_retention_days      = var.log_retention_days
+  waf_logs_enabled        = var.waf_logs_enabled
+  cloudfront_logs_enabled = var.cloudfront_logs_enabled
 }
 
 module "bot" {
