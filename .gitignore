@@ -33,3 +33,5 @@ override.tf.json
 *.auto.tfvars
 .env
 .env.local
+
+apps/reporter/reporter
