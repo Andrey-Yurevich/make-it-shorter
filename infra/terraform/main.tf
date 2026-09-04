@@ -86,6 +86,24 @@ module "cdn" {
   function_name  = module.api.function_name
   extension_id   = var.extension_id
   waf_rate_limit = var.waf_rate_limit
+
+  log_retention_days = var.log_retention_days
+}
+
+module "bot" {
+  source = "./modules/bot"
+
+  artifacts_bucket   = module.artifacts.bucket_name
+  bot_version        = var.bot_version
+  log_retention_days = var.log_retention_days
+
+  api_log_group     = module.api.log_group_name
+  waf_log_group     = module.cdn.waf_log_group_name
+  api_function_name = module.api.function_name
+  metric_namespace  = local.metric_namespace
+
+  allowed_chat_ids     = var.telegram_chat_ids
+  reserved_concurrency = var.bot_reserved_concurrency
 }
 
 module "landing" {

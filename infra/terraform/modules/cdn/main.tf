@@ -4,6 +4,7 @@ variable "function_url" { type = string }
 variable "function_name" { type = string }
 variable "extension_id" { type = string }
 variable "waf_rate_limit" { type = number }
+variable "log_retention_days" { type = number }
 
 locals {
   origin_host = replace(replace(var.function_url, "https://", ""), "/", "")
@@ -200,6 +201,60 @@ resource "aws_wafv2_web_acl" "api" {
   }
 }
 
+# --- WAF logs ---
+#
+# The WebACL counts what it blocks in metrics, but a count cannot say which rule fired
+# or how often, and that is the only question worth asking when the extension suddenly
+# stops working. These logs answer it.
+
+# The name is not a preference: WAF refuses any CloudWatch destination whose log group
+# is not named aws-waf-logs-*, and the error it gives says nothing about the prefix.
+resource "aws_cloudwatch_log_group" "waf" {
+  name              = "aws-waf-logs-mis-api"
+  retention_in_days = var.log_retention_days
+}
+
+resource "aws_wafv2_web_acl_logging_configuration" "api" {
+  resource_arn = aws_wafv2_web_acl.api.arn
+
+  # The log group ARN carries a trailing ":*" that WAF rejects.
+  log_destination_configs = [trimsuffix(aws_cloudwatch_log_group.waf.arn, ":*")]
+
+  # Allowed requests are dropped before they are written. Every question the report asks
+  # is about requests that were stopped or counted, and on a working service those are a
+  # rounding error next to the traffic that goes through — logging all of it would be
+  # paying per gigabyte to store the answer "nothing happened".
+  logging_filter {
+    default_behavior = "DROP"
+
+    filter {
+      behavior    = "KEEP"
+      requirement = "MEETS_ANY"
+
+      condition {
+        action_condition {
+          action = "BLOCK"
+        }
+      }
+
+      condition {
+        action_condition {
+          action = "COUNT"
+        }
+      }
+    }
+  }
+
+  # WAF writes the request headers, and X-Device-Id is one of them. The device id is not
+  # in the allow-list of things this service logs, and it has no business being in a log
+  # group that exists to count rule hits: redacted here, at the only place it could leak.
+  redacted_fields {
+    single_header {
+      name = "x-device-id"
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "api" {
   enabled         = true
   comment         = "mis-api"
@@ -290,4 +345,5 @@ resource "aws_route53_record" "api" {
 }
 
 output "distribution_arn" { value = aws_cloudfront_distribution.api.arn }
+output "waf_log_group_name" { value = aws_cloudwatch_log_group.waf.name }
 output "distribution_domain" { value = aws_cloudfront_distribution.api.domain_name }

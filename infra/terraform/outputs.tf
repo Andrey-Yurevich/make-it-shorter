@@ -22,3 +22,13 @@ output "artifacts_bucket" {
 output "landing_url" {
   value = "https://${var.domain}"
 }
+
+output "bot_webhook_url" {
+  description = "Hand this to Telegram's setWebhook, together with the secret_token from the mis-bot secret."
+  value       = module.bot.webhook_url
+}
+
+output "bot_secret_arn" {
+  description = "Where the bot token and webhook secret go. Terraform creates the secret and never sees its contents."
+  value       = module.bot.secret_arn
+}

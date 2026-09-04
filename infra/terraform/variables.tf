@@ -180,3 +180,23 @@ variable "min_invocations_for_alarm" {
   default     = 20
   description = "What counts as normal traffic for the zero-successes alarm. Without it the alarm is a night-time idle detector."
 }
+
+# --- telegram bot ---
+
+variable "bot_version" {
+  type        = string
+  description = "Key of the bot artifact in S3, under bot/ and without the .zip. Same label as lambda_version when both halves came from one build."
+}
+
+variable "telegram_chat_ids" {
+  type        = list(string)
+  default     = []
+  description = "Chats the bot will answer. Empty means it answers nobody and only replies with the chat id, which is how you find the first value to put here."
+}
+
+variable "bot_reserved_concurrency" {
+  type        = number
+  nullable    = true
+  default     = null
+  description = "Null for the same reason as reserved_concurrency above: the account ceiling is 10, and AWS rejects any reservation that leaves fewer than 10 unreserved. Set it to 2 once the ceiling is raised — the bot serves one person typing one command, and that is room for a retry rather than for a flood."
+}
