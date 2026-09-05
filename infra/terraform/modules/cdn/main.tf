@@ -235,10 +235,20 @@ resource "aws_wafv2_web_acl_logging_configuration" "api" {
   # The log group ARN carries a trailing ":*" that WAF rejects.
   log_destination_configs = [trimsuffix(aws_cloudwatch_log_group.waf.arn, ":*")]
 
-  # Allowed requests are dropped before they are written. Every question the report asks
-  # is about requests that were stopped or counted, and on a working service those are a
-  # rounding error next to the traffic that goes through — logging all of it would be
-  # paying per gigabyte to store the answer "nothing happened".
+  # Only blocked requests are written. Everything else is dropped before it reaches the
+  # log group, which is what keeps the volume tied to incidents rather than to traffic.
+  #
+  # COUNT used to be kept here too, on the theory that a counted rule is also a rule that
+  # fired and that both together would be a rounding error next to real traffic. That was
+  # wrong, and the logs said so: SizeRestrictions_BODY is deliberately overridden to count
+  # (see the rule above), the body of a real request is regularly past its 8 KB limit, and
+  # so nearly every genuine request tripped a COUNT and was kept. The filter was doing
+  # exactly what it said; the estimate of how often COUNT happens was the mistake.
+  #
+  # The counted hits are not lost with it — the managed group publishes them as CloudWatch
+  # metrics, which is where "is the size rule firing" is answered anyway. What is lost is
+  # the per-request detail behind them, and getting it back is adding the COUNT condition
+  # here for as long as the question is open.
   logging_filter {
     default_behavior = "DROP"
 
@@ -249,12 +259,6 @@ resource "aws_wafv2_web_acl_logging_configuration" "api" {
       condition {
         action_condition {
           action = "BLOCK"
-        }
-      }
-
-      condition {
-        action_condition {
-          action = "COUNT"
         }
       }
     }

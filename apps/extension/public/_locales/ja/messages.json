@@ -1,5 +1,5 @@
 {
-  "extName": { "message": "make it shorter" },
+  "extName": { "message": "Make It Shorter" },
   "extDescription": { "message": "AI要約：要約するか、ただ短くするか。長い記事もワンクリックで、どの言語でも。" },
   "actionTitle": { "message": "このページを要約" },
   "contextMenuSelection": { "message": "選択範囲を短く" },

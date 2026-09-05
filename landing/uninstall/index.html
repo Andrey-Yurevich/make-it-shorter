@@ -2,17 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>make it shorter — uninstalled</title>
+<meta name="robots" content="noindex">
+<!-- The redirect, for a browser that runs no JavaScript. The script below does the
+     same thing sooner; whichever fires first wins and the other has nothing left to do. -->
+<meta http-equiv="refresh" content="0; url=https://forms.gle/bCK2xfDcnAkGZEh56">
+<title>make it shorter</title>
 <style>
-  body{font:16px/1.6 system-ui,sans-serif;margin:0;display:grid;place-items:center;height:100vh;color:#1b1b1f}
-  main{max-width:38rem;padding:2rem;text-align:center}
+  body{font:16px/1.5 system-ui,sans-serif;margin:0;display:grid;place-items:center;height:100vh;color:#1b1b1f}
+  main{max-width:32rem;padding:2rem;text-align:center}
+  a{color:#1b1b1f}
 </style>
 </head>
 <body>
 <main>
-  <h1>make it shorter</h1>
-  <p><strong>ЗАГЛУШКА.</strong> Страница после удаления расширения. Реализуется отдельно, вне спецификации расширения.</p>
+  <p id="m">One moment…</p>
+  <p><a href="https://forms.gle/bCK2xfDcnAkGZEh56">Tell us why you left</a></p>
 </main>
+<script>
+// replace() and not assign(): the person got here by uninstalling, and Back should
+// take them wherever they were before that, not into this page again.
+location.replace('https://forms.gle/bCK2xfDcnAkGZEh56');
+</script>
 </body>
 </html>

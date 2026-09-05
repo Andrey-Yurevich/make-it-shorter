@@ -255,8 +255,14 @@ func readWafActivity(ctx context.Context, wafLogGroup string, start, end time.Ti
 	// that is their name; for a managed group it is the group, not the rule inside it —
 	// good enough to say "the common rule set is blocking things" and to send someone to
 	// the console, which is what this line is for.
+	// ALLOW is excluded explicitly rather than left to the logging filter to keep out.
+	// The two are set independently — the filter is a cost decision in Terraform, this is
+	// what the word "fired" means in the report — and when the filter was briefly keeping
+	// counted requests, "Default_Action (allow)" sat at the top of the list of rules that
+	// fired, which is not a rule and did not fire.
 	const query = `
-		stats count(*) as hits by terminatingRuleId, action
+		filter action != "ALLOW"
+		| stats count(*) as hits by terminatingRuleId, action
 		| sort hits desc`
 
 	results, err := runQuery(ctx, wafLogGroup, query, start, end)

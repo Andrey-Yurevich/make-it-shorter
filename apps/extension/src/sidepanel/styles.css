@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* The panel is a narrow column that never scrolls as a whole — only the form area
-   inside it does, so the button at the bottom stays put. */
+   inside it does, so the rating strip at the bottom stays put. */
 html,
 body,
 #root {

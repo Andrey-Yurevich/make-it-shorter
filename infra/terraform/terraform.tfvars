@@ -16,7 +16,7 @@ lambda_version = "0.2.1"
 default_max_summary_tokens = 1000
 
 # The bot artifact, built and uploaded by scripts/make-release.sh alongside the other two.
-bot_version = "0.2.3"
+bot_version = "0.2.4"
 
 # Chats the Telegram bot answers. Empty until the first one is known: message the bot and
 # it replies with the chat id to put here.

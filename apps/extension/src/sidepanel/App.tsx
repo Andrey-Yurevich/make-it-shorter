@@ -61,6 +61,9 @@ export function App() {
   // while the first one is still writing, and without this its text would be written
   // into the same field, interleaved with the text of the run that replaced it.
   const runId = useRef(0);
+  // Whether one is in flight, for the same reason: the port listener was made once, at
+  // mount, and the render it closed over is long gone.
+  const streamingRef = useRef(false);
 
   useEffect(() => {
     void (async () => {
@@ -113,6 +116,10 @@ export function App() {
     };
   }, []);
 
+  useEffect(() => {
+    streamingRef.current = run.streaming;
+  }, [run.streaming]);
+
   // What the worker needs for the "second click on the icon" rule.
   useEffect(() => {
     portRef.current?.postMessage({
@@ -128,6 +135,16 @@ export function App() {
   function handleJob(job: PanelJob): void {
     if (job.kind === "unreadable") {
       dispatch({ type: "unreadable-page", tabId: job.tabId ?? null });
+      return;
+    }
+    // Text selected in the page while the panel is open. It lands in the field and stops
+    // there: the user was reading, not asking, and Shorten is how they ask. A run that is
+    // already writing keeps its field — swapping the text under it would leave the answer
+    // on screen belonging to something else.
+    if (job.kind === "fill") {
+      if (!streamingRef.current) {
+        dispatch({ type: "loaded", text: job.text, source: "selection", truncated: job.truncated });
+      }
       return;
     }
     load(job.text, job.source, job.truncated, job.pageUrl);
@@ -218,7 +235,10 @@ export function App() {
     <div className="flex h-full flex-col bg-surface">
       <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
         <section className="flex min-h-32 flex-1 flex-col gap-1.5">
-          <FieldLabel htmlFor="input-text">Input text</FieldLabel>
+          <FieldRow>
+            <FieldLabel htmlFor="input-text">Input text</FieldLabel>
+            <CharCount value={inputLength} />
+          </FieldRow>
           {/* The field stays editable while the answer is being written: correcting the
               text and running it again is the ordinary next step, not an edge case. */}
           <textarea
@@ -256,15 +276,28 @@ export function App() {
           </div>
         )}
 
-        {/* Without this button the input field would be decoration: the button at the
-            bottom reads the tab and overwrites whatever was typed, so there would be no
-            way to send text the user wrote or pasted themselves. */}
-        <Button className="w-full" disabled={!canShorten} onClick={() => void start(run.input, run.source)}>
-          {run.streaming ? "Shortening…" : "Shorten"}
-        </Button>
+        {/* The two ways to spend a request, side by side. The left one sends what is in
+            the field — without it the field would be decoration. The right one ignores
+            the field and reads the active tab from scratch, so the two are never the
+            same button with a different name. */}
+        <div className="flex gap-2">
+          <Button
+            className="flex-1"
+            disabled={!canShorten}
+            onClick={() => void start(run.input, run.source)}
+          >
+            {run.streaming ? "Shortening…" : "Shorten"}
+          </Button>
+          <Button className="flex-1 text-center leading-tight" disabled={pageBlocked} onClick={() => void readPage()}>
+            Shorten entire page content
+          </Button>
+        </div>
 
         <section className="flex min-h-32 flex-1 flex-col gap-1.5">
-          <FieldLabel htmlFor="shortened-text">Shortened text</FieldLabel>
+          <FieldRow>
+            <FieldLabel htmlFor="shortened-text">Shortened text</FieldLabel>
+            <CharCount value={countCodePoints(run.result)} />
+          </FieldRow>
           <OutputBox text={run.result} streaming={run.streaming} />
         </section>
 
@@ -284,14 +317,19 @@ export function App() {
           }}
         />
       )}
-
-      <div className="border-t border-line px-3 py-2">
-        <Button className="w-full" disabled={pageBlocked} onClick={() => void readPage()}>
-          Shorten entire page content
-        </Button>
-      </div>
     </div>
   );
+}
+
+// A label with its character count on the same line, one at each end.
+function FieldRow({ children }: { children: ReactNode }) {
+  return <div className="flex items-baseline justify-between gap-2">{children}</div>;
+}
+
+// How long the text is, in the same code points the server counts. It sits by the label
+// rather than under the field so that both fields carry it in the same place.
+function CharCount({ value }: { value: number }) {
+  return <span className="text-xs tabular-nums text-ink-soft">{value.toLocaleString("en-US")}</span>;
 }
 
 function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: string }) {

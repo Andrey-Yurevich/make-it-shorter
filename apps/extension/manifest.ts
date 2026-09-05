@@ -63,7 +63,7 @@ export function buildManifest(): chrome.runtime.ManifestV3 {
   const manifest: chrome.runtime.ManifestV3 = {
     manifest_version: 3,
     name: "__MSG_extName__",
-    short_name: "make it shorter",
+    short_name: "Make It Shorter",
     description: "__MSG_extDescription__",
     default_locale: "en",
     version,

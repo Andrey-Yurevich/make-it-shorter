@@ -2,6 +2,7 @@ import { UNINSTALL_URL, WELCOME_URL } from "../shared/limits.ts";
 import {
   PANEL_PORT,
   readPanelState,
+  readSelectionChanged,
   readSelectionMessage,
   type PanelJob,
   type PanelState,
@@ -69,6 +70,18 @@ chrome.contextMenus.onClicked.addListener((_info, tab) => {
 chrome.runtime.onMessage.addListener((message: unknown, sender) => {
   if (readSelectionMessage(message) && sender.tab?.id !== undefined) {
     void run(sender.tab, "selection");
+    return false;
+  }
+
+  // A selection made while the panel is open goes into its input field. The panel is
+  // not opened for it and nothing is sent: without the port there is no panel, and the
+  // message is dropped where it stands.
+  const selection = readSelectionChanged(message);
+  if (selection && panelPort) {
+    panelPort.postMessage({
+      type: "job",
+      job: { kind: "fill", text: selection.text, truncated: selection.truncated },
+    });
   }
   return false;
 });

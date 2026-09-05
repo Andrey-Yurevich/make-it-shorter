@@ -108,6 +108,12 @@ variable "cloudfront_logs_enabled" {
   description = "Every request the distribution serves, allowed ones included. Volume, and therefore money, scales with traffic rather than with incidents."
 }
 
+variable "landing_logs_enabled" {
+  type        = bool
+  default     = true
+  description = "Access logs for the landing distribution. This is the only place an uninstall leaves a trace: Chrome opens /uninstall when the extension is removed, and by then the extension is gone and cannot report anything itself."
+}
+
 variable "waf_rate_limit" {
   type    = number
   default = 60

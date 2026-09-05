@@ -4,6 +4,7 @@ import {
   readExtractRequest,
   readPanelMessage,
   readPanelState,
+  readSelectionChanged,
   readSelectionMessage,
 } from "./messaging.ts";
 
@@ -98,4 +99,29 @@ test("a selection message always carries a string", () => {
     text: "",
   });
   assert.equal(readSelectionMessage({ type: "extract" }), null);
+});
+
+test("a fill job carries the selection and nothing else", () => {
+  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "fill", text: "hi", truncated: true } }), {
+    kind: "fill",
+    text: "hi",
+    truncated: true,
+  });
+  // The same rule as every other job: a fill with no text is not a fill, and the panel
+  // must not be handed `undefined` to count the length of.
+  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "fill" } }), {
+    kind: "unreadable",
+    tabId: undefined,
+  });
+});
+
+test("a selection change with nothing in it is dropped", () => {
+  assert.deepEqual(readSelectionChanged({ type: "selection-changed", text: "hi", truncated: false }), {
+    type: "selection-changed",
+    text: "hi",
+    truncated: false,
+  });
+  assert.equal(readSelectionChanged({ type: "selection-changed", text: "" }), null);
+  assert.equal(readSelectionChanged({ type: "selection-changed" }), null);
+  assert.equal(readSelectionChanged({ type: "selection-clicked", text: "hi" }), null);
 });

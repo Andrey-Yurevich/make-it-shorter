@@ -1,6 +1,8 @@
 variable "domain" { type = string }
 variable "zone_id" { type = string }
 variable "content_root" { type = string }
+variable "logs_enabled" { type = bool }
+variable "log_retention_days" { type = number }
 
 resource "aws_s3_bucket" "landing" {
   bucket = "mis-landing"
@@ -171,3 +173,63 @@ resource "aws_route53_record" "landing" {
 
 output "distribution_id" { value = aws_cloudfront_distribution.landing.id }
 output "bucket_name" { value = aws_s3_bucket.landing.id }
+
+# --- access logs ---
+#
+# What this is for: /uninstall is where Chrome sends someone who has just removed the
+# extension, and a request to it is the only trace that they did. How many, from where,
+# and when is a question these logs answer and nothing else does — the extension is gone
+# by then and cannot report anything itself, and the redirect target is a Google form
+# that counts submissions rather than arrivals.
+#
+# Standard logging v2 to CloudWatch Logs, the same shape the API distribution uses. The
+# field list is spelled out rather than left to the default because the default is the
+# classic 33-column set, and the field that carries the country is not in it.
+resource "aws_cloudwatch_log_group" "landing" {
+  count = var.logs_enabled ? 1 : 0
+
+  name              = "/aws/cloudfront/mis-landing"
+  retention_in_days = var.log_retention_days
+}
+
+resource "aws_cloudwatch_log_delivery_source" "landing" {
+  count = var.logs_enabled ? 1 : 0
+
+  name         = "mis-landing-access-logs"
+  log_type     = "ACCESS_LOGS"
+  resource_arn = aws_cloudfront_distribution.landing.arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "landing" {
+  count = var.logs_enabled ? 1 : 0
+
+  name          = "mis-landing-access-logs"
+  output_format = "json"
+
+  delivery_destination_configuration {
+    destination_resource_arn = aws_cloudwatch_log_group.landing[0].arn
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "landing" {
+  count = var.logs_enabled ? 1 : 0
+
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.landing[0].name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.landing[0].arn
+
+  # Deliberately short. Every extra column is bytes per request forever, and this log
+  # exists to answer three questions: how many, from where, when.
+  record_fields = [
+    "timestamp",
+    "c-country",
+    "cs-uri-stem",
+    "sc-status",
+    "cs(User-Agent)",
+    "cs(Referer)",
+    "x-edge-result-type",
+  ]
+}
+
+output "log_group_name" {
+  value = var.logs_enabled ? aws_cloudwatch_log_group.landing[0].name : ""
+}

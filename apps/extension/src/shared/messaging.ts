@@ -22,6 +22,15 @@ export type SelectionMessage = {
   text: string;
 };
 
+// content script → service worker, whenever a selection is made in a page. The worker
+// forwards it only while the panel is open and drops it otherwise, so the content script
+// does not have to know whether anybody is listening.
+export type SelectionChangedMessage = {
+  type: "selection-changed";
+  text: string;
+  truncated: boolean;
+};
+
 // What the panel is asked to work on. `kind: "unreadable"` is the page we could not
 // read — a restricted page, or a page that came back with no text at all. That is not an
 // error: the panel says so and waits for the next thing the user does.
@@ -31,8 +40,13 @@ export type SelectionMessage = {
 // which tab the message is about so it can drop it when the user moves to another one.
 // The url would not do — Chrome withholds it on exactly the pages that produce this
 // message, since `<all_urls>` does not match `chrome://`.
+//
+// `kind: "fill"` is a selection the user made in the page while the panel was open. It
+// only puts text in the field: nothing is sent, and no request is spent. Selecting text
+// is reading, not asking, and the panel has a button for asking.
 export type PanelJob =
   | { kind: "text"; text: string; source: Source; truncated: boolean; pageUrl?: string }
+  | { kind: "fill"; text: string; truncated: boolean }
   | { kind: "unreadable"; tabId?: number };
 
 // panel → service worker, over the long-lived port. The worker needs it for one rule:
@@ -76,6 +90,10 @@ export function readPanelMessage(message: unknown): PanelJob | null {
   }
 
   const job = envelope.job as Record<string, unknown> | null | undefined;
+
+  if (job?.kind === "fill" && typeof job.text === "string") {
+    return { kind: "fill", text: job.text, truncated: job.truncated === true };
+  }
 
   if (job?.kind === "text" && typeof job.text === "string") {
     const pageUrl = typeof job.pageUrl === "string" ? job.pageUrl : undefined;
@@ -129,4 +147,17 @@ export function readSelectionMessage(message: unknown): SelectionMessage | null 
     return null;
   }
   return { type: "selection-clicked", text: typeof selection.text === "string" ? selection.text : "" };
+}
+
+// content script → service worker. A message with no text is not a selection worth
+// forwarding, so it comes back null and the field keeps what it holds.
+export function readSelectionChanged(message: unknown): SelectionChangedMessage | null {
+  const selection = message as Record<string, unknown> | null | undefined;
+  if (selection?.type !== "selection-changed" || typeof selection.text !== "string") {
+    return null;
+  }
+  if (selection.text === "") {
+    return null;
+  }
+  return { type: "selection-changed", text: selection.text, truncated: selection.truncated === true };
 }

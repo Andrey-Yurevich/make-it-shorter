@@ -68,6 +68,19 @@ function onMouseUp(event: MouseEvent): void {
     return;
   }
 
+  // The panel, if it is open, gets the selection straight away. The worker drops the
+  // message when it is not, so nothing here depends on knowing that.
+  //
+  // The threshold is the icon's: below the minimum there is nothing to shorten anyway,
+  // and picking up every stray word would overwrite text the user had put in the field
+  // by hand.
+  const normalized = normalizeText(text);
+  void chrome.runtime
+    .sendMessage({ type: "selection-changed", text: normalized.text, truncated: normalized.truncated })
+    // The extension was reloaded and this script belongs to the build before it. There
+    // is nothing to do about that here, and the page must not see an error for it.
+    .catch(() => {});
+
   const rect = selection.getRangeAt(0).getBoundingClientRect();
   showIcon(rect);
 }

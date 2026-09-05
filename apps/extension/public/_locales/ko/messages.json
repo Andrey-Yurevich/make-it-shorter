@@ -1,5 +1,5 @@
 {
-  "extName": { "message": "make it shorter" },
+  "extName": { "message": "Make It Shorter" },
   "extDescription": { "message": "AI 요약: 요약하거나 그냥 짧게. 긴 글도 클릭 한 번으로, 어떤 언어로든." },
   "actionTitle": { "message": "이 페이지 요약" },
   "contextMenuSelection": { "message": "선택한 부분 줄이기" },

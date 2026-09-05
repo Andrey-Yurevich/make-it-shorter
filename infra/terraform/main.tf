@@ -113,6 +113,9 @@ module "landing" {
   domain       = var.domain
   zone_id      = data.aws_route53_zone.root.zone_id
   content_root = "${path.module}/../../landing"
+
+  logs_enabled       = var.landing_logs_enabled
+  log_retention_days = var.log_retention_days
 }
 
 module "budget" {

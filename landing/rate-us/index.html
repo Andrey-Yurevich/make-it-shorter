@@ -11,9 +11,18 @@
 <body>
 <p id="m">One moment…</p>
 <script>
-// ЗАГЛУШКА. Подставить реальные адреса перед выкатом.
+// STORE_URL is still a placeholder: the extension is not in the store yet, so there is
+// no id to put here. Four and five stars land on a broken address until it is filled.
 var STORE_URL = 'https://chromewebstore.google.com/detail/__EXTENSION_ID__';
-var FORM_URL  = 'https://docs.google.com/forms/__FORM_ID__/viewform';
+
+// The feedback form, for one, two and three stars.
+//
+// The star value is deliberately not passed along. A forms.gle link drops whatever query
+// string it is given — it answers 302 to the form's canonical address carrying only
+// usp=send_form — so an entry.<id>= parameter here would be a prefill that silently does
+// nothing. Sending the number needs the expanded /forms/d/e/<id>/viewform address and the
+// entry id of the field to fill; until both are known, the form asks and the person answers.
+var FORM_URL = 'https://forms.gle/tqd29EVHDFgrd86D6';
 
 var stars = parseInt(new URLSearchParams(location.search).get('stars'), 10);
 
@@ -22,7 +31,7 @@ if (!(stars >= 1 && stars <= 5)) {
 } else if (stars >= 4) {
   location.replace(STORE_URL);
 } else {
-  location.replace(FORM_URL + '?usp=pp_url&entry.__STARS_FIELD__=' + stars);
+  location.replace(FORM_URL);
 }
 </script>
 <noscript><p>Enable JavaScript, or <a href="/">go to the homepage</a>.</p></noscript>

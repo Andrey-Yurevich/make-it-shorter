@@ -1,5 +1,5 @@
 {
-  "extName": { "message": "make it shorter" },
+  "extName": { "message": "Make It Shorter" },
   "extDescription": { "message": "AI 摘要：既能总结，也能只是缩短。文章太长？一键搞定，支持各种语言。" },
   "actionTitle": { "message": "总结此页面" },
   "contextMenuSelection": { "message": "缩短所选内容" },

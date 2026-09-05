@@ -16,6 +16,8 @@ apps/extension/dist/
 # the apps/backend and specs/backend directories.
 /apps/backend/backend
 /apps/backend/bootstrap
+/apps/reporter/reporter
+/apps/reporter/bootstrap
 
 # Terraform. Provider plugins are ~800M and re-downloadable via `terraform init`.
 # State lives in S3 (see versions.tf); local state files only appear by accident.
@@ -33,5 +35,3 @@ override.tf.json
 *.auto.tfvars
 .env
 .env.local
-
-apps/reporter/reporter
