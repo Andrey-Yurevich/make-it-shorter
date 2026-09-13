@@ -231,7 +231,7 @@ func isOfferedWindow(window string) bool {
 }
 
 func usage() string {
-	return "make it shorter — reports\n\n/report 30m\n/report 1h\n/report 12h\n/report 24h\n/report month\n\n/report on its own is the last 24h."
+	return "Make It Shorter — reports\n\n/report 30m\n/report 1h\n/report 12h\n/report 24h\n/report month\n\n/report on its own is the last 24h."
 }
 
 func allowed(chatID int64) bool {

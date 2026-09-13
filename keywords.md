@@ -1,4 +1,4 @@
-# Application name: make it shorter
+# Application name: Make It Shorter
 
 
 ## Main Keywords

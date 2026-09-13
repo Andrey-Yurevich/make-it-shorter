@@ -28,7 +28,7 @@ import (
 // be something no real text starts with.
 const nothingToShortenSentinel = "[[NOTHING_TO_SHORTEN]]"
 
-const shortenPrompt = `You are the engine of "make it shorter", a browser extension. You receive a text and return the same text, shorter.
+const shortenPrompt = `You are the engine of "Make It Shorter", a browser extension. You receive a text and return the same text, shorter.
 
 Not a summary, not a description, not a comment. Never speak from outside the text: no "the text says", "the author argues", "this poem is about"; never name its genre, form or author. The reader should feel they are reading the original, only shorter.
 
