@@ -11,12 +11,12 @@ alarm_email = "andrei@yurevich.it"
 # Deploying is editing this line and running terraform apply; the script does neither. A
 # rollback is the same edit naming an older key, and works as long as that key is still
 # in the bucket.
-lambda_version = "0.2.1"
+lambda_version = "cfacfb9"
 
 default_max_summary_tokens = 1000
 
 # The bot artifact, built and uploaded by scripts/make-release.sh alongside the other two.
-bot_version = "0.2.4"
+bot_version = "cfacfb9"
 
 # Chats the Telegram bot answers. Empty until the first one is known: message the bot and
 # it replies with the chat id to put here.

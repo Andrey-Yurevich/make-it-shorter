@@ -101,7 +101,8 @@ export function buildManifest(): chrome.runtime.ManifestV3 {
     host_permissions: ["https://api.make-it-shorter.net/*", "<all_urls>"],
     commands: {
       // _execute_action fires action.onClicked, so the hotkey and the toolbar icon walk
-      // the same path in the service worker: both compress the whole page.
+      // the same path in the service worker: both shorten the selection, and with
+      // nothing selected both only open the panel.
       _execute_action: {
         suggested_key: { default: "Alt+Shift+S" },
       },

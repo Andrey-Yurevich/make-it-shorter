@@ -30,6 +30,7 @@ import { initialRunState, runReducer } from "./state.ts";
 // as read. The order is the order of TONES: the default first, then the rest as the
 // product lists them. Every wire value has a label here — the type makes sure of it.
 const TONE_LABELS: Record<Tone, string> = {
+  simplified: "🔤 Simplified",
   original: "📄 Original",
   diplomatic: "🤝 Diplomatic",
   formal: "🎩 Formal",
@@ -38,7 +39,6 @@ const TONE_LABELS: Record<Tone, string> = {
   friendly: "😊 Friendly",
   academic: "🎓 Academic",
   casual: "😎 Casual",
-  simplified: "🔤 Simplified",
   bold: "🔥 Bold",
   empathetic: "💛 Empathetic",
   direct: "🎯 Direct",
@@ -61,9 +61,11 @@ export function App() {
   // while the first one is still writing, and without this its text would be written
   // into the same field, interleaved with the text of the run that replaced it.
   const runId = useRef(0);
-  // Whether one is in flight, for the same reason: the port listener was made once, at
-  // mount, and the render it closed over is long gone.
-  const streamingRef = useRef(false);
+  // What is on screen right now, for the same reason: the port listener was made once,
+  // at mount, and the render it closed over is long gone. It is read for two decisions —
+  // whether a run is in flight, and whether an arriving job is the text the panel is
+  // already showing a summary of.
+  const runRef = useRef(initialRunState);
 
   useEffect(() => {
     void (async () => {
@@ -117,17 +119,8 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    streamingRef.current = run.streaming;
-  }, [run.streaming]);
-
-  // What the worker needs for the "second click on the icon" rule.
-  useEffect(() => {
-    portRef.current?.postMessage({
-      type: "state",
-      pageUrl: run.pageUrl,
-      hasSummary: run.result !== "",
-    });
-  }, [run.pageUrl, run.result]);
+    runRef.current = run;
+  }, [run]);
 
   // The selection and the whole page arrive the same way and end up in the same place:
   // the input field. After that the difference between them is gone — it is text in a
@@ -142,12 +135,24 @@ export function App() {
     // already writing keeps its field — swapping the text under it would leave the answer
     // on screen belonging to something else.
     if (job.kind === "fill") {
-      if (!streamingRef.current) {
+      if (!runRef.current.streaming) {
         dispatch({ type: "loaded", text: job.text, source: "selection", truncated: job.truncated });
       }
       return;
     }
-    load(job.text, job.source, job.truncated, job.pageUrl);
+
+    // The very text the panel already holds a summary of. The selection is still
+    // highlighted in the page long after the answer has been read, so a click on the
+    // toolbar icon to get back to the panel would otherwise buy a second copy of what is
+    // on screen — a request out of the daily quota and real money, at the price of a
+    // click that was not asking for anything. Shortening the same text again on purpose
+    // is the Shorten button, and that is the only place that spends on it.
+    const shown = runRef.current;
+    if (job.text === shown.input && shown.result !== "" && !shown.streaming) {
+      return;
+    }
+
+    load(job.text, job.source, job.truncated);
   }
 
   // Text that came from a page, one way or another. It goes into the field and starts
@@ -157,8 +162,8 @@ export function App() {
   // Below the minimum nothing is sent — the request would come back too_short — but the
   // text stays in the field, where the user can add to it. Throwing it away would leave
   // them with an empty panel and no idea what happened.
-  function load(text: string, source: Source, truncated: boolean, pageUrl?: string): void {
-    dispatch({ type: "loaded", text, source, truncated, pageUrl });
+  function load(text: string, source: Source, truncated: boolean): void {
+    dispatch({ type: "loaded", text, source, truncated });
     if (countCodePoints(text) >= MIN_INPUT) {
       void start(text, source);
     }
@@ -210,7 +215,7 @@ export function App() {
       dispatch({ type: "unreadable-page", tabId: tab.id });
       return;
     }
-    load(extracted.text, "page", extracted.truncated, tab.url);
+    load(extracted.text, "page", extracted.truncated);
   }
 
   async function changeSettings(patch: Partial<Settings>): Promise<void> {

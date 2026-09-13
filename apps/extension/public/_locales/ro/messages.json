@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "Rezumat cu IA: un rezumat sau pur și simplu mai scurt. Articol lung? Un clic, în orice limbă."
   },
-  "actionTitle": { "message": "Rezumă această pagină" },
+  "actionTitle": { "message": "Scurtează selecția" },
   "contextMenuSelection": { "message": "Scurtează selecția" },
   "floatingIconTitle": { "message": "Scurtează selecția" }
 }

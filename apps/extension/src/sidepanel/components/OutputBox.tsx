@@ -14,18 +14,17 @@ export function OutputBox({ text, streaming }: { text: string; streaming: boolea
   const waitingForFirstToken = streaming && text === "";
   const finished = !streaming && text !== "";
 
-  // Follow the text as it is written. Without this the newest sentence is below the
-  // fold on anything longer than the field, and the panel looks stuck after the first
-  // few lines.
-  useEffect(() => {
-    if (streaming && field.current) {
-      field.current.scrollTop = field.current.scrollHeight;
-    }
-  }, [text, streaming]);
-
-  // A new run means a new text, and "Copied" was about the old one.
+  // The text is not followed as it is written: chasing the newest line would yank the
+  // field out from under anybody reading the beginning, and the beginning is where a
+  // summary says the most. Scrolling is the reader's to do.
+  //
+  // A new run starts at the top, though — the old scroll position belongs to a text
+  // that is gone. And "Copied" was about that text too.
   useEffect(() => {
     if (streaming) {
+      if (field.current) {
+        field.current.scrollTop = 0;
+      }
       setCopied(false);
     }
   }, [streaming]);

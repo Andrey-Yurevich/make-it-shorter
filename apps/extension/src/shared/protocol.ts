@@ -31,7 +31,14 @@ export function isErrorCode(value: unknown): value is ErrorCode {
 // The voice the shorter text is written in. `original` keeps the register of the source; every
 // other value is a register to write in whatever the source sounds like. The server
 // validates against the same list, so a value that is not here is invalid_request.
+//
+// `simplified` leads the list because it is the default, and the list is drawn in this
+// order. It is the default because the shortest useful answer to "make this shorter" is
+// plain words and short sentences: whoever reached for this extension was having trouble
+// with the text in front of them, and a shorter version in the same dense register is
+// the one outcome that does not help them.
 export const TONES = [
+  "simplified",
   "original",
   "diplomatic",
   "formal",
@@ -40,7 +47,6 @@ export const TONES = [
   "friendly",
   "academic",
   "casual",
-  "simplified",
   "bold",
   "empathetic",
   "direct",

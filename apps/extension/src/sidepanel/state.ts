@@ -14,8 +14,6 @@ export type RunState = {
   // Where the text in the field came from. It travels with the request and it is what a
   // retry repeats.
   source: Source;
-  // The page the text was read from, for the worker's "second click on the icon" rule.
-  pageUrl: string | null;
   result: string;
   streaming: boolean;
   error: { code: ErrorCode; message?: string } | null;
@@ -36,7 +34,6 @@ export const initialRunState: RunState = {
   input: "",
   truncated: false,
   source: "manual",
-  pageUrl: null,
   result: "",
   streaming: false,
   error: null,
@@ -46,7 +43,7 @@ export const initialRunState: RunState = {
 export type RunAction =
   | { type: "edit"; text: string }
   | { type: "reading" }
-  | { type: "loaded"; text: string; source: Source; truncated: boolean; pageUrl?: string }
+  | { type: "loaded"; text: string; source: Source; truncated: boolean }
   | { type: "start" }
   | { type: "delta"; text: string }
   | { type: "done" }
@@ -65,9 +62,6 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         ...state,
         input: action.text,
         source: "manual",
-        // Whatever is on screen is no longer this page's, so a second click on the
-        // toolbar icon reads the page again instead of just focusing the panel.
-        pageUrl: null,
         error: null,
         unreadable: null,
       };
@@ -83,7 +77,6 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         input: action.text,
         truncated: action.truncated,
         source: action.source,
-        pageUrl: action.pageUrl ?? null,
         result: "",
         streaming: false,
         error: null,

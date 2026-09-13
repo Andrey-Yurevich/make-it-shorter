@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "สรุปด้วย AI: จะสรุปหรือแค่ทำให้สั้นลงก็ได้ บทความยาว? คลิกเดียว ทุกภาษา"
   },
-  "actionTitle": { "message": "สรุปหน้านี้" },
+  "actionTitle": { "message": "ย่อข้อความที่เลือก" },
   "contextMenuSelection": { "message": "ย่อข้อความที่เลือก" },
   "floatingIconTitle": { "message": "ย่อข้อความที่เลือก" }
 }

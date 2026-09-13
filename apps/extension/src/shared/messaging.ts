@@ -45,20 +45,14 @@ export type SelectionChangedMessage = {
 // only puts text in the field: nothing is sent, and no request is spent. Selecting text
 // is reading, not asking, and the panel has a button for asking.
 export type PanelJob =
-  | { kind: "text"; text: string; source: Source; truncated: boolean; pageUrl?: string }
+  | { kind: "text"; text: string; source: Source; truncated: boolean }
   | { kind: "fill"; text: string; truncated: boolean }
   | { kind: "unreadable"; tabId?: number };
 
-// panel → service worker, over the long-lived port. The worker needs it for one rule:
-// a second click on the toolbar icon while the panel already holds a summary of this
-// very page only focuses the panel and spends nothing.
-export type PanelState = {
-  type: "state";
-  pageUrl: string | null;
-  hasSummary: boolean;
-};
-
-// service worker → panel, over the same port
+// service worker → panel, over the port. Nothing travels the other way: the worker sends
+// jobs and knows nothing about what the panel holds. The one rule that needed to know —
+// a repeated click must not pay twice for the same text — is decided in the panel, where
+// that text already is.
 export type PanelMessage = { type: "job"; job: PanelJob };
 
 export const PANEL_PORT = "panel";
@@ -96,7 +90,6 @@ export function readPanelMessage(message: unknown): PanelJob | null {
   }
 
   if (job?.kind === "text" && typeof job.text === "string") {
-    const pageUrl = typeof job.pageUrl === "string" ? job.pageUrl : undefined;
     return {
       kind: "text",
       text: job.text,
@@ -104,28 +97,12 @@ export function readPanelMessage(message: unknown): PanelJob | null {
       // of the request, and getting it wrong costs nothing a user can see.
       source: isSource(job.source) ? job.source : "page",
       truncated: job.truncated === true,
-      pageUrl,
     };
   }
   // No tab id is a message that expires on the first tab switch instead of on the right
   // one. That is the safe direction: the button comes back sooner than it had to, rather
   // than staying dead on a tab the message was never about.
   return { kind: "unreadable", tabId: typeof job?.tabId === "number" ? job.tabId : undefined };
-}
-
-// panel → service worker. A state that cannot be read is dropped: the worker's copy
-// keeps its previous value, and the only thing that rides on it is whether a second
-// click on the icon re-reads the page. Worst case it re-reads one it need not have.
-export function readPanelState(message: unknown): PanelState | null {
-  const state = message as Record<string, unknown> | null | undefined;
-  if (state?.type !== "state") {
-    return null;
-  }
-  return {
-    type: "state",
-    pageUrl: typeof state.pageUrl === "string" ? state.pageUrl : null,
-    hasSummary: state.hasSummary === true,
-  };
 }
 
 // service worker → content script.

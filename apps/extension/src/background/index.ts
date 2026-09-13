@@ -1,11 +1,9 @@
 import { UNINSTALL_URL, WELCOME_URL } from "../shared/limits.ts";
 import {
   PANEL_PORT,
-  readPanelState,
   readSelectionChanged,
   readSelectionMessage,
   type PanelJob,
-  type PanelState,
 } from "../shared/messaging.ts";
 import { extractFromTab } from "../shared/tab.ts";
 
@@ -18,7 +16,6 @@ import { extractFromTab } from "../shared/tab.ts";
 // are lost when the worker restarts; the panel notices its port dying and reconnects,
 // and a lost state only ever costs one extra request.
 let panelPort: chrome.runtime.Port | null = null;
-let panelState: PanelState = { type: "state", pageUrl: null, hasSummary: false };
 let pendingJob: PanelJob | null = null;
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -49,16 +46,24 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() =>
   // Older Chrome without the API. The panel still opens from the click handler below.
 });
 
-// The toolbar icon, and the hotkey through _execute_action, compress the whole page.
-// Selection has two entry points of its own, both within reach; making the most visible
-// control depend on invisible state would make its behaviour unpredictable.
+// Every entry point into the worker shortens the selection, and none of them shortens
+// the whole page. The toolbar icon and the hotkey behind _execute_action included: with
+// something selected they shorten that, and with nothing selected they only open the
+// panel and spend nothing.
+//
+// A whole page is the most expensive thing this extension can be asked for — with the
+// follow-ups pre-generated, one request is not loose change — and it is now asked for in
+// exactly one place, in so many words: the panel's own "Shorten entire page content".
+// The icon used to do it on every click, which meant the most visible control in the
+// extension spent a request out of the daily quota whether or not anybody had asked for
+// a summary of that page.
 chrome.action.onClicked.addListener((tab) => {
-  void run(tab, "page");
+  void run(tab);
 });
 
 chrome.contextMenus.onClicked.addListener((_info, tab) => {
   if (tab) {
-    void run(tab, "selection");
+    void run(tab);
   }
 });
 
@@ -69,7 +74,7 @@ chrome.contextMenus.onClicked.addListener((_info, tab) => {
 // let the floating icon hand text to a panel that is already open.
 chrome.runtime.onMessage.addListener((message: unknown, sender) => {
   if (readSelectionMessage(message) && sender.tab?.id !== undefined) {
-    void run(sender.tab, "selection");
+    void run(sender.tab);
     return false;
   }
 
@@ -91,15 +96,8 @@ chrome.runtime.onConnect.addListener((port) => {
     return;
   }
   panelPort = port;
-  port.onMessage.addListener((message: unknown) => {
-    const state = readPanelState(message);
-    if (state) {
-      panelState = state;
-    }
-  });
   port.onDisconnect.addListener(() => {
     panelPort = null;
-    panelState = { type: "state", pageUrl: null, hasSummary: false };
   });
 
   // The panel opens before the text is ready, so a job that arrived first waits here.
@@ -109,30 +107,36 @@ chrome.runtime.onConnect.addListener((port) => {
   }
 });
 
-async function run(tab: chrome.tabs.Tab, mode: "page" | "selection"): Promise<void> {
+async function run(tab: chrome.tabs.Tab): Promise<void> {
   if (tab.id === undefined) {
     return;
   }
 
-  // A second click on the icon while the panel already holds a summary of this very
-  // page just focuses the panel. Without the rule, opening the panel to reread a summary
-  // would burn a request from the daily quota and real money for a text the reader
-  // already has. Compressing the page again on purpose is what the panel's own button
-  // is for.
-  const repeatOnSamePage =
-    mode === "page" && panelPort !== null && panelState.hasSummary && panelState.pageUrl === tab.url;
-
   await chrome.sidePanel.open({ tabId: tab.id });
-  if (repeatOnSamePage) {
+
+  const extracted = await extractFromTab(tab.id, "selection");
+
+  // Not a page we can reach at all: chrome://, the web store, the PDF viewer, a tab
+  // older than the extension. The panel says so, because a click that does nothing and
+  // explains nothing reads as a broken extension.
+  if (!extracted.ok) {
+    sendToPanel({ kind: "unreadable", tabId: tab.id });
     return;
   }
 
-  const extracted = await extractFromTab(tab.id, mode);
-  const job: PanelJob = extracted.ok
-    ? { kind: "text", text: extracted.text, source: mode, truncated: extracted.truncated, pageUrl: tab.url }
-    : { kind: "unreadable", tabId: tab.id };
+  // Nothing is selected, and opening the panel is all this click asked for. The field
+  // keeps whatever the user had put in it — sending an empty job here would wipe text
+  // they pasted by hand, which is the one thing a click on the toolbar must never do.
+  if (extracted.text === "") {
+    return;
+  }
 
-  sendToPanel(job);
+  sendToPanel({
+    kind: "text",
+    text: extracted.text,
+    source: "selection",
+    truncated: extracted.truncated,
+  });
 }
 
 function sendToPanel(job: PanelJob): void {

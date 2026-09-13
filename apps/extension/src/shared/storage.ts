@@ -45,7 +45,7 @@ export async function getSettings(): Promise<Settings> {
   const stored = await chrome.storage.local.get(["lang", "tone"]);
   const lang =
     typeof stored.lang === "string" ? stored.lang : normalizeLang(chrome.i18n.getUILanguage());
-  const tone: Tone = isTone(stored.tone) ? stored.tone : "original";
+  const tone: Tone = isTone(stored.tone) ? stored.tone : "simplified";
   return { lang, tone };
 }
 

@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "Streszczenie AI: streszczenie albo po prostu krócej. Długi artykuł? Jedno kliknięcie, w każdym języku."
   },
-  "actionTitle": { "message": "Streść tę stronę" },
+  "actionTitle": { "message": "Skróć zaznaczenie" },
   "contextMenuSelection": { "message": "Skróć zaznaczenie" },
   "floatingIconTitle": { "message": "Skróć zaznaczenie" }
 }

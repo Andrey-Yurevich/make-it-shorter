@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "Resumen con IA: obtén un resumen o simplemente acórtalo. ¿Artículo largo? Un clic, en cualquier idioma."
   },
-  "actionTitle": { "message": "Resumir esta página" },
+  "actionTitle": { "message": "Acortar lo seleccionado" },
   "contextMenuSelection": { "message": "Acortar lo seleccionado" },
   "floatingIconTitle": { "message": "Acortar lo seleccionado" }
 }

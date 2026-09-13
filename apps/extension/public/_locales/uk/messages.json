@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "ШІ-стиснення: короткий виклад або просто коротше. Довга стаття? Один клік, будь-якою мовою."
   },
-  "actionTitle": { "message": "Стиснути цю сторінку" },
+  "actionTitle": { "message": "Стиснути виділене" },
   "contextMenuSelection": { "message": "Стиснути виділене" },
   "floatingIconTitle": { "message": "Стиснути виділене" }
 }

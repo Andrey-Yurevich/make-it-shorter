@@ -3,7 +3,6 @@ import test from "node:test";
 import {
   readExtractRequest,
   readPanelMessage,
-  readPanelState,
   readSelectionChanged,
   readSelectionMessage,
 } from "./messaging.ts";
@@ -17,9 +16,9 @@ test("a well-formed job passes through", () => {
   assert.deepEqual(
     readPanelMessage({
       type: "job",
-      job: { kind: "text", text: "hello", source: "page", truncated: false, pageUrl: "https://x" },
+      job: { kind: "text", text: "hello", source: "selection", truncated: false },
     }),
-    { kind: "text", text: "hello", source: "page", truncated: false, pageUrl: "https://x" },
+    { kind: "text", text: "hello", source: "selection", truncated: false },
   );
 });
 
@@ -54,7 +53,7 @@ test("an unreadable job keeps its tab id", () => {
 
 test("an unknown source falls back rather than travelling on", () => {
   const job = readPanelMessage({ type: "job", job: { kind: "text", text: "hi", source: "elsewhere" } });
-  assert.deepEqual(job, { kind: "text", text: "hi", source: "page", truncated: false, pageUrl: undefined });
+  assert.deepEqual(job, { kind: "text", text: "hi", source: "page", truncated: false });
 });
 
 test("truncated is a boolean whatever arrived", () => {
@@ -66,20 +65,6 @@ test("anything that is not a job is ignored", () => {
   for (const message of [null, undefined, {}, { type: "state" }, "job", 7, []]) {
     assert.equal(readPanelMessage(message), null, JSON.stringify(message));
   }
-});
-
-test("panel state is read, and a broken one is dropped", () => {
-  assert.deepEqual(readPanelState({ type: "state", pageUrl: "https://x", hasSummary: true }), {
-    type: "state",
-    pageUrl: "https://x",
-    hasSummary: true,
-  });
-  assert.deepEqual(readPanelState({ type: "state", pageUrl: 5, hasSummary: "yes" }), {
-    type: "state",
-    pageUrl: null,
-    hasSummary: false,
-  });
-  assert.equal(readPanelState({ type: "job" }), null);
 });
 
 test("an extract request is accepted only for a mode that exists", () => {

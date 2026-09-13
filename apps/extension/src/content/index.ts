@@ -12,6 +12,9 @@ import { countCodePoints, normalizeText } from "../shared/text.ts";
 
 let iconHost: HTMLDivElement | null = null;
 
+// Kept in step with the width and height in the button's own CSS below.
+const ICON_SIZE = 28;
+
 document.addEventListener("mouseup", onMouseUp, true);
 document.addEventListener("scroll", hideIcon, true);
 document.addEventListener("keydown", (event) => {
@@ -35,7 +38,17 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
 });
 
 async function respondWithText(mode: "selection" | "page"): Promise<ExtractResult> {
-  const raw = mode === "selection" ? selectionText() : await extractPageText();
+  // An empty selection is an answer, not a failure: the page was reachable and nothing
+  // was selected in it. The two have to be told apart on the other end — the toolbar
+  // icon does nothing at all when nothing is selected, and says the page could not be
+  // read when it could not. Only a page we never reached comes back `ok: false`, and on
+  // those this listener is not running in the first place.
+  if (mode === "selection") {
+    const normalized = normalizeText(selectionText());
+    return { ok: true, text: normalized.text, truncated: normalized.truncated };
+  }
+
+  const raw = await extractPageText();
   if (!raw) {
     return { ok: false };
   }
@@ -81,13 +94,70 @@ function onMouseUp(event: MouseEvent): void {
     // is nothing to do about that here, and the page must not see an error for it.
     .catch(() => {});
 
-  const rect = selection.getRangeAt(0).getBoundingClientRect();
-  showIcon(rect);
+  const end = selectionEnd(selection);
+  if (end) {
+    showIcon(end.caret, end.backward);
+    return;
+  }
+  // No usable caret: fall back to the corner of the whole selection. Passing the block's
+  // own box as the caret puts the icon at its top right — where it used to be for every
+  // selection, and still a place the user can see it.
+  showIcon(selection.getRangeAt(0).getBoundingClientRect(), false);
+}
+
+type SelectionEnd = {
+  // A caret-shaped box at the point the selection was released: no width, the height of
+  // the line it ended on.
+  caret: DOMRect;
+  // The drag ran towards the beginning of the document, so the point it ended at is the
+  // left-hand end of the selection and the icon belongs to its left.
+  backward: boolean;
+};
+
+// Where the selection ended, which is not the same as where it is. `anchorNode` is the
+// end the drag started from and `focusNode` is the end it stopped at — so a selection
+// made bottom-up and right-to-left has its focus at the top left, and that is where the
+// icon goes. The corner of the bounding box cannot tell the two apart: it is the same
+// box either way, and half the time the icon appeared at the end of the selection the
+// user's hand had left several lines ago.
+function selectionEnd(selection: Selection): SelectionEnd | null {
+  const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
+  if (!anchorNode || !focusNode) {
+    return null;
+  }
+
+  const caretRange = document.createRange();
+  try {
+    caretRange.setStart(focusNode, focusOffset);
+  } catch {
+    // An offset that node cannot take. Nothing here to place an icon by.
+    return null;
+  }
+  caretRange.collapse(true);
+  const caret = caretRange.getBoundingClientRect();
+  // A collapsed range has no width by definition; no height means it has no position
+  // either — the focus sits on an element rather than inside text.
+  if (caret.height === 0) {
+    return null;
+  }
+
+  // A range will not end before it starts: handed the two ends in the order the user
+  // made them, it collapses onto the new end instead, and that collapse is the whole
+  // signal. There is no direction flag on Selection to ask for.
+  const direction = document.createRange();
+  try {
+    direction.setStart(anchorNode, anchorOffset);
+    direction.setEnd(focusNode, focusOffset);
+  } catch {
+    // Ends in two different trees. Rare enough that the forward placement will do.
+    return { caret, backward: false };
+  }
+  return { caret, backward: direction.collapsed };
 }
 
 // Shadow DOM with ordinary CSS. Tailwind never reaches a foreign page: this icon is the
 // only thing the extension injects, and everything else happens in the side panel.
-function showIcon(rect: DOMRect): void {
+function showIcon(caret: DOMRect, backward: boolean): void {
   if (!iconHost) {
     iconHost = document.createElement("div");
     iconHost.style.position = "fixed";
@@ -135,9 +205,14 @@ function showIcon(rect: DOMRect): void {
     document.documentElement.append(iconHost);
   }
 
-  // Placed to the right of the selection's end, nudged back inside the viewport.
-  const left = Math.min(Math.max(rect.right + 6, 4), window.innerWidth - 32);
-  const top = Math.min(Math.max(rect.top - 4, 4), window.innerHeight - 32);
+  // Just outside the point the selection was released, on the side the drag was heading:
+  // to its right going forwards, to its left going back. Either way the icon sits off the
+  // selected text rather than over it, and within reach of the cursor that let it go.
+  // Then nudged back inside the viewport, which is what keeps a selection ending at the
+  // very edge of the window from putting the icon out of sight.
+  const beside = backward ? caret.left - ICON_SIZE - 6 : caret.right + 6;
+  const left = Math.min(Math.max(beside, 4), window.innerWidth - 32);
+  const top = Math.min(Math.max(caret.top - 4, 4), window.innerHeight - 32);
   iconHost.style.left = `${left}px`;
   iconHost.style.top = `${top}px`;
   iconHost.style.display = "block";

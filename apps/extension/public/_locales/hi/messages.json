@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "AI सारांश: सारांश पाइए या बस छोटा कीजिए। लंबा लेख? एक क्लिक में, किसी भी भाषा में।"
   },
-  "actionTitle": { "message": "इस पेज का सारांश" },
+  "actionTitle": { "message": "चुना हुआ हिस्सा छोटा करें" },
   "contextMenuSelection": { "message": "चुना हुआ हिस्सा छोटा करें" },
   "floatingIconTitle": { "message": "चुना हुआ हिस्सा छोटा करें" }
 }

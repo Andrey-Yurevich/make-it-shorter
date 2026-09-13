@@ -1,7 +1,7 @@
 {
   "extName": { "message": "Make It Shorter" },
   "extDescription": { "message": "AI 摘要：可以總結，也可以只是變短。文章太長？一鍵完成，支援各種語言。" },
-  "actionTitle": { "message": "總結這個頁面" },
+  "actionTitle": { "message": "縮短所選內容" },
   "contextMenuSelection": { "message": "縮短所選內容" },
   "floatingIconTitle": { "message": "縮短所選內容" }
 }

@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "AI-samenvatting: een samenvatting of gewoon korter. Lang artikel? Eén klik, in elke taal."
   },
-  "actionTitle": { "message": "Deze pagina samenvatten" },
+  "actionTitle": { "message": "Selectie inkorten" },
   "contextMenuSelection": { "message": "Selectie inkorten" },
   "floatingIconTitle": { "message": "Selectie inkorten" }
 }

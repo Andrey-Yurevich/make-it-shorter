@@ -3,7 +3,7 @@
   "extDescription": {
     "message": "MI-összefoglaló: összefoglaló vagy egyszerűen rövidebb szöveg. Hosszú cikk? Egy kattintás, bármely nyelven."
   },
-  "actionTitle": { "message": "Oldal összefoglalása" },
+  "actionTitle": { "message": "Kijelölés rövidítése" },
   "contextMenuSelection": { "message": "Kijelölés rövidítése" },
   "floatingIconTitle": { "message": "Kijelölés rövidítése" }
 }
