@@ -13,7 +13,7 @@ apps/extension/dist/
 # directory, so a stray local build lands as apps/backend/backend. The release
 # path never produces it: make-release.sh writes build/bootstrap instead.
 # The paths are anchored on purpose — a bare `backend` pattern would also match
-# the apps/backend and specs/backend directories.
+# the apps/backend directory.
 /apps/backend/backend
 /apps/backend/bootstrap
 /apps/reporter/reporter
