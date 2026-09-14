@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "Σύνοψη με AI: μια περίληψη ή απλώς πιο σύντομα. Μεγάλο άρθρο; Με ένα κλικ, σε κάθε γλώσσα."
   },
-  "actionTitle": { "message": "Συντόμευση επιλογής" },
-  "contextMenuSelection": { "message": "Συντόμευση επιλογής" },
-  "floatingIconTitle": { "message": "Συντόμευση επιλογής" }
+  "actionTitle": { "message": "Άνοιγμα Make It Shorter" }
 }

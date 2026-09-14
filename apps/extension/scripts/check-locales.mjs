@@ -4,8 +4,7 @@
 // legible, rather than discovered in the store review queue.
 //
 // Only the strings Chrome itself shows live in these files: the extension name, the
-// description, the context menu item, the icon tooltip. The panel is English and its
-// text is in the code.
+// description, the icon tooltip. The panel is English and its text is in the code.
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 

@@ -98,9 +98,17 @@ func loadConfig() (*config, error) {
 	c.languages = map[string]bool{}
 	for _, code := range strings.Split(requiredString("LANGUAGES"), ",") {
 		code = strings.TrimSpace(code)
-		if code != "" {
-			c.languages[strings.ToLower(code)] = true
+		if code == "" {
+			continue
 		}
+		code = strings.ToLower(code)
+		// The prompt names the language by its English name, so a served code without
+		// one would reach the model as a bare code. Refused here rather than discovered
+		// on a live request.
+		if languageNames[code] == "" {
+			problems = append(problems, "LANGUAGES has "+code+", which has no name in languageNames")
+		}
+		c.languages[code] = true
 	}
 
 	// Go on provided.al2023 carries no timezone database; `_ "time/tzdata"` in

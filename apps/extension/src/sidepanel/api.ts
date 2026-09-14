@@ -1,7 +1,7 @@
-import { API_URL, REQUEST_TIMEOUT_MS } from "../shared/limits.ts";
-import type { ErrorCode, ServerEvent, SummarizeRequest } from "../shared/protocol.ts";
-import { SSEParser } from "../shared/sse.ts";
-import { getDeviceId } from "../shared/storage.ts";
+import { API_URL, REQUEST_TIMEOUT_MS } from "@/shared/limits.ts";
+import type { ErrorCode, ServerEvent, ShortenRequest } from "@/shared/protocol.ts";
+import { SSEParser } from "@/shared/sse.ts";
+import { getDeviceId } from "@/shared/storage.ts";
 
 // The request is made from here, from the side panel, and not from the service worker:
 // the panel is an ordinary document that lives exactly as long as it is open, and the
@@ -13,7 +13,7 @@ export type StreamHandlers = {
   onError: (code: ErrorCode, message?: string) => void;
 };
 
-export async function shorten(request: SummarizeRequest, handlers: StreamHandlers): Promise<void> {
+export async function shorten(request: ShortenRequest, handlers: StreamHandlers): Promise<void> {
   const body = JSON.stringify(request);
 
   // One absolute deadline, 60s from the start of the request to `done`. It is above the

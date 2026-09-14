@@ -27,25 +27,80 @@ type requestBody struct {
 	Source *string `json:"source"`
 }
 
-// The tones the client may ask for. "original" keeps the register of the source; every
-// other value is a register to write in. The list is the same as the extension's, and
-// the prompt describes each of them by this exact name.
+// The tones the client may ask for. The list is the same as the extension's, and the
+// prompt describes each of them by this exact name.
 var knownTones = map[string]bool{
-	"original":     true,
-	"diplomatic":   true,
-	"formal":       true,
-	"professional": true,
-	"confident":    true,
-	"friendly":     true,
-	"academic":     true,
-	"casual":       true,
 	"simplified":   true,
-	"bold":         true,
-	"empathetic":   true,
+	"professional": true,
+	"casual":       true,
 	"direct":       true,
-	"luxury":       true,
-	"persuasive":   true,
-	"engaging":     true,
+}
+
+// English names for every language the service can be asked to write in, keyed by the
+// normalized code. The prompt names the language by this name and not by its code: a
+// bare "be" reads as a verb, "Belarusian (be)" does not.
+//
+// The extension carries the same 57 entries as its picker. LANGUAGES in the environment
+// must be a subset of this table, and loadConfig refuses to start otherwise — a served
+// language without a name would reach the model as a bare code.
+var languageNames = map[string]string{
+	"af": "Afrikaans",
+	"sq": "Albanian",
+	"ar": "Arabic",
+	"hy": "Armenian",
+	"az": "Azerbaijani",
+	"bn": "Bangla",
+	"be": "Belarusian",
+	"bg": "Bulgarian",
+	"zh": "Chinese (Simplified)",
+	"hr": "Croatian",
+	"cs": "Czech",
+	"da": "Danish",
+	"nl": "Dutch",
+	"en": "English",
+	"et": "Estonian",
+	"tl": "Filipino",
+	"fi": "Finnish",
+	"fr": "French",
+	"ka": "Georgian",
+	"de": "German",
+	"el": "Greek",
+	"gu": "Gujarati",
+	"he": "Hebrew",
+	"hi": "Hindi",
+	"hu": "Hungarian",
+	"id": "Indonesian",
+	"it": "Italian",
+	"ja": "Japanese",
+	"kk": "Kazakh",
+	"ko": "Korean",
+	"lv": "Latvian",
+	"lt": "Lithuanian",
+	"mk": "Macedonian",
+	"ms": "Malay",
+	"ml": "Malayalam",
+	"mr": "Marathi",
+	"nb": "Norwegian",
+	"fa": "Persian",
+	"pl": "Polish",
+	"pt": "Portuguese",
+	"pa": "Punjabi",
+	"ro": "Romanian",
+	"ru": "Russian",
+	"sr": "Serbian",
+	"sk": "Slovak",
+	"sl": "Slovenian",
+	"es": "Spanish",
+	"sw": "Swahili",
+	"sv": "Swedish",
+	"ta": "Tamil",
+	"te": "Telugu",
+	"th": "Thai",
+	"tr": "Turkish",
+	"uk": "Ukrainian",
+	"ur": "Urdu",
+	"uz": "Uzbek",
+	"vi": "Vietnamese",
 }
 
 var uuidV4Pattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
@@ -112,41 +167,28 @@ func checkLength(text string) errorCode {
 	return ""
 }
 
-// normalizeLang folds a BCP-47 tag onto the shape the whitelist uses. Portuguese and
-// Chinese keep their variants because the texts genuinely differ; nothing else is
-// split, so Serbian in either script and every regional English land on their base
-// subtag. The three legacy aliases below are codes browsers still emit for languages
-// the whitelist spells the modern way.
+// normalizeLang folds a BCP-47 tag onto the base subtag the whitelist uses. No variant
+// is split: pt-BR and pt-PT are both Portuguese, zh-Hans and zh-Hant are both Chinese,
+// Serbian in either script is Serbian. Older builds of the extension still send pt-BR
+// and zh-Hans, and they keep working through this fold. The four aliases below are
+// codes browsers still emit for languages the whitelist spells the modern way.
 //
 // An unknown tag is returned as its base subtag and then fails the whitelist check —
 // the client-side fallback to English does not apply here, where an unserved language
 // must be reported rather than silently swapped.
 func normalizeLang(tag string) string {
-	parts := strings.Split(strings.TrimSpace(tag), "-")
-	base := strings.ToLower(parts[0])
-
-	subtags := map[string]bool{}
-	for _, part := range parts[1:] {
-		subtags[strings.ToLower(part)] = true
-	}
+	base, _, _ := strings.Cut(strings.TrimSpace(tag), "-")
+	base = strings.ToLower(base)
 
 	switch base {
-	case "zh":
-		if subtags["hant"] || subtags["tw"] || subtags["hk"] || subtags["mo"] {
-			return "zh-Hant"
-		}
-		return "zh-Hans"
-	case "pt":
-		if subtags["pt"] {
-			return "pt-PT"
-		}
-		return "pt-BR"
 	case "no":
 		return "nb" // the macrolanguage, written as Bokmål in practice
 	case "iw":
 		return "he" // the pre-1989 code for Hebrew, still emitted by some browsers
 	case "fil":
 		return "tl"
+	case "in":
+		return "id" // the pre-1989 code for Indonesian
 	}
 	return base
 }

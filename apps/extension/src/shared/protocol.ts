@@ -28,42 +28,31 @@ export function isErrorCode(value: unknown): value is ErrorCode {
   return typeof value === "string" && (ERROR_CODES as string[]).includes(value);
 }
 
-// The voice the shorter text is written in. `original` keeps the register of the source; every
-// other value is a register to write in whatever the source sounds like. The server
-// validates against the same list, so a value that is not here is invalid_request.
+// The voice the shorter text is written in. The server validates against the same four
+// ids, so a value that is not here is invalid_request. The order is the order of the
+// picker, and the labels are what it shows.
 //
-// `simplified` leads the list because it is the default, and the list is drawn in this
-// order. It is the default because the shortest useful answer to "make this shorter" is
-// plain words and short sentences: whoever reached for this extension was having trouble
-// with the text in front of them, and a shorter version in the same dense register is
-// the one outcome that does not help them.
+// `simplified` is the default because the shortest useful answer to "make this shorter"
+// is plain words and short sentences: whoever reached for this extension was having
+// trouble with the text in front of them.
 export const TONES = [
-  "simplified",
-  "original",
-  "diplomatic",
-  "formal",
-  "professional",
-  "confident",
-  "friendly",
-  "academic",
-  "casual",
-  "bold",
-  "empathetic",
-  "direct",
-  "luxury",
-  "persuasive",
-  "engaging",
+  { id: "simplified", label: "Simplified" },
+  { id: "professional", label: "Professional" },
+  { id: "casual", label: "Casual" },
+  { id: "direct", label: "Direct" },
 ] as const;
 
-export type Tone = (typeof TONES)[number];
+export type Tone = (typeof TONES)[number]["id"];
+
+export const DEFAULT_TONE: Tone = "simplified";
 
 export function isTone(value: unknown): value is Tone {
-  return typeof value === "string" && (TONES as readonly string[]).includes(value);
+  return typeof value === "string" && TONES.some((tone) => tone.id === value);
 }
 
 export type Source = "selection" | "page" | "manual";
 
-export type SummarizeRequest = {
+export type ShortenRequest = {
   text: string;
   lang: string;
   tone: Tone;

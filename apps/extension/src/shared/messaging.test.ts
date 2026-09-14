@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   readExtractRequest,
+  readExtractResult,
   readPanelMessage,
   readSelectionChanged,
-  readSelectionMessage,
 } from "./messaging.ts";
 
 // The shapes below are what actually arrived over the port on the day the panel went
@@ -12,7 +12,7 @@ import {
 // `countCodePoints` spreads that text and `[...undefined]` throws inside render — which
 // unmounts the whole panel, not just the message that caused it.
 
-test("a well-formed job passes through", () => {
+test("a well-formed text job passes through", () => {
   assert.deepEqual(
     readPanelMessage({
       type: "job",
@@ -24,8 +24,9 @@ test("a well-formed job passes through", () => {
 
 test("a text job with no text is an unreadable page, not a crash", () => {
   // The exact shape that blanked the panel.
-  const job = readPanelMessage({ type: "job", job: { kind: "text", source: "page" } });
-  assert.deepEqual(job, { kind: "unreadable", tabId: undefined });
+  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "text", source: "page" } }), {
+    kind: "unreadable",
+  });
 });
 
 test("a text job whose text is not a string is unreadable too", () => {
@@ -35,55 +36,24 @@ test("a text job whose text is not a string is unreadable too", () => {
   }
 });
 
-test("an unreadable job keeps its tab id", () => {
-  // The panel disables its read-the-page button while the message is up, and the tab id
-  // is what tells it when to stop: lose it here and the button expires on the wrong
-  // tab switch.
-  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "unreadable", tabId: 7 } }), {
-    kind: "unreadable",
-    tabId: 7,
-  });
-  for (const tabId of [null, "7", {}, undefined]) {
-    assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "unreadable", tabId } }), {
-      kind: "unreadable",
-      tabId: undefined,
-    });
+test("a job that is not an object is unreadable", () => {
+  for (const job of [null, undefined, "text", 7]) {
+    assert.deepEqual(readPanelMessage({ type: "job", job }), { kind: "unreadable" }, JSON.stringify(job));
   }
 });
 
-test("an unknown source falls back rather than travelling on", () => {
-  const job = readPanelMessage({ type: "job", job: { kind: "text", text: "hi", source: "elsewhere" } });
-  assert.deepEqual(job, { kind: "text", text: "hi", source: "page", truncated: false });
+test("an unknown source falls back to page rather than travelling on", () => {
+  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "text", text: "hi", source: "manual" } }), {
+    kind: "text",
+    text: "hi",
+    source: "page",
+    truncated: false,
+  });
 });
 
 test("truncated is a boolean whatever arrived", () => {
   const job = readPanelMessage({ type: "job", job: { kind: "text", text: "hi", truncated: "yes" } });
   assert.equal(job?.kind === "text" && job.truncated, false);
-});
-
-test("anything that is not a job is ignored", () => {
-  for (const message of [null, undefined, {}, { type: "state" }, "job", 7, []]) {
-    assert.equal(readPanelMessage(message), null, JSON.stringify(message));
-  }
-});
-
-test("an extract request is accepted only for a mode that exists", () => {
-  assert.deepEqual(readExtractRequest({ type: "extract", mode: "page" }), { type: "extract", mode: "page" });
-  assert.equal(readExtractRequest({ type: "extract", mode: "everything" }), null);
-  assert.equal(readExtractRequest({ type: "extract" }), null);
-  assert.equal(readExtractRequest(undefined), null);
-});
-
-test("a selection message always carries a string", () => {
-  assert.deepEqual(readSelectionMessage({ type: "selection-clicked", text: "hi" }), {
-    type: "selection-clicked",
-    text: "hi",
-  });
-  assert.deepEqual(readSelectionMessage({ type: "selection-clicked" }), {
-    type: "selection-clicked",
-    text: "",
-  });
-  assert.equal(readSelectionMessage({ type: "extract" }), null);
 });
 
 test("a fill job carries the selection and nothing else", () => {
@@ -92,12 +62,45 @@ test("a fill job carries the selection and nothing else", () => {
     text: "hi",
     truncated: true,
   });
-  // The same rule as every other job: a fill with no text is not a fill, and the panel
-  // must not be handed `undefined` to count the length of.
-  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "fill" } }), {
-    kind: "unreadable",
-    tabId: undefined,
+  // The same rule as every other job: a fill with no text is not a fill.
+  assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "fill" } }), { kind: "unreadable" });
+});
+
+test("anything that is not a job is ignored", () => {
+  for (const message of [null, undefined, {}, { type: "state" }, "job", 7, []]) {
+    assert.equal(readPanelMessage(message), null, JSON.stringify(message));
+  }
+});
+
+test("an extract request is only its type", () => {
+  assert.deepEqual(readExtractRequest({ type: "extract" }), { type: "extract" });
+  assert.deepEqual(readExtractRequest({ type: "extract", mode: "page" }), { type: "extract" });
+  assert.equal(readExtractRequest({ type: "selection-changed" }), null);
+  assert.equal(readExtractRequest(undefined), null);
+});
+
+test("an extract reply is read back into shape", () => {
+  assert.deepEqual(readExtractResult({ ok: true, text: "hi", source: "selection", truncated: false }), {
+    ok: true,
+    text: "hi",
+    source: "selection",
+    truncated: false,
   });
+  assert.deepEqual(readExtractResult({ ok: true, text: "hi" }), {
+    ok: true,
+    text: "hi",
+    source: "page",
+    truncated: false,
+  });
+});
+
+// sendMessage resolves to undefined when nothing in the tab answered, and an old content
+// script left over from a previous build answers in the shape it had then. Both are a
+// page that could not be read, not a crash.
+test("anything but a well-formed success is a page that could not be read", () => {
+  for (const reply of [undefined, null, {}, { ok: false }, { ok: true }, { ok: true, text: 7 }, "ok"]) {
+    assert.deepEqual(readExtractResult(reply), { ok: false }, JSON.stringify(reply));
+  }
 });
 
 test("a selection change with nothing in it is dropped", () => {
@@ -108,5 +111,6 @@ test("a selection change with nothing in it is dropped", () => {
   });
   assert.equal(readSelectionChanged({ type: "selection-changed", text: "" }), null);
   assert.equal(readSelectionChanged({ type: "selection-changed" }), null);
-  assert.equal(readSelectionChanged({ type: "selection-clicked", text: "hi" }), null);
+  assert.equal(readSelectionChanged({ type: "extract" }), null);
+  assert.equal(readSelectionChanged(null), null);
 });

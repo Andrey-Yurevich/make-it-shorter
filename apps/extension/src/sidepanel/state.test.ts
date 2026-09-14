@@ -1,65 +1,82 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { initialRunState, runReducer, type RunAction, type RunState } from "./state.ts";
+import { initialPanelState, panelReducer, type PanelAction, type PanelState } from "./state.ts";
 
-// One rule is worth a test of its own: the message about a page that could not be read
-// disables the button that reads the page, so the message has to expire, and it has to
-// expire on the right event. Too late and the button is dead on a tab the message was
-// never about; too early and the two contradict each other again.
-
-function after(actions: RunAction[], from: RunState = initialRunState): RunState {
-  return actions.reduce(runReducer, from);
+function after(actions: PanelAction[], from: PanelState = initialPanelState): PanelState {
+  return actions.reduce(panelReducer, from);
 }
 
-const unreadableTab7 = after([{ type: "unreadable-page", tabId: 7 }]);
+const pageJob: PanelAction = {
+  type: "job",
+  job: { kind: "text", text: "the whole page", source: "page", truncated: true },
+};
+const fillJob: PanelAction = { type: "job", job: { kind: "fill", text: "a selection", truncated: false } };
 
-test("a page that could not be read is remembered against its tab", () => {
-  assert.deepEqual(unreadableTab7.unreadable, { tabId: 7 });
+test("a text job fills the field with its source and truncation", () => {
+  const state = after([pageJob]);
+  assert.equal(state.input, "the whole page");
+  assert.equal(state.source, "page");
+  assert.equal(state.truncated, true);
 });
 
-test("the message survives while the same tab is in front of the user", () => {
-  const state = after([{ type: "tab-activated", tabId: 7 }], unreadableTab7);
-  assert.deepEqual(state.unreadable, { tabId: 7 });
-  // Nothing changed, so the panel does not re-render either.
-  assert.equal(state, unreadableTab7);
+test("a fill job is a selection", () => {
+  const state = after([fillJob]);
+  assert.equal(state.input, "a selection");
+  assert.equal(state.source, "selection");
 });
 
-test("the message goes when the user moves to another tab", () => {
-  assert.equal(after([{ type: "tab-activated", tabId: 8 }], unreadableTab7).unreadable, null);
+// The rule the spec calls out: text arriving under a running request is dropped, or the
+// result on screen would belong to a text the field no longer shows.
+test("text and fill jobs are ignored while streaming", () => {
+  const streaming = after([{ type: "edit", text: "typed by hand, long enough" }, { type: "start" }]);
+  assert.equal(after([pageJob], streaming), streaming);
+  assert.equal(after([fillJob], streaming), streaming);
 });
 
-test("the message goes when that tab loads something else", () => {
-  assert.equal(after([{ type: "tab-navigated", tabId: 7 }], unreadableTab7).unreadable, null);
+test("the unreadable job leaves the field alone and raises the hint", () => {
+  const state = after([{ type: "edit", text: "pasted by hand" }, { type: "job", job: { kind: "unreadable" } }]);
+  assert.equal(state.input, "pasted by hand");
+  assert.equal(state.unreadable, true);
 });
 
-test("another tab loading in the background says nothing about this one", () => {
-  const state = after([{ type: "tab-navigated", tabId: 8 }], unreadableTab7);
-  assert.deepEqual(state.unreadable, { tabId: 7 });
-  assert.equal(state, unreadableTab7);
+test("typing clears the hint, the error and the truncation, and makes the source manual", () => {
+  const before = after([pageJob, { type: "job", job: { kind: "unreadable" } }, { type: "error", code: "too_long" }]);
+  const state = after([{ type: "edit", text: "corrected" }], before);
+  assert.equal(state.unreadable, false);
+  assert.equal(state.error, null);
+  assert.equal(state.truncated, false);
+  assert.equal(state.source, "manual");
 });
 
-test("without a tab id the message expires on the first switch anywhere", () => {
-  const unknownTab = after([{ type: "unreadable-page", tabId: null }]);
-  assert.equal(after([{ type: "tab-activated", tabId: 1 }], unknownTab).unreadable, null);
+test("a run accumulates deltas and finishes on done", () => {
+  const state = after([{ type: "start" }, { type: "delta", text: "Shorter " }, { type: "delta", text: "text." }, { type: "done" }]);
+  assert.equal(state.result, "Shorter text.");
+  assert.equal(state.streaming, false);
+  assert.equal(state.error, null);
 });
 
-test("typing in the field clears the message, whatever the tabs are doing", () => {
-  assert.equal(after([{ type: "edit", text: "pasted by hand" }], unreadableTab7).unreadable, null);
+test("a new run clears the previous result and counts itself", () => {
+  const first = after([{ type: "start" }, { type: "delta", text: "old" }, { type: "done" }]);
+  const second = after([{ type: "start" }], first);
+  assert.equal(second.result, "");
+  assert.equal(second.streaming, true);
+  assert.equal(second.run, first.run + 1);
 });
 
-test("tab events on a panel with no message change nothing at all", () => {
-  for (const action of [
-    { type: "tab-activated", tabId: 1 },
-    { type: "tab-navigated", tabId: 1 },
-  ] as RunAction[]) {
-    assert.equal(runReducer(initialRunState, action), initialRunState, action.type);
-  }
+test("an error stops the run and keeps the text received so far", () => {
+  const state = after([{ type: "start" }, { type: "delta", text: "half a " }, { type: "error", code: "upstream_error" }]);
+  assert.equal(state.streaming, false);
+  assert.equal(state.result, "half a ");
+  assert.deepEqual(state.error, { code: "upstream_error", message: undefined });
 });
 
-test("a page that could not be read keeps the text already in the field", () => {
-  const state = after([
-    { type: "edit", text: "text the user pasted" },
-    { type: "unreadable-page", tabId: 7 },
-  ]);
-  assert.equal(state.input, "text the user pasted");
+test("service_disabled carries the server's message as is", () => {
+  const state = after([{ type: "start" }, { type: "error", code: "service_disabled", message: "Back on Monday." }]);
+  assert.deepEqual(state.error, { code: "service_disabled", message: "Back on Monday." });
+});
+
+test("a job after a finished run replaces the field but not the result", () => {
+  const state = after([{ type: "start" }, { type: "delta", text: "result" }, { type: "done" }, fillJob]);
+  assert.equal(state.input, "a selection");
+  assert.equal(state.result, "result");
 });

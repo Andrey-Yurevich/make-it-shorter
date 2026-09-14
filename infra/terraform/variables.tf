@@ -38,20 +38,21 @@ variable "max_input" {
 }
 
 # The output languages the service serves, and the server side of the pair: the
-# extension's SUMMARY_LANGS is a copy of this list and must never be wider than it, or
-# it offers a language answered with unsupported_language.
+# extension's picker carries the same 57 codes with English labels, and the two lists
+# are equal — the client list may never be wider, or it offers a language answered with
+# unsupported_language. Every code here must have a name in the function's languageNames
+# table, or the function refuses to start.
 #
-# The line the list is drawn on is where the model stops being reliable rather than
-# where speakers run out: a summary in a language it half-knows is worse than none.
-# Variants are split only where the texts genuinely differ — Portuguese and Chinese.
-# Serbian is not split by script, and neither is any regional English or Spanish.
+# No variant is split: pt-BR and pt-PT are both "pt", zh-Hans and zh-Hant are both "zh"
+# (written as Simplified Chinese), Serbian is one entry whatever the script. The
+# function folds the old split codes onto these, so older builds keep working.
 variable "languages" {
   type = list(string)
   default = [
     # western Europe
-    "en", "es", "pt-BR", "pt-PT", "fr", "de", "it", "nl", "ca", "gl",
+    "en", "es", "pt", "fr", "de", "it", "nl",
     # the Nordics
-    "sv", "da", "nb", "fi", "is",
+    "sv", "da", "nb", "fi",
     # central, eastern and southeastern Europe
     "pl", "cs", "sk", "sl", "hr", "sr", "bg", "ro", "hu", "el", "sq", "mk",
     # eastern Europe and the Baltics
@@ -61,11 +62,11 @@ variable "languages" {
     # the Middle East
     "tr", "he", "ar", "fa", "ur",
     # south Asia
-    "hi", "bn", "pa", "gu", "mr", "ta", "te", "kn", "ml",
+    "hi", "bn", "pa", "gu", "mr", "ta", "te", "ml",
     # southeast Asia
     "th", "vi", "id", "ms", "tl",
     # east Asia
-    "zh-Hans", "zh-Hant", "ja", "ko",
+    "zh", "ja", "ko",
     # Africa
     "sw", "af",
   ]

@@ -26,7 +26,7 @@ func TestPipelineRejectsBeforeCallingAnything(t *testing.T) {
 			name:    "the kill switch answers first, with its message",
 			enabled: false,
 			message: "Back on Monday.",
-			body:    `{"text":"long enough to pass the length check","lang":"ru","tone":"original","source":"page"}`,
+			body:    `{"text":"long enough to pass the length check","lang":"ru","tone":"simplified","source":"page"}`,
 			want:    `{"code":"service_disabled","message":"Back on Monday."}`,
 		},
 		{
@@ -38,13 +38,13 @@ func TestPipelineRejectsBeforeCallingAnything(t *testing.T) {
 		{
 			name:    "a language the server does not serve gets its own code",
 			enabled: true,
-			body:    `{"text":"long enough to pass the length check","lang":"is","tone":"original","source":"page"}`,
+			body:    `{"text":"long enough to pass the length check","lang":"is","tone":"simplified","source":"page"}`,
 			want:    `{"code":"unsupported_language"}`,
 		},
 		{
 			name:    "short text never reaches the model",
 			enabled: true,
-			body:    `{"text":"tiny","lang":"ru","tone":"original","source":"page"}`,
+			body:    `{"text":"tiny","lang":"ru","tone":"simplified","source":"page"}`,
 			want:    `{"code":"too_short"}`,
 		},
 	}

@@ -5,14 +5,13 @@ import tailwind from "@tailwindcss/vite";
 import { defineConfig, type Plugin } from "vite";
 import { buildManifest } from "./manifest.ts";
 
-// MV3 needs three builds, and this is the first: the side panel (an ordinary HTML
-// document) and the service worker (a module), which may share chunks freely. The other
-// two are single self-contained files and are built separately — the extractor in
-// vite.extract.config.ts, the content script in vite.content.config.ts.
+// MV3 needs two builds. This is the first: the side panel and the output window (two
+// ordinary HTML documents) and the service worker (a module), which may share chunks
+// freely. The content script is one self-contained classic script and is built
+// separately by vite.content.config.ts.
 //
-// CRXJS would cover all of it, but the spec ties us to Vite and not to CRXJS, and a
-// forty-line plugin is cheaper to own than a plugin whose maintenance has stalled
-// before.
+// CRXJS would cover all of it, but a forty-line plugin is cheaper to own than a plugin
+// whose maintenance has stalled before.
 
 function emitManifest(): Plugin {
   return {
@@ -33,6 +32,9 @@ function emitManifest(): Plugin {
 
 export default defineConfig({
   plugins: [react(), tailwind(), emitManifest()],
+  resolve: {
+    alias: { "@": resolve(import.meta.dirname, "src") },
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,
@@ -41,6 +43,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         sidepanel: resolve(import.meta.dirname, "sidepanel.html"),
+        output: resolve(import.meta.dirname, "output.html"),
         background: resolve(import.meta.dirname, "src/background/index.ts"),
       },
       output: {

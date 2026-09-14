@@ -1,58 +1,38 @@
-import type { Source } from "./protocol.ts";
-
 // Messages between the three surfaces. The content script only ever extracts text; the
-// service worker only ever decides what to extract and opens the panel; the panel does
-// the network. Nothing here carries a summary.
-
-export type ExtractMode = "selection" | "page";
+// service worker only ever opens the panel and gets the text out of the tab; the panel
+// does the network. Nothing here carries a result.
 
 // service worker → content script
-export type ExtractRequest = {
-  type: "extract";
-  mode: ExtractMode;
-};
+export type ExtractRequest = { type: "extract" };
 
+// content script → service worker, the reply to `extract`. `ok: false` is a page with
+// nothing to read: no selection and no article-shaped body of text.
 export type ExtractResult =
-  | { ok: true; text: string; truncated: boolean }
+  | { ok: true; text: string; source: "selection" | "page"; truncated: boolean }
   | { ok: false };
 
-// content script → service worker, when the floating icon is clicked
-export type SelectionMessage = {
-  type: "selection-clicked";
-  text: string;
-};
-
-// content script → service worker, whenever a selection is made in a page. The worker
-// forwards it only while the panel is open and drops it otherwise, so the content script
-// does not have to know whether anybody is listening.
+// content script → service worker, whenever a selection worth shortening is made in the
+// page. The worker forwards it only while the panel is open and drops it otherwise, so
+// the content script does not have to know whether anybody is listening.
 export type SelectionChangedMessage = {
   type: "selection-changed";
   text: string;
   truncated: boolean;
 };
 
-// What the panel is asked to work on. `kind: "unreadable"` is the page we could not
-// read — a restricted page, or a page that came back with no text at all. That is not an
-// error: the panel says so and waits for the next thing the user does.
+// What the panel is asked to work on.
 //
-// It carries the tab rather than the url, and the tab is the whole point of it: the
-// panel disables its read-the-page button while the message is up, and has to know
-// which tab the message is about so it can drop it when the user moves to another one.
-// The url would not do — Chrome withholds it on exactly the pages that produce this
-// message, since `<all_urls>` does not match `chrome://`.
-//
-// `kind: "fill"` is a selection the user made in the page while the panel was open. It
-// only puts text in the field: nothing is sent, and no request is spent. Selecting text
-// is reading, not asking, and the panel has a button for asking.
+// `text` is what a click on the toolbar icon read from the tab: the selection, or the
+// whole page. `fill` is a selection made while the panel was open. Both only put text in
+// the field: nothing is sent and no request is spent — the Shorten button is how the
+// user asks. `unreadable` is a page we could not read: a restricted page, or one with
+// no text on it. That is not an error; the panel says so and waits.
 export type PanelJob =
-  | { kind: "text"; text: string; source: Source; truncated: boolean }
+  | { kind: "text"; text: string; source: "selection" | "page"; truncated: boolean }
   | { kind: "fill"; text: string; truncated: boolean }
-  | { kind: "unreadable"; tabId?: number };
+  | { kind: "unreadable" };
 
-// service worker → panel, over the port. Nothing travels the other way: the worker sends
-// jobs and knows nothing about what the panel holds. The one rule that needed to know —
-// a repeated click must not pay twice for the same text — is decided in the panel, where
-// that text already is.
+// service worker → panel, over the port. Nothing travels the other way.
 export type PanelMessage = { type: "job"; job: PanelJob };
 
 export const PANEL_PORT = "panel";
@@ -69,8 +49,12 @@ export const PANEL_PORT = "panel";
 // the message that broke it. scripts/check-boundaries.mjs now keeps every listener
 // parameter at `unknown`, so the compiler cannot be told to skip this step again.
 
-function isSource(value: unknown): value is Source {
-  return value === "selection" || value === "page" || value === "manual";
+function isPageSource(value: unknown): value is "selection" | "page" {
+  return value === "selection" || value === "page";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 // service worker → panel. Returns null for anything that is not a job, which the panel
@@ -78,63 +62,58 @@ function isSource(value: unknown): value is Source {
 // Silently dropping a malformed job would leave the panel waiting for text that is
 // never coming, with nothing on screen to say so.
 export function readPanelMessage(message: unknown): PanelJob | null {
-  const envelope = message as { type?: unknown; job?: unknown } | null | undefined;
-  if (envelope?.type !== "job") {
+  if (!isRecord(message) || message.type !== "job") {
     return null;
   }
-
-  const job = envelope.job as Record<string, unknown> | null | undefined;
-
-  if (job?.kind === "fill" && typeof job.text === "string") {
-    return { kind: "fill", text: job.text, truncated: job.truncated === true };
+  const job = message.job;
+  if (!isRecord(job)) {
+    return { kind: "unreadable" };
   }
 
-  if (job?.kind === "text" && typeof job.text === "string") {
+  if (job.kind === "fill" && typeof job.text === "string") {
+    return { kind: "fill", text: job.text, truncated: job.truncated === true };
+  }
+  if (job.kind === "text" && typeof job.text === "string") {
     return {
       kind: "text",
       text: job.text,
       // A source we do not recognise still describes a page: it only picks the wording
       // of the request, and getting it wrong costs nothing a user can see.
-      source: isSource(job.source) ? job.source : "page",
+      source: isPageSource(job.source) ? job.source : "page",
       truncated: job.truncated === true,
     };
   }
-  // No tab id is a message that expires on the first tab switch instead of on the right
-  // one. That is the safe direction: the button comes back sooner than it had to, rather
-  // than staying dead on a tab the message was never about.
-  return { kind: "unreadable", tabId: typeof job?.tabId === "number" ? job.tabId : undefined };
+  return { kind: "unreadable" };
 }
 
 // service worker → content script.
 export function readExtractRequest(message: unknown): ExtractRequest | null {
-  const request = message as Record<string, unknown> | null | undefined;
-  if (request?.type !== "extract") {
-    return null;
-  }
-  if (request.mode !== "selection" && request.mode !== "page") {
-    return null;
-  }
-  return { type: "extract", mode: request.mode };
+  return isRecord(message) && message.type === "extract" ? { type: "extract" } : null;
 }
 
-// content script → service worker.
-export function readSelectionMessage(message: unknown): SelectionMessage | null {
-  const selection = message as Record<string, unknown> | null | undefined;
-  if (selection?.type !== "selection-clicked") {
-    return null;
+// content script → service worker, the reply to `extract`. Anything that is not a
+// well-formed success — including `undefined`, which is what sendMessage resolves to
+// when nothing in the tab answered — is a page that could not be read.
+export function readExtractResult(reply: unknown): ExtractResult {
+  if (!isRecord(reply) || reply.ok !== true || typeof reply.text !== "string") {
+    return { ok: false };
   }
-  return { type: "selection-clicked", text: typeof selection.text === "string" ? selection.text : "" };
+  return {
+    ok: true,
+    text: reply.text,
+    source: isPageSource(reply.source) ? reply.source : "page",
+    truncated: reply.truncated === true,
+  };
 }
 
 // content script → service worker. A message with no text is not a selection worth
 // forwarding, so it comes back null and the field keeps what it holds.
 export function readSelectionChanged(message: unknown): SelectionChangedMessage | null {
-  const selection = message as Record<string, unknown> | null | undefined;
-  if (selection?.type !== "selection-changed" || typeof selection.text !== "string") {
+  if (!isRecord(message) || message.type !== "selection-changed" || typeof message.text !== "string") {
     return null;
   }
-  if (selection.text === "") {
+  if (message.text === "") {
     return null;
   }
-  return { type: "selection-changed", text: selection.text, truncated: selection.truncated === true };
+  return { type: "selection-changed", text: message.text, truncated: message.truncated === true };
 }

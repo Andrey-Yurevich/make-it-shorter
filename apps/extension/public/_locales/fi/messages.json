@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "Tekoälytiivistys: tiivistelmä tai vain lyhyempi teksti. Pitkä artikkeli? Yksi klikkaus, millä kielellä vain."
   },
-  "actionTitle": { "message": "Lyhennä valinta" },
-  "contextMenuSelection": { "message": "Lyhennä valinta" },
-  "floatingIconTitle": { "message": "Lyhennä valinta" }
+  "actionTitle": { "message": "Avaa Make It Shorter" }
 }

@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "KI-Zusammenfassung: kurz gefasst oder einfach kürzer. Langer Artikel? Ein Klick, in jeder Sprache."
   },
-  "actionTitle": { "message": "Auswahl kürzen" },
-  "contextMenuSelection": { "message": "Auswahl kürzen" },
-  "floatingIconTitle": { "message": "Auswahl kürzen" }
+  "actionTitle": { "message": "Make It Shorter öffnen" }
 }

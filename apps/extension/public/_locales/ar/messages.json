@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "تلخيص بالذكاء الاصطناعي: ملخّص أو نص أقصر فقط. مقال طويل؟ بنقرة واحدة، بأي لغة."
   },
-  "actionTitle": { "message": "اختصار النص المحدد" },
-  "contextMenuSelection": { "message": "اختصار النص المحدد" },
-  "floatingIconTitle": { "message": "اختصار النص المحدد" }
+  "actionTitle": { "message": "افتح Make It Shorter" }
 }

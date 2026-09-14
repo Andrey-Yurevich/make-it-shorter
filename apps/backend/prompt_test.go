@@ -28,9 +28,9 @@ func TestSystemBlocksEndAtTheCacheBreakpoint(t *testing.T) {
 // Everything variable — output language, tone, the user text and the task — travels in
 // one user block, after the breakpoint.
 func TestUserBlockCarriesLanguageToneTextAndTask(t *testing.T) {
-	block := buildUserBlock(shortenRequest{lang: "pt-BR", tone: "formal", text: "the source text"})
+	block := buildUserBlock(shortenRequest{lang: "pt", tone: "professional", text: "the source text"})
 
-	for _, want := range []string{"Output language: pt-BR", "Tone: formal", "the source text"} {
+	for _, want := range []string{"Output language: Portuguese (pt)", "Tone: professional", "the source text"} {
 		if !strings.Contains(block, want) {
 			t.Errorf("user block is missing %q:\n%s", want, block)
 		}
@@ -52,6 +52,45 @@ func TestPromptDescribesEveryKnownTone(t *testing.T) {
 		if !strings.Contains(shortenPrompt, "\n- "+tone+" — ") {
 			t.Errorf("the prompt has no line for tone %q", tone)
 		}
+	}
+}
+
+// The 57 codes the extension offers. Every one of them needs an English name, because
+// that name — not the code — is what the prompt says. The user block has to carry both,
+// name first, so that "be" reads as Belarusian and not as a verb.
+func TestLanguageNamesCoverEveryOfferedLanguage(t *testing.T) {
+	offered := []string{
+		"af", "sq", "ar", "hy", "az", "bn", "be", "bg", "zh", "hr", "cs", "da", "nl", "en", "et",
+		"tl", "fi", "fr", "ka", "de", "el", "gu", "he", "hi", "hu", "id", "it", "ja", "kk", "ko",
+		"lv", "lt", "mk", "ms", "ml", "mr", "nb", "fa", "pl", "pt", "pa", "ro", "ru", "sr", "sk",
+		"sl", "es", "sw", "sv", "ta", "te", "th", "tr", "uk", "ur", "uz", "vi",
+	}
+	if len(offered) != 57 {
+		t.Fatalf("the test list has %d codes, want 57", len(offered))
+	}
+	if len(languageNames) != len(offered) {
+		t.Errorf("languageNames has %d entries, the extension offers %d", len(languageNames), len(offered))
+	}
+	for _, code := range offered {
+		if languageNames[code] == "" {
+			t.Errorf("no English name for %q", code)
+		}
+		if normalizeLang(code) != code {
+			t.Errorf("%q is not stable under normalizeLang: an offered code must pass through unchanged", code)
+		}
+	}
+
+	block := buildUserBlock(shortenRequest{lang: "be", tone: "direct", text: "the source text"})
+	if !strings.Contains(block, "Output language: Belarusian (be)") {
+		t.Errorf("the user block must name the language, got:\n%s", block)
+	}
+}
+
+// The system prompt has to tell the model to start in the output language: the user
+// block names it, but a first word in the source language is a whole answer in it.
+func TestPromptTellsTheModelToBeginInTheOutputLanguage(t *testing.T) {
+	if !strings.Contains(shortenPrompt, "Begin in the output language from the first word.") {
+		t.Errorf("the prompt does not say to begin in the output language")
 	}
 }
 

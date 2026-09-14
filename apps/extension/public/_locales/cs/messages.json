@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "Shrnutí s AI: shrnutí, nebo prostě kratší text. Dlouhý článek? Jedno kliknutí, v každém jazyce."
   },
-  "actionTitle": { "message": "Zkrátit výběr" },
-  "contextMenuSelection": { "message": "Zkrátit výběr" },
-  "floatingIconTitle": { "message": "Zkrátit výběr" }
+  "actionTitle": { "message": "Otevřít Make It Shorter" }
 }

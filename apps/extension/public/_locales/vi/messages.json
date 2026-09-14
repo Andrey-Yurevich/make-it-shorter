@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "Tóm tắt bằng AI: lấy bản tóm tắt hoặc chỉ cần ngắn hơn. Bài dài? Một cú nhấp, mọi ngôn ngữ."
   },
-  "actionTitle": { "message": "Rút gọn phần đã chọn" },
-  "contextMenuSelection": { "message": "Rút gọn phần đã chọn" },
-  "floatingIconTitle": { "message": "Rút gọn phần đã chọn" }
+  "actionTitle": { "message": "Mở Make It Shorter" }
 }

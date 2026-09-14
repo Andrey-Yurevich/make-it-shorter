@@ -1,181 +1,103 @@
+import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
-import { SUMMARY_LANGS, languageName } from "../shared/lang.ts";
-import { MAX_INPUT, MIN_INPUT } from "../shared/limits.ts";
-import { PANEL_PORT, readPanelMessage, type PanelJob } from "../shared/messaging.ts";
-import { TONES, type ErrorCode, type Source, type Tone } from "../shared/protocol.ts";
+import { CopyButton } from "@/components/CopyButton.tsx";
+import { MarkdownView } from "@/components/MarkdownView.tsx";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { LANGUAGES } from "@/shared/lang.ts";
+import { MAX_INPUT, MIN_INPUT } from "@/shared/limits.ts";
+import { markdownToPlainText } from "@/shared/markdown.ts";
+import { PANEL_PORT, readPanelMessage } from "@/shared/messaging.ts";
+import { TONES, type ErrorCode, type Tone } from "@/shared/protocol.ts";
 import {
   getSettings,
   hideRating,
   isRatingHidden,
   saveSettings,
+  stashOutputWindowContent,
   type Settings,
-} from "../shared/storage.ts";
-import { activeTab, extractFromTab } from "../shared/tab.ts";
-import { countCodePoints } from "../shared/text.ts";
+} from "@/shared/storage.ts";
+import { countCodePoints } from "@/shared/text.ts";
 import { shorten } from "./api.ts";
-import { OutputBox } from "./components/OutputBox.tsx";
-import { Picker } from "./components/Picker.tsx";
 import { StarRating } from "./components/StarRating.tsx";
-import { Button } from "./components/ui.tsx";
-import { initialRunState, runReducer } from "./state.ts";
+import { initialPanelState, panelReducer } from "./state.ts";
 
-// One column, top to bottom: the text going in, how to shorten it, the text coming out.
-// The panel holds one run — the one on screen — and keeps nothing after it is closed.
+// One column, top to bottom: the text going in, how to shorten it, the text coming out,
+// and the rating strip pinned underneath. The panel holds one run — the one on screen —
+// and keeps nothing after it is closed.
 //
 // Everything the user reads here is an English literal. The panel is not localised: the
 // only strings that go through chrome.i18n are the ones Chrome itself draws — the name,
-// the description, the context menu item and the icon tooltip.
-
-// One emoji per tone, in front of the name, so the list can be scanned by shape as well
-// as read. The order is the order of TONES: the default first, then the rest as the
-// product lists them. Every wire value has a label here — the type makes sure of it.
-const TONE_LABELS: Record<Tone, string> = {
-  simplified: "🔤 Simplified",
-  original: "📄 Original",
-  diplomatic: "🤝 Diplomatic",
-  formal: "🎩 Formal",
-  professional: "💼 Professional",
-  confident: "💪 Confident",
-  friendly: "😊 Friendly",
-  academic: "🎓 Academic",
-  casual: "😎 Casual",
-  bold: "🔥 Bold",
-  empathetic: "💛 Empathetic",
-  direct: "🎯 Direct",
-  luxury: "💎 Luxury",
-  persuasive: "🧲 Persuasive",
-  engaging: "✨ Engaging",
-};
-
-const TONE_OPTIONS = TONES.map((tone) => ({ value: tone, label: TONE_LABELS[tone] }));
+// the description and the icon tooltip.
 
 export function App() {
-  const [run, dispatch] = useReducer(runReducer, initialRunState);
+  const [state, dispatch] = useReducer(panelReducer, initialPanelState);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [ratingHidden, setRatingHidden] = useState(true);
 
   // Read inside callbacks that outlive the render they were created in.
   const settingsRef = useRef<Settings | null>(null);
-  const portRef = useRef<chrome.runtime.Port | null>(null);
-  // Which run the panel is showing. A click on the floating icon opens a second stream
-  // while the first one is still writing, and without this its text would be written
-  // into the same field, interleaved with the text of the run that replaced it.
+  // Which run the panel is showing. Events from a run that has been replaced are
+  // dropped, so a late delta cannot write into the next run's result.
   const runId = useRef(0);
-  // What is on screen right now, for the same reason: the port listener was made once,
-  // at mount, and the render it closed over is long gone. It is read for two decisions —
-  // whether a run is in flight, and whether an arriving job is the text the panel is
-  // already showing a summary of.
-  const runRef = useRef(initialRunState);
+  const outputRef = useRef<HTMLDivElement | null>(null);
+  const renderedRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    let disposed = false;
+
     void (async () => {
       const loaded = await getSettings();
       settingsRef.current = loaded;
       setSettings(loaded);
       setRatingHidden(await isRatingHidden());
-      connect();
     })();
-    // Mount only. Everything the callbacks below need afterwards is in refs, so there is
-    // nothing here to re-run.
-  }, []);
 
-  // The port is the panel's lifetime as far as the service worker is concerned, and it
-  // carries the job the worker prepared. A worker restart drops it, so the panel dials
-  // back: losing the connection costs at most one extra request.
-  function connect(): void {
-    const port = chrome.runtime.connect({ name: PANEL_PORT });
-    portRef.current = port;
-    port.onMessage.addListener((message: unknown) => {
-      const job = readPanelMessage(message);
-      if (job) {
-        handleJob(job);
+    // The port is the panel's lifetime as far as the service worker is concerned, and it
+    // carries the job the worker prepared. A worker restart drops it, so the panel dials
+    // back a second later.
+    function connect(): void {
+      if (disposed) {
+        return;
       }
-    });
-    port.onDisconnect.addListener(() => {
-      portRef.current = null;
-      setTimeout(connect, 1000);
-    });
-  }
+      const port = chrome.runtime.connect({ name: PANEL_PORT });
+      port.onMessage.addListener((message: unknown) => {
+        const job = readPanelMessage(message);
+        if (job) {
+          dispatch({ type: "job", job });
+        }
+      });
+      port.onDisconnect.addListener(() => {
+        setTimeout(connect, 1000);
+      });
+    }
+    connect();
 
-  // The message about a page that could not be read disables the button at the bottom,
-  // so it must not outlive what it is about: the panel stays open while the user
-  // switches tabs and loads pages, and these two events are how it hears about that.
-  // Neither needs the `tabs` permission — the tab id arrives without it, and nothing
-  // here looks at a url. Adding that permission for this would be paid for in the
-  // install warning.
-  useEffect(() => {
-    const onActivated = (info: chrome.tabs.OnActivatedInfo) => {
-      dispatch({ type: "tab-activated", tabId: info.tabId });
-    };
-    const onUpdated = (tabId: number) => {
-      dispatch({ type: "tab-navigated", tabId });
-    };
-    chrome.tabs.onActivated.addListener(onActivated);
-    chrome.tabs.onUpdated.addListener(onUpdated);
     return () => {
-      chrome.tabs.onActivated.removeListener(onActivated);
-      chrome.tabs.onUpdated.removeListener(onUpdated);
+      disposed = true;
     };
   }, []);
 
+  // A new run starts at the top of the output area. While it streams, the area is not
+  // scrolled along with the text: the reader keeps the place they are looking at.
   useEffect(() => {
-    runRef.current = run;
-  }, [run]);
-
-  // The selection and the whole page arrive the same way and end up in the same place:
-  // the input field. After that the difference between them is gone — it is text in a
-  // field, and the user can correct it and run it again.
-  function handleJob(job: PanelJob): void {
-    if (job.kind === "unreadable") {
-      dispatch({ type: "unreadable-page", tabId: job.tabId ?? null });
-      return;
+    if (outputRef.current) {
+      outputRef.current.scrollTop = 0;
     }
-    // Text selected in the page while the panel is open. It lands in the field and stops
-    // there: the user was reading, not asking, and Shorten is how they ask. A run that is
-    // already writing keeps its field — swapping the text under it would leave the answer
-    // on screen belonging to something else.
-    if (job.kind === "fill") {
-      if (!runRef.current.streaming) {
-        dispatch({ type: "loaded", text: job.text, source: "selection", truncated: job.truncated });
-      }
-      return;
-    }
+  }, [state.run]);
 
-    // The very text the panel already holds a summary of. The selection is still
-    // highlighted in the page long after the answer has been read, so a click on the
-    // toolbar icon to get back to the panel would otherwise buy a second copy of what is
-    // on screen — a request out of the daily quota and real money, at the price of a
-    // click that was not asking for anything. Shortening the same text again on purpose
-    // is the Shorten button, and that is the only place that spends on it.
-    const shown = runRef.current;
-    if (job.text === shown.input && shown.result !== "" && !shown.streaming) {
-      return;
-    }
-
-    load(job.text, job.source, job.truncated);
-  }
-
-  // Text that came from a page, one way or another. It goes into the field and starts
-  // running by itself: clicking the floating icon over a selection is already the user
-  // asking for this, and asking them to press Shorten afterwards would be asking twice.
-  //
-  // Below the minimum nothing is sent — the request would come back too_short — but the
-  // text stays in the field, where the user can add to it. Throwing it away would leave
-  // them with an empty panel and no idea what happened.
-  function load(text: string, source: Source, truncated: boolean): void {
-    dispatch({ type: "loaded", text, source, truncated });
-    if (countCodePoints(text) >= MIN_INPUT) {
-      void start(text, source);
-    }
-  }
-
-  async function start(text: string, source: Source): Promise<void> {
+  async function start(): Promise<void> {
     const id = ++runId.current;
     dispatch({ type: "start" });
     const current = settingsRef.current ?? (await getSettings());
 
     await shorten(
-      { text, lang: current.lang, tone: current.tone, source },
+      { text: state.input, lang: current.lang, tone: current.tone, source: state.source },
       {
         onDelta: (chunk) => {
           if (id === runId.current) {
@@ -196,28 +118,9 @@ export function App() {
     );
   }
 
-  // The button at the bottom reads the active tab from scratch, every time, whatever is
-  // in the field: the point of it is a page whose content has moved on, and the only way
-  // to know that it has is to go and read it. The panel does the reading itself rather
-  // than asking the worker for it — the worker may be asleep, and a message to a port
-  // that is being re-established would be lost with nothing on screen to say so.
-  async function readPage(): Promise<void> {
-    dispatch({ type: "reading" });
-
-    const tab = await activeTab();
-    if (tab?.id === undefined) {
-      dispatch({ type: "unreadable-page", tabId: null });
-      return;
-    }
-
-    const extracted = await extractFromTab(tab.id, "page");
-    if (!extracted.ok) {
-      dispatch({ type: "unreadable-page", tabId: tab.id });
-      return;
-    }
-    load(extracted.text, "page", extracted.truncated);
-  }
-
+  // A change applies to the next run, not to the text already on screen: running it
+  // again costs a request out of the daily quota, and the Shorten button is what spends
+  // it. Both values are written to storage as they are picked.
   async function changeSettings(patch: Partial<Settings>): Promise<void> {
     const updated = { ...(settingsRef.current ?? (await getSettings())), ...patch };
     settingsRef.current = updated;
@@ -225,93 +128,141 @@ export function App() {
     await saveSettings(patch);
   }
 
-  const inputLength = countCodePoints(run.input);
-  const canShorten = !run.streaming && inputLength >= MIN_INPUT && inputLength <= MAX_INPUT;
-  // Three reasons the page cannot be read right now, and the panel says all three out
-  // loud below: a run is in flight (one at a time), the service is switched off (no
-  // request goes out until the user asks again), or this very tab has just been read and
-  // could not be. The last one lasts until the user moves to another tab, loads
-  // something else in this one, or puts text in the field by hand — the message and the
-  // button go together, and neither outlives the tab it was about.
-  const pageBlocked =
-    run.streaming || run.unreadable !== null || run.error?.code === "service_disabled";
+  async function openInWindow(): Promise<void> {
+    await stashOutputWindowContent({ markdown: state.result, lang: settingsRef.current?.lang ?? "en" });
+    await chrome.windows.create({
+      url: chrome.runtime.getURL("output.html"),
+      type: "popup",
+      width: 720,
+      height: 600,
+    });
+  }
+
+  const inputLength = countCodePoints(state.input);
+  const outputLength = countCodePoints(markdownToPlainText(state.result));
+  const finished = !state.streaming && state.result !== "" && state.error === null;
+  // service_disabled is the one error that holds the button down: the service said no,
+  // and it will say no again until something changes. Editing the field lifts it.
+  const canShorten =
+    !state.streaming &&
+    inputLength >= MIN_INPUT &&
+    inputLength <= MAX_INPUT &&
+    state.error?.code !== "service_disabled";
+  const lang = settings?.lang ?? "en";
 
   return (
-    <div className="flex h-full flex-col bg-surface">
-      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3">
-        <section className="flex min-h-32 flex-1 flex-col gap-1.5">
+    <div className="flex h-full flex-col">
+      <main className="flex min-h-0 flex-1 flex-col gap-3 p-3">
+        <section className="flex min-h-0 flex-1 flex-col gap-1.5">
           <FieldRow>
-            <FieldLabel htmlFor="input-text">Input text</FieldLabel>
+            <Label htmlFor="input-text">Input text</Label>
             <CharCount value={inputLength} />
           </FieldRow>
           {/* The field stays editable while the answer is being written: correcting the
               text and running it again is the ordinary next step, not an edge case. */}
-          <textarea
+          <Textarea
             id="input-text"
-            value={run.input}
+            value={state.input}
             onChange={(event) => dispatch({ type: "edit", text: event.target.value })}
-            className="h-full w-full flex-1 resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm leading-relaxed text-ink focus:border-ink focus:outline-none"
+            // field-sizing-fixed: the field takes the height the column gives it and
+            // scrolls inside, instead of growing with its content and pushing the
+            // controls off the panel.
+            className="min-h-0 flex-1 field-sizing-fixed resize-none text-sm leading-relaxed"
           />
-          <InputHint length={inputLength} truncated={run.truncated} />
+          <InputHint length={inputLength} truncated={state.truncated} unreadable={state.unreadable} />
         </section>
 
-        {/* A change applies to the next run, not to the text already on screen: running
-            it again costs a request out of the daily quota, and the Shorten button is
-            what spends it. */}
-        {settings && (
+        <section className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <section className="flex flex-1 flex-col gap-1.5">
-              <FieldLabel>Output language</FieldLabel>
-              <Picker
-                label="Output language"
-                value={settings.lang}
-                options={SUMMARY_LANGS.map((code) => ({ value: code, label: languageName(code) }))}
-                onChange={(lang) => void changeSettings({ lang })}
-              />
-            </section>
-            <section className="flex flex-1 flex-col gap-1.5">
-              <FieldLabel>Tone</FieldLabel>
-              <Picker
-                label="Tone"
-                value={settings.tone}
-                options={TONE_OPTIONS}
-                onChange={(tone) => void changeSettings({ tone: tone as Tone })}
-              />
-            </section>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Label htmlFor="output-language">Output language</Label>
+              <Select value={lang} onValueChange={(value) => void changeSettings({ lang: value })} disabled={!settings}>
+                <SelectTrigger id="output-language" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((language) => (
+                    <SelectItem key={language.code} value={language.code}>
+                      {language.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Label htmlFor="tone">Tone</Label>
+              <Select
+                value={settings?.tone ?? "simplified"}
+                onValueChange={(value) => void changeSettings({ tone: value as Tone })}
+                disabled={!settings}
+              >
+                <SelectTrigger id="tone" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TONES.map((tone) => (
+                    <SelectItem key={tone.id} value={tone.id}>
+                      {tone.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        )}
 
-        {/* The two ways to spend a request, side by side. The left one sends what is in
-            the field — without it the field would be decoration. The right one ignores
-            the field and reads the active tab from scratch, so the two are never the
-            same button with a different name. */}
-        <div className="flex gap-2">
-          <Button
-            className="flex-1"
-            disabled={!canShorten}
-            onClick={() => void start(run.input, run.source)}
-          >
-            {run.streaming ? "Shortening…" : "Shorten"}
+          {/* The only way to spend a request. Nothing else in the extension sends one. */}
+          <Button className="w-full" disabled={!canShorten} onClick={() => void start()}>
+            {state.streaming ? "Shortening…" : "Shorten"}
           </Button>
-          <Button className="flex-1 text-center leading-tight" disabled={pageBlocked} onClick={() => void readPage()}>
-            Shorten entire page content
-          </Button>
-        </div>
 
-        <section className="flex min-h-32 flex-1 flex-col gap-1.5">
-          <FieldRow>
-            <FieldLabel htmlFor="shortened-text">Shortened text</FieldLabel>
-            <CharCount value={countCodePoints(run.result)} />
-          </FieldRow>
-          <OutputBox text={run.result} streaming={run.streaming} />
+          {state.error && (
+            <Alert>
+              <AlertDescription>{errorText(state.error)}</AlertDescription>
+            </Alert>
+          )}
         </section>
 
-        {run.unreadable && (
-          <Notice>
-            This page has no readable text to shorten. Paste the text into the field above instead.
-          </Notice>
-        )}
-        {run.error && <Notice>{errorText(run.error)}</Notice>}
+        <section className="flex min-h-0 flex-1 flex-col gap-1.5">
+          <FieldRow>
+            <Label>Shortened text</Label>
+            <div className="flex items-center gap-1">
+              {finished && (
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon-sm" aria-label="Open in window" onClick={() => void openInWindow()}>
+                        <ExternalLinkIcon />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Open in window</TooltipContent>
+                  </Tooltip>
+                  <CopyButton markdown={state.result} rendered={renderedRef} />
+                </>
+              )}
+              <CharCount value={outputLength} />
+            </div>
+          </FieldRow>
+          <div
+            ref={outputRef}
+            className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-transparent px-3 py-2 text-sm leading-relaxed dark:bg-input/30"
+          >
+            {state.streaming && state.result === "" ? (
+              <div className="flex flex-col gap-2 py-1" aria-label="Waiting for the first words">
+                {/* Darker than the component's default: the default accent is a shade
+                    off the background in the light theme and the pulse halves it. */}
+                <Skeleton className="h-3.5 w-full bg-muted-foreground/20" />
+                <Skeleton className="h-3.5 w-11/12 bg-muted-foreground/20" />
+                <Skeleton className="h-3.5 w-4/6 bg-muted-foreground/20" />
+              </div>
+            ) : state.result === "" ? (
+              <p className="text-muted-foreground">The shortened text will appear here.</p>
+            ) : (
+              <div ref={renderedRef}>
+                <MarkdownView markdown={state.result} lang={lang} />
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       {!ratingHidden && (
@@ -326,27 +277,23 @@ export function App() {
   );
 }
 
-// A label with its character count on the same line, one at each end.
+// A label with what belongs on its line — the character count, the icons — at the far
+// end.
 function FieldRow({ children }: { children: ReactNode }) {
-  return <div className="flex items-baseline justify-between gap-2">{children}</div>;
+  return <div className="flex min-h-8 items-center justify-between gap-2">{children}</div>;
 }
 
-// How long the text is, in the same code points the server counts. It sits by the label
-// rather than under the field so that both fields carry it in the same place.
+// How long the text is, in the same code points the server counts.
 function CharCount({ value }: { value: number }) {
-  return <span className="text-xs tabular-nums text-ink-soft">{value.toLocaleString("en-US")}</span>;
+  return <span className="text-xs tabular-nums text-muted-foreground">{value.toLocaleString("en-US")}</span>;
 }
 
-function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: string }) {
-  return (
-    <label htmlFor={htmlFor} className="text-xs font-medium text-ink-soft">
-      {children}
-    </label>
-  );
-}
-
-// Why the Shorten button is greyed out, and only then: an empty field explains itself.
-function InputHint({ length, truncated }: { length: number; truncated: boolean }) {
+// One line under the field, and only when there is something to say. The order is the
+// priority: the page could not be read, the text is too short, too long, or was cut.
+function InputHint({ length, truncated, unreadable }: { length: number; truncated: boolean; unreadable: boolean }) {
+  if (unreadable) {
+    return <Hint>This page has no readable text to shorten. Paste the text here instead.</Hint>;
+  }
   if (length > 0 && length < MIN_INPUT) {
     return <Hint>Add {characters(MIN_INPUT - length)} more to shorten this text.</Hint>;
   }
@@ -354,29 +301,19 @@ function InputHint({ length, truncated }: { length: number; truncated: boolean }
     return <Hint>This text is {characters(length - MAX_INPUT)} over the limit.</Hint>;
   }
   if (truncated) {
-    return (
-      <Hint>The page was long, so only its first {characters(MAX_INPUT)} were read.</Hint>
-    );
+    return <Hint>The page was long, so only its first {characters(MAX_INPUT)} were read.</Hint>;
   }
   return null;
 }
 
 function Hint({ children }: { children: ReactNode }) {
-  return <p className="text-xs text-ink-soft">{children}</p>;
-}
-
-function Notice({ children }: { children: ReactNode }) {
-  return (
-    <p className="rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm text-ink">
-      {children}
-    </p>
-  );
+  return <p className="text-xs text-muted-foreground">{children}</p>;
 }
 
 // `message` only ever arrives with service_disabled: hand-written English, shown as is.
 // Every other code carries no text, and the wording for it is here.
 function errorText(error: { code: ErrorCode; message?: string }): string {
-  if (error.message) {
+  if (error.code === "service_disabled" && error.message) {
     return error.message;
   }
   switch (error.code) {

@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "Yapay zekâ özeti: özet çıkarın ya da sadece kısaltın. Uzun makale? Tek tıkla, her dilde."
   },
-  "actionTitle": { "message": "Seçimi kısalt" },
-  "contextMenuSelection": { "message": "Seçimi kısalt" },
-  "floatingIconTitle": { "message": "Seçimi kısalt" }
+  "actionTitle": { "message": "Make It Shorter'ı aç" }
 }

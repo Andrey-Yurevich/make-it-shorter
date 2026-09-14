@@ -3,11 +3,14 @@ import { defineConfig } from "vite";
 
 // The content script alone, and separately from everything else, because it is the one
 // bundle Chrome loads as a classic script: no imports, no code splitting, one file.
-// Readability is not in here — it arrives through a dynamic import() of extract.js,
-// which the first build emits as a module.
+// Readability is bundled into it. The script is injected only on a click on the toolbar
+// icon, so there is nothing to load lazily and no page it slows down unasked.
 //
 // Runs after the main build, so it must not empty dist or copy public/ a second time.
 export default defineConfig({
+  resolve: {
+    alias: { "@": resolve(import.meta.dirname, "src") },
+  },
   build: {
     outDir: "dist",
     emptyOutDir: false,

@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "AI-resumé: et resumé eller bare kortere. Lang artikel? Ét klik, på alle sprog."
   },
-  "actionTitle": { "message": "Forkort det markerede" },
-  "contextMenuSelection": { "message": "Forkort det markerede" },
-  "floatingIconTitle": { "message": "Forkort det markerede" }
+  "actionTitle": { "message": "Åbn Make It Shorter" }
 }

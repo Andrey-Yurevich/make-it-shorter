@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "Resumo com IA: um resumo ou simplesmente mais curto. Texto longo? Um clique, em qualquer idioma."
   },
-  "actionTitle": { "message": "Encurtar a seleção" },
-  "contextMenuSelection": { "message": "Encurtar a seleção" },
-  "floatingIconTitle": { "message": "Encurtar a seleção" }
+  "actionTitle": { "message": "Abrir o Make It Shorter" }
 }

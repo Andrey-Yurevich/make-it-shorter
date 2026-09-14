@@ -15,6 +15,9 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "types": ["chrome", "node", "vite/client"]
   },
   "include": ["src", "manifest.ts", "vite.config.ts", "vite.content.config.ts"]

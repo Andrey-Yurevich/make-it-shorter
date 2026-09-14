@@ -3,7 +3,5 @@
   "extDescription": {
     "message": "סיכום עם AI: סיכום או פשוט קצר יותר. מאמר ארוך? בלחיצה אחת, בכל שפה."
   },
-  "actionTitle": { "message": "קצר את הטקסט המסומן" },
-  "contextMenuSelection": { "message": "קצר את הטקסט המסומן" },
-  "floatingIconTitle": { "message": "קצר את הטקסט המסומן" }
+  "actionTitle": { "message": "פתיחת Make It Shorter" }
 }

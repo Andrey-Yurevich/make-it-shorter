@@ -53,17 +53,21 @@ function buildVersion(): { version: string; versionName: string } {
 
 // The public key of the Chrome Web Store item. Without it an unpacked build gets a
 // random extension id, its Origin is not the one the WAF allows, and every request
-// comes back 403 — see "Фиксированный ID расширения" in the spec. Empty until the item
-// exists in the store; the build prints a warning when it is.
+// comes back 403. The build prints a warning when it is missing.
 const EXTENSION_KEY = process.env.EXTENSION_KEY ?? "";
 
+// Permissions are the smallest set that works, and activeTab rather than <all_urls> is
+// the point of it: access to a tab is granted by the click on the icon, so there is no
+// resident script on every page and no "read your data on all sites" warning at install.
+// The price is that selections are tracked only in tabs where the icon was clicked.
+// Bringing back anything that needs a resident script — a floating icon, a context menu,
+// a hotkey — means bringing back <all_urls> with it.
 export function buildManifest(): chrome.runtime.ManifestV3 {
   const { version, versionName } = buildVersion();
 
   const manifest: chrome.runtime.ManifestV3 = {
     manifest_version: 3,
     name: "__MSG_extName__",
-    short_name: "Make It Shorter",
     description: "__MSG_extDescription__",
     default_locale: "en",
     version,
@@ -85,28 +89,8 @@ export function buildManifest(): chrome.runtime.ManifestV3 {
     },
     side_panel: { default_path: "sidepanel.html" },
     background: { service_worker: "background.js", type: "module" },
-    content_scripts: [
-      {
-        matches: ["<all_urls>"],
-        js: ["content.js"],
-        run_at: "document_idle",
-        all_frames: false,
-      },
-    ],
-    // extract.js is pulled into the page by a dynamic import() from the content script,
-    // so the page has to be allowed to load it. It carries Readability and is fetched
-    // only when there is a page to extract.
-    web_accessible_resources: [{ resources: ["extract.js"], matches: ["<all_urls>"] }],
-    permissions: ["storage", "contextMenus", "sidePanel", "scripting"],
-    host_permissions: ["https://api.make-it-shorter.net/*", "<all_urls>"],
-    commands: {
-      // _execute_action fires action.onClicked, so the hotkey and the toolbar icon walk
-      // the same path in the service worker: both shorten the selection, and with
-      // nothing selected both only open the panel.
-      _execute_action: {
-        suggested_key: { default: "Alt+Shift+S" },
-      },
-    },
+    permissions: ["storage", "sidePanel", "activeTab", "scripting"],
+    host_permissions: ["https://api.make-it-shorter.net/*"],
   };
 
   if (EXTENSION_KEY) {

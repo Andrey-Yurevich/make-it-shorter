@@ -68,7 +68,6 @@ resource "aws_cloudfront_origin_request_policy" "api" {
     headers {
       items = [
         "X-Device-Id",
-        "X-Catalog-Version",
         "Origin",
         "Content-Type",
         "CloudFront-Viewer-Country",

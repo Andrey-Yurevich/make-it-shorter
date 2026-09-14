@@ -16,15 +16,16 @@ func TestNormalizeLang(t *testing.T) {
 		{"ru-RU", "ru"},
 		{"EN-GB", "en"},
 		{"es-419", "es"},
-		{"zh", "zh-Hans"},
-		{"zh-CN", "zh-Hans"},
-		{"zh-TW", "zh-Hant"},
-		{"zh-HK", "zh-Hant"},
-		{"zh-Hant-TW", "zh-Hant"},
-		{"pt", "pt-BR"},
-		{"pt-BR", "pt-BR"},
-		{"pt-PT", "pt-PT"},
-		// Serbian is not split by script: both scripts summarize the same language.
+		// No variant is split. Older builds of the extension still send the split
+		// codes, and they must keep working.
+		{"zh", "zh"},
+		{"zh-CN", "zh"},
+		{"zh-Hans", "zh"},
+		{"zh-TW", "zh"},
+		{"zh-Hant-TW", "zh"},
+		{"pt", "pt"},
+		{"pt-BR", "pt"},
+		{"pt-PT", "pt"},
 		{"sr-Latn", "sr"},
 		{"sr-Cyrl-RS", "sr"},
 		// Legacy codes browsers still emit for languages the whitelist spells the
@@ -33,6 +34,7 @@ func TestNormalizeLang(t *testing.T) {
 		{"nb-NO", "nb"},
 		{"iw", "he"},
 		{"fil-PH", "tl"},
+		{"in", "id"},
 	}
 	for _, testCase := range cases {
 		if got := normalizeLang(testCase.tag); got != testCase.want {
@@ -69,11 +71,11 @@ func TestParseShortenRequest(t *testing.T) {
 	cfg = &config{
 		minInput:  1,
 		maxInput:  100,
-		languages: map[string]bool{"en": true, "ru": true, "pt-br": true},
+		languages: map[string]bool{"en": true, "ru": true, "pt": true},
 	}
 
 	const deviceID = "3f1a6b2c-9d4e-4a1b-8c2d-5e6f7a8b9c0d"
-	validBody := `{"text":"some text","lang":"ru-RU","tone":"original","source":"selection"}`
+	validBody := `{"text":"some text","lang":"ru-RU","tone":"simplified","source":"selection"}`
 
 	cases := []struct {
 		name    string
@@ -83,16 +85,16 @@ func TestParseShortenRequest(t *testing.T) {
 	}{
 		{name: "valid request", body: validBody, want: ""},
 		{name: "body is not JSON", body: `{`, want: errInvalidRequest},
-		{name: "text missing", body: `{"lang":"ru","tone":"original","source":"page"}`, want: errInvalidRequest},
-		{name: "text of the wrong type", body: `{"text":42,"lang":"ru","tone":"original","source":"page"}`, want: errInvalidRequest},
-		{name: "unknown field", body: `{"text":"t","lang":"ru","tone":"original","source":"page","extra":1}`, want: errInvalidRequest},
+		{name: "text missing", body: `{"lang":"ru","tone":"simplified","source":"page"}`, want: errInvalidRequest},
+		{name: "text of the wrong type", body: `{"text":42,"lang":"ru","tone":"simplified","source":"page"}`, want: errInvalidRequest},
+		{name: "unknown field", body: `{"text":"t","lang":"ru","tone":"simplified","source":"page","extra":1}`, want: errInvalidRequest},
 		{name: "tone outside the set", body: `{"text":"t","lang":"ru","tone":"shouting","source":"page"}`, want: errInvalidRequest},
-		{name: "source outside the set", body: `{"text":"t","lang":"ru","tone":"original","source":"clipboard"}`, want: errInvalidRequest},
+		{name: "source outside the set", body: `{"text":"t","lang":"ru","tone":"simplified","source":"clipboard"}`, want: errInvalidRequest},
 		{name: "device id missing", body: validBody, headers: map[string]string{"X-Device-Id": ""}, want: errInvalidRequest},
 		{name: "device id is not UUIDv4", body: validBody, headers: map[string]string{"X-Device-Id": "not-a-uuid"}, want: errInvalidRequest},
 		// A language the server does not serve is its own code, not invalid_request:
 		// the client is not broken, the language is simply not offered.
-		{name: "language outside the list", body: `{"text":"t","lang":"is","tone":"original","source":"page"}`, want: errUnsupportedLanguage},
+		{name: "language outside the list", body: `{"text":"t","lang":"is","tone":"simplified","source":"page"}`, want: errUnsupportedLanguage},
 	}
 
 	for _, testCase := range cases {
@@ -115,7 +117,7 @@ func TestParseShortenRequestNormalizesAndTrims(t *testing.T) {
 	cfg = &config{minInput: 1, maxInput: 100, languages: map[string]bool{"ru": true}}
 
 	request := httptest.NewRequest(http.MethodPost, "/v1/shorten",
-		strings.NewReader(`{"text":"  padded  ","lang":"ru-RU","tone":"formal","source":"manual"}`))
+		strings.NewReader(`{"text":"  padded  ","lang":"ru-RU","tone":"professional","source":"manual"}`))
 	request.Header.Set("X-Device-Id", "3f1a6b2c-9d4e-4a1b-8c2d-5e6f7a8b9c0d")
 	request.Header.Set("CloudFront-Viewer-Country", "DE")
 
