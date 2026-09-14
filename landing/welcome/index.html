@@ -3,16 +3,121 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
 <title>Make It Shorter — installed</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231B1B1F'/%3E%3Cg fill='%23fff'%3E%3Crect x='7' y='9' width='18' height='3' rx='1.5'/%3E%3Crect x='7' y='14.5' width='12' height='3' rx='1.5'/%3E%3Crect x='7' y='20' width='6' height='3' rx='1.5'/%3E%3C/g%3E%3C/svg%3E">
 <style>
-  body{font:16px/1.6 system-ui,sans-serif;margin:0;display:grid;place-items:center;height:100vh;color:#1b1b1f}
-  main{max-width:38rem;padding:2rem;text-align:center}
+  /* Same tokens as the side panel (src/sidepanel/styles.css), written out by hand:
+     the landing pages carry no build step, so there is nothing here to import them from. */
+  :root{
+    --ink:#1b1b1f;
+    --ink-soft:#52525b;
+    --line:#e4e4e7;
+    --surface:#fff;
+    --surface-muted:#f4f4f5;
+  }
+
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);
+    background:var(--surface);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  main{
+    max-width:52rem;
+    margin:0 auto;
+    padding:4rem 1.5rem 6rem;
+  }
+
+  .mark{
+    width:44px;
+    height:44px;
+    display:block;
+    margin:0 auto 1.5rem;
+    border-radius:10px;
+  }
+
+  h1{
+    margin:0;
+    font-size:clamp(1.75rem,4.2vw,2.6rem);
+    line-height:1.15;
+    letter-spacing:-.02em;
+    text-align:center;
+  }
+
+  section{margin-top:4rem}
+
+  h2{
+    margin:0 0 1rem;
+    font-size:1.35rem;
+    line-height:1.3;
+    letter-spacing:-.01em;
+  }
+
+  h3{
+    margin:2.5rem 0 .75rem;
+    font-size:1.05rem;
+    line-height:1.35;
+    font-weight:500;
+    color:var(--ink-soft);
+  }
+
+  h3:first-of-type{margin-top:0}
+
+  figure{margin:0}
+
+  video{
+    display:block;
+    width:100%;
+    height:auto;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--surface-muted);
+  }
 </style>
 </head>
 <body>
+
 <main>
-  <h1>Make It Shorter</h1>
-  <p><strong>ЗАГЛУШКА.</strong> Страница приветствия после установки. Реализуется отдельно, вне спецификации расширения.</p>
+  <svg class="mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Make It Shorter">
+    <rect width="32" height="32" rx="7" fill="#1B1B1F"/>
+    <g fill="#FFFFFF">
+      <rect x="7" y="9" width="18" height="3" rx="1.5"/>
+      <rect x="7" y="14.5" width="12" height="3" rx="1.5"/>
+      <rect x="7" y="20" width="6" height="3" rx="1.5"/>
+    </g>
+  </svg>
+
+  <h1>Congratulations, Make It Shorter is installed</h1>
+
+  <section>
+    <h2>Pin the extension for quick access</h2>
+    <figure>
+      <video src="/assets/pin-demo.mp4" width="1038" height="582" autoplay muted loop playsinline
+             aria-label="Pinning Make It Shorter to the Chrome toolbar"></video>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Here are a couple of ways to use it</h2>
+
+    <h3>Example 1</h3>
+    <figure>
+      <video src="/assets/usage1-demo.mp4" width="3022" height="1898" autoplay muted loop playsinline
+             aria-label="Shortening a selected email in Gmail"></video>
+    </figure>
+
+    <h3>Example 2</h3>
+    <figure>
+      <video src="/assets/usage2-demo.mp4" width="3022" height="1898" autoplay muted loop playsinline
+             aria-label="Shortening an entire Wikipedia article"></video>
+    </figure>
+  </section>
 </main>
+
 </body>
 </html>

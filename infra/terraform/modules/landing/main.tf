@@ -1,6 +1,7 @@
 variable "domain" { type = string }
 variable "zone_id" { type = string }
 variable "content_root" { type = string }
+variable "assets_root" { type = string }
 variable "logs_enabled" { type = bool }
 variable "log_retention_days" { type = number }
 
@@ -155,6 +156,28 @@ resource "aws_s3_object" "pages" {
   content_type = "text/html"
   # Five minutes, so an edit to /welcome reaches users without an invalidation.
   cache_control = "public, max-age=300"
+}
+
+# The demo recordings /welcome plays. They live in the repository's assets/ rather than
+# under landing/ because the store listing draws on the same files; the welcome page is
+# one consumer of them, not their owner.
+#
+# These are Git LFS objects. A clone without LFS holds the pointer file instead of the
+# video, and terraform would upload that 130-byte text file perfectly happily — the plan
+# looks normal and the page serves three broken players. Run `git lfs pull` before apply
+# if the sizes below come out in bytes rather than megabytes.
+resource "aws_s3_object" "demos" {
+  for_each = toset(["pin-demo.mp4", "usage1-demo.mp4", "usage2-demo.mp4"])
+
+  bucket = aws_s3_bucket.landing.id
+  key    = "assets/${each.value}"
+  source = "${var.assets_root}/${each.value}"
+  etag   = filemd5("${var.assets_root}/${each.value}")
+
+  content_type = "video/mp4"
+  # An hour, per the table in the spec: the name carries no hash, so a year would strand
+  # a re-recorded demo in caches with no way to name the new one.
+  cache_control = "public, max-age=3600"
 }
 
 resource "aws_route53_record" "landing" {

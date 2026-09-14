@@ -35,3 +35,9 @@ override.tf.json
 *.auto.tfvars
 .env
 .env.local
+
+# Source screen recordings. QuickTime .mov keeps the footage cut away by a trim
+# and stores it uncompressed-ish, so these land in git an order of magnitude
+# larger than they look. Demos are committed as .mp4 (LFS, see .gitattributes);
+# convert and drop the .mov.
+*.mov
