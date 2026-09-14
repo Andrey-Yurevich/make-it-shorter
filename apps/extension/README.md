@@ -10,6 +10,7 @@ decisions live in the root `CLAUDE.md`; this file is the package's own notes.
 | `manifest.ts` | the manifest, written into `dist/` by a Vite plugin; version from the git tag on HEAD |
 | `src/background/index.ts` | service worker: opens the panel on the icon click, injects `content.js`, hands the text to the panel over a port |
 | `src/content/index.ts` | content script, one IIFE with Readability inside; answers `extract`, reports selections |
+| `src/content/structure.ts` | DOM → text with its shape: headings as bold lines, `- ` / `1. ` items, `\| cell \|` rows; tested with linkedom |
 | `src/sidepanel/` | the panel: `App.tsx`, the reducer in `state.ts`, the network call in `api.ts` |
 | `src/output/` | the "Open in window" page |
 | `src/components/` | `MarkdownView` and `CopyButton`, shared by the panel and the window; `ui/` is shadcn |

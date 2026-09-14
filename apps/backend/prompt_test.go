@@ -55,6 +55,18 @@ func TestPromptDescribesEveryKnownTone(t *testing.T) {
 	}
 }
 
+// The shapes the prompt tells the model to recognise and mirror. The source reaches
+// the model flat — the extension extracts textContent, so list markers and table
+// borders are gone — and the shape rules are what stops a list or a table from
+// coming back as a paragraph. Each one has to be there by name.
+func TestPromptDescribesEveryShape(t *testing.T) {
+	for _, shape := range []string{"Prose", "A list", "A table", "A document with sections", "Mixed"} {
+		if !strings.Contains(shortenPrompt, "\n- "+shape+" — ") {
+			t.Errorf("the prompt has no line for shape %q", shape)
+		}
+	}
+}
+
 // The 57 codes the extension offers. Every one of them needs an English name, because
 // that name — not the code — is what the prompt says. The user block has to carry both,
 // name first, so that "be" reads as Belarusian and not as a verb.

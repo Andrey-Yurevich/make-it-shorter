@@ -2,6 +2,7 @@ import { Readability, isProbablyReaderable } from "@mozilla/readability";
 import { MIN_INPUT } from "@/shared/limits.ts";
 import { readExtractRequest, type ExtractResult, type SelectionChangedMessage } from "@/shared/messaging.ts";
 import { countCodePoints, normalizeText } from "@/shared/text.ts";
+import { selectionWithStructure, textWithStructure } from "./structure.ts";
 
 // The content script. It is not resident: the service worker injects it into the active
 // tab when the toolbar icon is clicked, and nowhere else. It does two things — answers
@@ -34,8 +35,10 @@ if (!window.__makeItShorterInjected) {
 // The selection when there is one, the page when there is not. Dirty text is an
 // acceptable result: what is content and what is furniture is decided by Readability on
 // the DOM, where link density and markup are still available, never on the flat string.
+// The same goes for shape: headings, list items and table rows are written down as light
+// Markdown here, while the DOM still tells them apart (structure.ts).
 function extract(): ExtractResult {
-  const selection = normalizeText(window.getSelection()?.toString() ?? "");
+  const selection = normalizeText(selectionText(window.getSelection()));
   if (selection.text !== "") {
     return { ok: true, text: selection.text, source: "selection", truncated: selection.truncated };
   }
@@ -48,9 +51,15 @@ function extract(): ExtractResult {
     return { ok: false };
   }
 
-  // Readability mutates the document it is given, so it gets a copy.
+  // Readability mutates the document it is given, so it gets a copy. What it returns is
+  // the article's HTML with the furniture removed; that is parsed back into a detached
+  // document so the shape can be read off it.
   const article = new Readability(document.cloneNode(true) as Document).parse();
-  let raw = article?.textContent ?? "";
+  let raw = "";
+  if (article?.content) {
+    const detached = new DOMParser().parseFromString(article.content, "text/html");
+    raw = textWithStructure(detached.body);
+  }
   if (raw.trim() === "") {
     // The page looked readable and Readability still declined — a forum thread, a long
     // comment section. The visible text is a worse but honest fallback.
@@ -62,6 +71,16 @@ function extract(): ExtractResult {
     return { ok: false };
   }
   return { ok: true, text: page.text, source: "page", truncated: page.truncated };
+}
+
+// The selection with its shape. Selection.toString() is the fallback for the case the
+// walker returns nothing — a selection of hidden or media nodes only.
+function selectionText(selection: Selection | null): string {
+  if (!selection || selection.isCollapsed) {
+    return "";
+  }
+  const structured = selectionWithStructure(selection);
+  return structured.trim() !== "" ? structured : selection.toString();
 }
 
 // Selections made while the panel is open go into its field. Debounced: selectionchange
@@ -82,7 +101,7 @@ function reportSelection(): void {
 
   // Below the minimum there is nothing to shorten anyway, and picking up every stray
   // word would overwrite text the user had put in the field by hand.
-  const normalized = normalizeText(selection.toString());
+  const normalized = normalizeText(selectionText(selection));
   if (countCodePoints(normalized.text) < MIN_INPUT) {
     return;
   }
