@@ -46,13 +46,17 @@ Load `dist/` unpacked (with `EXTENSION_KEY` set) and walk through:
 
 - click the icon on an article: the panel opens with the page text in the field, source
   "page"; select text and click again: the selection replaces it;
-- select text (≥ 50 characters) on the same tab while the panel is open: the field
+- select text (≥ 20 characters) on the same tab while the panel is open: the field
   follows; switching tabs alone changes nothing;
 - click the icon on `chrome://extensions` or the web store: the hint "This page has no
   readable text to shorten" under the field, nothing else;
-- Shorten: skeleton, then streaming text, then the Copy and Open in window icons; Copy
-  puts both plain text and HTML on the clipboard;
-- 40 characters in the field: the hint counts the missing ones and Shorten is disabled;
+- Shorten: skeleton, then streaming text; once it is done, hovering the result shows a
+  strip along its bottom edge with "Open in window" and "Copy" as words, half the width
+  each; Copy puts both plain text and HTML on the clipboard and reads "Copied" briefly;
+- the language picker shows a flag before each name, following the browser's region
+  (Chrome in en-GB: British flag on English; in en-US: American); the tone picker shows
+  a pictogram before each tone;
+- 15 characters in the field: the hint counts the missing ones and Shorten is disabled;
   no request goes out;
 - Shorten twice on the same text works; changing language or tone applies to the next run;
 - dark theme follows the system; Arabic output renders right to left;

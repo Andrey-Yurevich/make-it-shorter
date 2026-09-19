@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { LANGUAGES, isRtl, normalizeLang } from "./lang.ts";
+import { LANGUAGES, flagEmoji, isRtl, languageFlag, normalizeLang } from "./lang.ts";
 
 test("regional and script subtags are dropped", () => {
   assert.equal(normalizeLang("ru-RU"), "ru");
@@ -50,6 +50,44 @@ test("the list has 57 unique codes, each stable under normalisation", () => {
 test("the list is sorted by label", () => {
   const labels = LANGUAGES.map((language) => language.label);
   assert.deepEqual(labels, [...labels].sort((a, b) => a.localeCompare(b, "en")));
+});
+
+test("every language has a two-letter home region", () => {
+  for (const { code, region } of LANGUAGES) {
+    assert.match(region, /^[A-Z]{2}$/, code);
+  }
+});
+
+test("a region code becomes its flag", () => {
+  assert.equal(flagEmoji("US"), "🇺🇸");
+  assert.equal(flagEmoji("gb"), "🇬🇧");
+});
+
+const english = LANGUAGES.find((language) => language.code === "en")!;
+const portuguese = LANGUAGES.find((language) => language.code === "pt")!;
+const spanish = LANGUAGES.find((language) => language.code === "es")!;
+const serbian = LANGUAGES.find((language) => language.code === "sr")!;
+
+// The browser's own tags decide whose English it is; the first tag naming the language
+// with a region wins, whatever its case.
+test("the flag follows the browser's region for the language", () => {
+  assert.equal(languageFlag(english, ["en-US"]), "🇺🇸");
+  assert.equal(languageFlag(english, ["en-GB"]), "🇬🇧");
+  assert.equal(languageFlag(english, ["en-au", "en-GB"]), "🇦🇺");
+  assert.equal(languageFlag(english, ["ru-RU", "en-GB"]), "🇬🇧");
+  assert.equal(languageFlag(portuguese, ["en-US", "pt-BR"]), "🇧🇷");
+  assert.equal(languageFlag(serbian, ["sr-Latn-RS"]), "🇷🇸");
+});
+
+// No tag for the language, a tag without a region, or a region that is not a country:
+// the home flag.
+test("without a usable browser tag the home flag is drawn", () => {
+  assert.equal(languageFlag(english, ["ru-RU"]), "🇺🇸");
+  assert.equal(languageFlag(english, ["en"]), "🇺🇸");
+  assert.equal(languageFlag(english, []), "🇺🇸");
+  assert.equal(languageFlag(portuguese, ["en-US"]), "🇵🇹");
+  assert.equal(languageFlag(spanish, ["es-419"]), "🇪🇸");
+  assert.equal(languageFlag(serbian, ["sr-Latn"]), "🇷🇸");
 });
 
 test("right-to-left languages are the four the spec names", () => {

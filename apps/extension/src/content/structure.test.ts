@@ -60,6 +60,21 @@ test("a row of empty cells is nothing", () => {
   assert.equal(structured("<table><tr><td></td><td> </td></tr><tr><td>x</td><td>y</td></tr></table>"), "| x | y |\n| --- | --- |");
 });
 
+test("a table whose rows differ in width — an infobox — becomes label: value lines", () => {
+  assert.equal(
+    structured(
+      "<table class='infobox'><tr><th colspan='2'>Roman Empire<div>Imperium Romanum</div></th></tr>" +
+        "<tr><td colspan='2'><img alt='map'></td></tr>" +
+        "<tr><th>Capital</th><td>Rome</td></tr><tr><th>Languages</th><td>Latin</td><td>Greek</td></tr></table>",
+    ),
+    "Roman Empire Imperium Romanum\nCapital: Rome\nLanguages: Latin, Greek",
+  );
+});
+
+test("a one-column table is lines, not a table", () => {
+  assert.equal(structured("<table><tr><td>a</td></tr><tr><td>b</td></tr></table>"), "a\nb");
+});
+
 test("a table inside a cell is flat text of that cell", () => {
   assert.equal(
     structured("<table><tr><td>outer</td><td><table><tr><td>in</td><td>ner</td></tr></table></td></tr></table>"),

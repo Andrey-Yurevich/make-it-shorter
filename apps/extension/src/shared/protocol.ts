@@ -30,16 +30,16 @@ export function isErrorCode(value: unknown): value is ErrorCode {
 
 // The voice the shorter text is written in. The server validates against the same four
 // ids, so a value that is not here is invalid_request. The order is the order of the
-// picker, and the labels are what it shows.
+// picker, and the label and the emoji are what it shows; only the id goes on the wire.
 //
 // `simplified` is the default because the shortest useful answer to "make this shorter"
 // is plain words and short sentences: whoever reached for this extension was having
 // trouble with the text in front of them.
 export const TONES = [
-  { id: "simplified", label: "Simplified" },
-  { id: "professional", label: "Professional" },
-  { id: "casual", label: "Casual" },
-  { id: "direct", label: "Direct" },
+  { id: "simplified", label: "Simplified", emoji: "🔤" },
+  { id: "professional", label: "Professional", emoji: "💼" },
+  { id: "casual", label: "Casual", emoji: "😊" },
+  { id: "direct", label: "Direct", emoji: "🎯" },
 ] as const;
 
 export type Tone = (typeof TONES)[number]["id"];

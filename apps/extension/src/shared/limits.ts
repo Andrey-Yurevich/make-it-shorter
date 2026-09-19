@@ -5,7 +5,10 @@
 // That is why these are chosen on the soft side. A server tightening arrives on its own
 // with the next request; a server loosening runs into whatever is compiled in here, so
 // a value that is too strict cannot be undone from the server at all.
-export const MIN_INPUT = 50;
+//
+// 20 is a short sentence: one line of a chat message is a text worth shortening too, and
+// the prompt asks for a shorter sentence in return.
+export const MIN_INPUT = 20;
 export const MAX_INPUT = 30_000;
 
 // One absolute deadline from the start of the request to `done`. The function itself is

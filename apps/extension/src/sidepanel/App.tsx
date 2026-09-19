@@ -1,4 +1,3 @@
-import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
 import { CopyButton } from "@/components/CopyButton.tsx";
 import { MarkdownView } from "@/components/MarkdownView.tsx";
@@ -8,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LANGUAGES } from "@/shared/lang.ts";
+import { cn } from "@/lib/utils";
+import { LANGUAGES, languageFlag } from "@/shared/lang.ts";
 import { MAX_INPUT, MIN_INPUT } from "@/shared/limits.ts";
 import { markdownToPlainText } from "@/shared/markdown.ts";
 import { PANEL_PORT, readPanelMessage } from "@/shared/messaging.ts";
@@ -34,6 +33,11 @@ import { initialPanelState, panelReducer } from "./state.ts";
 // Everything the user reads here is an English literal. The panel is not localised: the
 // only strings that go through chrome.i18n are the ones Chrome itself draws — the name,
 // the description and the icon tooltip.
+
+// What the browser says about its user's languages, for the flags in the picker: the UI
+// language first, then the accept languages. Read once — it does not change while the
+// panel is open.
+const BROWSER_TAGS: readonly string[] = [chrome.i18n.getUILanguage(), ...navigator.languages];
 
 export function App() {
   const [state, dispatch] = useReducer(panelReducer, initialPanelState);
@@ -173,41 +177,48 @@ export function App() {
         </section>
 
         <section className="flex flex-col gap-2">
+          {/* Both pickers on one line, each carrying its own name inside the closed
+              control as a muted prefix in front of the value: "Output language  🇺🇸
+              English", "Tone  🔤 Simplified". Each control is as wide as its text and
+              the two share what is left of the line equally (flex-auto), so both read
+              whole whenever they can; when something still has to give, the value
+              truncates before the prefix does. */}
           <div className="flex gap-2">
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <Label htmlFor="output-language">Output language</Label>
-              <Select value={lang} onValueChange={(value) => void changeSettings({ lang: value })} disabled={!settings}>
-                <SelectTrigger id="output-language" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LANGUAGES.map((language) => (
-                    <SelectItem key={language.code} value={language.code}>
-                      {language.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <Label htmlFor="tone">Tone</Label>
-              <Select
-                value={settings?.tone ?? "simplified"}
-                onValueChange={(value) => void changeSettings({ tone: value as Tone })}
-                disabled={!settings}
-              >
-                <SelectTrigger id="tone" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TONES.map((tone) => (
-                    <SelectItem key={tone.id} value={tone.id}>
-                      {tone.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={lang} onValueChange={(value) => void changeSettings({ lang: value })} disabled={!settings}>
+              <SelectTrigger className="min-w-0 flex-auto" aria-label="Output language">
+                <PrefixLabel>Output language</PrefixLabel>
+                <SelectValue className="min-w-0 flex-1 text-left" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* textValue: the typeahead matches on it — typing "p" jumps to Persian,
+                    Polish, Portuguese. Without it Radix reads the item's text, which
+                    starts with the flag, and no letter matches anything. */}
+                {LANGUAGES.map((language) => (
+                  <SelectItem key={language.code} value={language.code} textValue={language.label}>
+                    <Emoji>{languageFlag(language, BROWSER_TAGS)}</Emoji>
+                    {language.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={settings?.tone ?? "simplified"}
+              onValueChange={(value) => void changeSettings({ tone: value as Tone })}
+              disabled={!settings}
+            >
+              <SelectTrigger className="min-w-0 flex-auto" aria-label="Tone">
+                <PrefixLabel>Tone</PrefixLabel>
+                <SelectValue className="min-w-0 flex-1 text-left" />
+              </SelectTrigger>
+              <SelectContent>
+                {TONES.map((tone) => (
+                  <SelectItem key={tone.id} value={tone.id} textValue={tone.label}>
+                    <Emoji>{tone.emoji}</Emoji>
+                    {tone.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* The only way to spend a request. Nothing else in the extension sends one. */}
@@ -225,40 +236,44 @@ export function App() {
         <section className="flex min-h-0 flex-1 flex-col gap-1.5">
           <FieldRow>
             <Label>Shortened text</Label>
-            <div className="flex items-center gap-1">
-              {finished && (
-                <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon-sm" aria-label="Open in window" onClick={() => void openInWindow()}>
-                        <ExternalLinkIcon />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Open in window</TooltipContent>
-                  </Tooltip>
-                  <CopyButton markdown={state.result} rendered={renderedRef} />
-                </>
-              )}
-              <CharCount value={outputLength} />
-            </div>
+            <CharCount value={outputLength} />
           </FieldRow>
-          <div
-            ref={outputRef}
-            className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-transparent px-3 py-2 text-sm leading-relaxed dark:bg-input/30"
-          >
-            {state.streaming && state.result === "" ? (
-              <div className="flex flex-col gap-2 py-1" aria-label="Waiting for the first words">
-                {/* Darker than the component's default: the default accent is a shade
-                    off the background in the light theme and the pulse halves it. */}
-                <Skeleton className="h-3.5 w-full bg-muted-foreground/20" />
-                <Skeleton className="h-3.5 w-11/12 bg-muted-foreground/20" />
-                <Skeleton className="h-3.5 w-4/6 bg-muted-foreground/20" />
-              </div>
-            ) : state.result === "" ? (
-              <p className="text-muted-foreground">The shortened text will appear here.</p>
-            ) : (
-              <div ref={renderedRef}>
-                <MarkdownView markdown={state.result} lang={lang} />
+          {/* The result and, once it is complete, the two things to do with it. The
+              buttons are a strip along the bottom of the field, each taking half of its
+              width, and they show while the pointer is over the field or one of them has
+              focus. Words, not icons: the panel is narrow, and nothing here needs a
+              tooltip to be understood. */}
+          <div className="group relative min-h-0 flex-1">
+            <div
+              ref={outputRef}
+              className={cn(
+                "h-full overflow-y-auto rounded-md border bg-transparent px-3 py-2 text-sm leading-relaxed dark:bg-input/30",
+                // Room for the last line to scroll out from under the strip.
+                finished && "pb-10",
+              )}
+            >
+              {state.streaming && state.result === "" ? (
+                <div className="flex flex-col gap-2 py-1" aria-label="Waiting for the first words">
+                  {/* Darker than the component's default: the default accent is a shade
+                      off the background in the light theme and the pulse halves it. */}
+                  <Skeleton className="h-3.5 w-full bg-muted-foreground/20" />
+                  <Skeleton className="h-3.5 w-11/12 bg-muted-foreground/20" />
+                  <Skeleton className="h-3.5 w-4/6 bg-muted-foreground/20" />
+                </div>
+              ) : state.result === "" ? (
+                <p className="text-muted-foreground">The shortened text will appear here.</p>
+              ) : (
+                <div ref={renderedRef}>
+                  <MarkdownView markdown={state.result} lang={lang} />
+                </div>
+              )}
+            </div>
+            {finished && (
+              <div className="absolute inset-x-px bottom-px flex divide-x overflow-hidden rounded-b-md border-t bg-background/90 opacity-0 backdrop-blur-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 dark:bg-popover/90">
+                <Button variant="ghost" size="sm" className="flex-1 rounded-none" onClick={() => void openInWindow()}>
+                  Open in window
+                </Button>
+                <CopyButton markdown={state.result} rendered={renderedRef} className="flex-1 rounded-none" />
               </div>
             )}
           </div>
@@ -277,10 +292,25 @@ export function App() {
   );
 }
 
-// A label with what belongs on its line — the character count, the icons — at the far
-// end.
+// A label with what belongs on its line — the character count — at the far end.
 function FieldRow({ children }: { children: ReactNode }) {
   return <div className="flex min-h-8 items-center justify-between gap-2">{children}</div>;
+}
+
+// The name of a picker, written inside its closed control in front of the value. The
+// control's accessible name is set separately (aria-label), so this is presentation.
+function PrefixLabel({ children }: { children: string }) {
+  return <span className="shrink-0 text-muted-foreground">{children}</span>;
+}
+
+// A flag or a pictogram in front of a picker entry. Decoration: the label says it all,
+// so the screen reader skips it.
+function Emoji({ children }: { children: string }) {
+  return (
+    <span aria-hidden="true" className="me-1.5">
+      {children}
+    </span>
+  );
 }
 
 // How long the text is, in the same code points the server counts.

@@ -29,7 +29,7 @@ variable "disabled_message" {
 
 variable "min_input" {
   type    = number
-  default = 50
+  default = 20
 }
 
 variable "max_input" {

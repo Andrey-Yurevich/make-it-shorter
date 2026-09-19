@@ -125,24 +125,40 @@ function listMarker(item: Element): string {
   return `${index}. `;
 }
 
-// Rows of this table only, not of tables nested in its cells. The separator after the
-// first row is what makes it a table to a Markdown reader — and to the model.
+// Rows of this table only, not of tables nested in its cells.
+//
+// A table of data — every row the same number of cells, two or more — is drawn as a
+// Markdown table; the separator after the first row is what makes it one to a Markdown
+// reader, and to the model. Anything else is not data but layout: an infobox with a
+// title spanning the top and "label | value" rows under it, a card, a form. Drawn as a
+// table it came out as one lopsided column; drawn as "label: value" lines it reads.
 function renderTable(table: Element): string {
-  const lines: string[] = [];
+  const rows: string[][] = [];
   for (const row of table.querySelectorAll("tr")) {
     if (row.closest("table") !== table) {
       continue;
     }
     const cells = rowCells(row);
-    if (cells.every((cell) => cell === "")) {
-      continue;
-    }
-    lines.push(formatRow(cells));
-    if (lines.length === 1) {
-      lines.push(formatRow(cells.map(() => "---")));
+    if (cells.some((cell) => cell !== "")) {
+      rows.push(cells);
     }
   }
-  return lines.length === 0 ? "" : `\n\n${lines.join("\n")}\n\n`;
+  if (rows.length === 0) {
+    return "";
+  }
+
+  const columns = rows[0].length;
+  const isData = columns >= 2 && rows.every((cells) => cells.length === columns);
+  if (isData) {
+    const lines = [formatRow(rows[0]), formatRow(rows[0].map(() => "---")), ...rows.slice(1).map(formatRow)];
+    return `\n\n${lines.join("\n")}\n\n`;
+  }
+
+  const lines = rows.map((cells) => {
+    const [first, ...rest] = cells.filter((cell) => cell !== "");
+    return rest.length === 0 ? first : `${first}: ${rest.join(", ")}`;
+  });
+  return `\n\n${lines.join("\n")}\n\n`;
 }
 
 // A cell's text folded onto one line, the bar escaped so it cannot pass for a border.

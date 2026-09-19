@@ -27,7 +27,7 @@ export function App() {
         )}
       </main>
       <div className="flex items-center justify-end gap-2 border-t px-4 py-2">
-        {content && <CopyButton markdown={content.markdown} rendered={renderedRef} />}
+        {content && <CopyButton markdown={content.markdown} rendered={renderedRef} variant="outline" />}
         <Button variant="outline" size="sm" onClick={() => window.close()}>
           Close
         </Button>

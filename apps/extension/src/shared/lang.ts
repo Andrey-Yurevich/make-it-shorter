@@ -1,72 +1,78 @@
-// The languages the shorter text can be written in: the wire code and the label the
-// picker shows. The labels are English literals, not Intl.DisplayNames — the panel is
-// English, and a fixed list is the same on every machine. The server carries the same
-// 57 codes in its LANGUAGES variable and languageNames table; this list may never be
-// wider than that one, or the picker offers a language answered with
-// unsupported_language.
+// The languages the shorter text can be written in: the wire code, the label the picker
+// shows, and the region whose flag is drawn next to it. The labels are English literals,
+// not Intl.DisplayNames — the panel is English, and a fixed list is the same on every
+// machine. The server carries the same 57 codes in its LANGUAGES variable and
+// languageNames table; this list may never be wider than that one, or the picker offers
+// a language answered with unsupported_language.
 //
 // No variant is split: Portuguese is one entry, Chinese is one entry (written as
 // Simplified), Serbian is one entry whatever the script. Sorted by label.
-export type Language = { code: string; label: string };
+//
+// `region` is the home region, an ISO 3166-1 alpha-2 code: the flag shown when the
+// browser says nothing about where its user reads the language. Where a language has
+// several homes (English, Spanish, Portuguese, Arabic, the languages of India) the pick
+// is the largest or the eponymous country; the browser's own tags override it, see
+// languageFlag below.
+export type Language = { code: string; label: string; region: string };
 
 export const LANGUAGES: Language[] = [
-  { code: "af", label: "Afrikaans" },
-  { code: "sq", label: "Albanian" },
-  { code: "ar", label: "Arabic" },
-  { code: "hy", label: "Armenian" },
-  { code: "az", label: "Azerbaijani" },
-  { code: "bn", label: "Bangla" },
-  { code: "be", label: "Belarusian" },
-  { code: "bg", label: "Bulgarian" },
-  { code: "zh", label: "Chinese" },
-  { code: "hr", label: "Croatian" },
-  { code: "cs", label: "Czech" },
-  { code: "da", label: "Danish" },
-  { code: "nl", label: "Dutch" },
-  { code: "en", label: "English" },
-  { code: "et", label: "Estonian" },
-  { code: "tl", label: "Filipino" },
-  { code: "fi", label: "Finnish" },
-  { code: "fr", label: "French" },
-  { code: "ka", label: "Georgian" },
-  { code: "de", label: "German" },
-  { code: "el", label: "Greek" },
-  { code: "gu", label: "Gujarati" },
-  { code: "he", label: "Hebrew" },
-  { code: "hi", label: "Hindi" },
-  { code: "hu", label: "Hungarian" },
-  { code: "id", label: "Indonesian" },
-  { code: "it", label: "Italian" },
-  { code: "ja", label: "Japanese" },
-  { code: "kk", label: "Kazakh" },
-  { code: "ko", label: "Korean" },
-  { code: "lv", label: "Latvian" },
-  { code: "lt", label: "Lithuanian" },
-  { code: "mk", label: "Macedonian" },
-  { code: "ms", label: "Malay" },
-  { code: "ml", label: "Malayalam" },
-  { code: "mr", label: "Marathi" },
-  { code: "nb", label: "Norwegian" },
-  { code: "fa", label: "Persian" },
-  { code: "pl", label: "Polish" },
-  { code: "pt", label: "Portuguese" },
-  { code: "pa", label: "Punjabi" },
-  { code: "ro", label: "Romanian" },
-  { code: "ru", label: "Russian" },
-  { code: "sr", label: "Serbian" },
-  { code: "sk", label: "Slovak" },
-  { code: "sl", label: "Slovenian" },
-  { code: "es", label: "Spanish" },
-  { code: "sw", label: "Swahili" },
-  { code: "sv", label: "Swedish" },
-  { code: "ta", label: "Tamil" },
-  { code: "te", label: "Telugu" },
-  { code: "th", label: "Thai" },
-  { code: "tr", label: "Turkish" },
-  { code: "uk", label: "Ukrainian" },
-  { code: "ur", label: "Urdu" },
-  { code: "uz", label: "Uzbek" },
-  { code: "vi", label: "Vietnamese" },
+  { code: "af", label: "Afrikaans", region: "ZA" },
+  { code: "sq", label: "Albanian", region: "AL" },
+  { code: "ar", label: "Arabic", region: "SA" },
+  { code: "hy", label: "Armenian", region: "AM" },
+  { code: "az", label: "Azerbaijani", region: "AZ" },
+  { code: "bn", label: "Bangla", region: "BD" },
+  { code: "be", label: "Belarusian", region: "BY" },
+  { code: "bg", label: "Bulgarian", region: "BG" },
+  { code: "zh", label: "Chinese", region: "CN" },
+  { code: "hr", label: "Croatian", region: "HR" },
+  { code: "cs", label: "Czech", region: "CZ" },
+  { code: "da", label: "Danish", region: "DK" },
+  { code: "nl", label: "Dutch", region: "NL" },
+  { code: "en", label: "English", region: "US" },
+  { code: "et", label: "Estonian", region: "EE" },
+  { code: "tl", label: "Filipino", region: "PH" },
+  { code: "fi", label: "Finnish", region: "FI" },
+  { code: "fr", label: "French", region: "FR" },
+  { code: "ka", label: "Georgian", region: "GE" },
+  { code: "de", label: "German", region: "DE" },
+  { code: "el", label: "Greek", region: "GR" },
+  { code: "gu", label: "Gujarati", region: "IN" },
+  { code: "he", label: "Hebrew", region: "IL" },
+  { code: "hi", label: "Hindi", region: "IN" },
+  { code: "hu", label: "Hungarian", region: "HU" },
+  { code: "id", label: "Indonesian", region: "ID" },
+  { code: "it", label: "Italian", region: "IT" },
+  { code: "ja", label: "Japanese", region: "JP" },
+  { code: "kk", label: "Kazakh", region: "KZ" },
+  { code: "ko", label: "Korean", region: "KR" },
+  { code: "lv", label: "Latvian", region: "LV" },
+  { code: "lt", label: "Lithuanian", region: "LT" },
+  { code: "mk", label: "Macedonian", region: "MK" },
+  { code: "ms", label: "Malay", region: "MY" },
+  { code: "ml", label: "Malayalam", region: "IN" },
+  { code: "mr", label: "Marathi", region: "IN" },
+  { code: "nb", label: "Norwegian", region: "NO" },
+  { code: "fa", label: "Persian", region: "IR" },
+  { code: "pl", label: "Polish", region: "PL" },
+  { code: "pt", label: "Portuguese", region: "PT" },
+  { code: "pa", label: "Punjabi", region: "IN" },
+  { code: "ro", label: "Romanian", region: "RO" },
+  { code: "ru", label: "Russian", region: "RU" },
+  { code: "sr", label: "Serbian", region: "RS" },
+  { code: "sk", label: "Slovak", region: "SK" },
+  { code: "sl", label: "Slovenian", region: "SI" },
+  { code: "es", label: "Spanish", region: "ES" },
+  { code: "sw", label: "Swahili", region: "KE" },
+  { code: "sv", label: "Swedish", region: "SE" },
+  { code: "ta", label: "Tamil", region: "IN" },
+  { code: "te", label: "Telugu", region: "IN" },
+  { code: "th", label: "Thai", region: "TH" },
+  { code: "tr", label: "Turkish", region: "TR" },
+  { code: "uk", label: "Ukrainian", region: "UA" },
+  { code: "ur", label: "Urdu", region: "PK" },
+  { code: "uz", label: "Uzbek", region: "UZ" },
+  { code: "vi", label: "Vietnamese", region: "VN" },
 ];
 
 const LANGUAGE_CODES = new Set(LANGUAGES.map((language) => language.code));
@@ -96,4 +102,34 @@ export function normalizeLang(tag: string): string {
   const base = tag.trim().split("-")[0].toLowerCase();
   const code = ALIASES[base] ?? base;
   return LANGUAGE_CODES.has(code) ? code : "en";
+}
+
+// The flag next to a language in the picker. The browser's own tags — its UI language
+// and the accept languages, in that order — are searched for the first one naming this
+// language with a region: an American's English is under the American flag, a Briton's
+// under the British one, a Brazilian's Portuguese under the Brazilian one. Without such
+// a tag the home region's flag is drawn. The region has to be two letters: es-419 names
+// a continent, and there is no flag for it.
+export function languageFlag(language: Language, browserTags: readonly string[]): string {
+  for (const tag of browserTags) {
+    if (normalizeLang(tag) !== language.code) {
+      continue;
+    }
+    const region = tag
+      .split("-")
+      .slice(1)
+      .find((subtag) => /^[A-Za-z]{2}$/.test(subtag));
+    if (region) {
+      return flagEmoji(region);
+    }
+  }
+  return flagEmoji(language.region);
+}
+
+// Two regional indicator symbols make one flag: "US" → 🇺🇸.
+export function flagEmoji(region: string): string {
+  const REGIONAL_INDICATOR_A = 0x1f1e6;
+  return String.fromCodePoint(
+    ...[...region.toUpperCase()].map((letter) => REGIONAL_INDICATOR_A + letter.charCodeAt(0) - "A".charCodeAt(0)),
+  );
 }

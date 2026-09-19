@@ -1,14 +1,13 @@
-import { CopyIcon } from "lucide-react";
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useState, type ComponentProps, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { markdownToPlainText } from "@/shared/markdown.ts";
 
 // Copy puts two flavours on the clipboard: the plain text for editors and chat boxes,
 // and the rendered HTML — the innerHTML of the container the caller points at — for
-// documents and mail that keep formatting. The tooltip says "Copied" for a moment.
+// documents and mail that keep formatting. The button is a word, not an icon, and it
+// reads "Copied" for a moment afterwards.
 
-type Props = {
+type Props = Pick<ComponentProps<typeof Button>, "variant" | "size" | "className"> & {
   markdown: string;
   // The rendered result; its innerHTML is the text/html half of the clipboard item.
   rendered: RefObject<HTMLElement | null>;
@@ -16,8 +15,7 @@ type Props = {
 
 const COPIED_FOR_MS = 1500;
 
-export function CopyButton({ markdown, rendered }: Props) {
-  const [open, setOpen] = useState(false);
+export function CopyButton({ markdown, rendered, variant = "ghost", size = "sm", className }: Props) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -47,13 +45,8 @@ export function CopyButton({ markdown, rendered }: Props) {
   }
 
   return (
-    <Tooltip open={open || copied} onOpenChange={setOpen}>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Copy" onClick={() => void copy()}>
-          <CopyIcon />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{copied ? "Copied" : "Copy"}</TooltipContent>
-    </Tooltip>
+    <Button variant={variant} size={size} className={className} onClick={() => void copy()}>
+      {copied ? "Copied" : "Copy"}
+    </Button>
   );
 }
