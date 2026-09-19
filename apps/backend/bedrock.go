@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/document"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 )
 
@@ -47,18 +48,29 @@ type shortenResult struct {
 func runShorten(ctx context.Context, params requestParams, req shortenRequest, onDelta func(string)) (shortenResult, error) {
 	result := shortenResult{}
 
-	out, err := bedrockClient.ConverseStream(ctx, &bedrockruntime.ConverseStreamInput{
+	input := &bedrockruntime.ConverseStreamInput{
 		ModelId:  aws.String(params.model),
 		System:   buildSystemBlocks(),
 		Messages: buildMessages(buildUserBlock(req)),
 		InferenceConfig: &types.InferenceConfiguration{
 			MaxTokens: aws.Int32(int32(params.maxSummaryTokens)),
-			// Anthropic's default is 1.0, which is a lot for a tool that should give the
-			// same text the same answer twice. Lower is steadier on borderline texts as
-			// well: fewer refusals, fewer runs that drop half the content.
-			Temperature: aws.Float32(0.3),
 		},
-	})
+	}
+	if takesTemperature(params.model) {
+		// Anthropic's default is 1.0, which is a lot for a tool that should give the same
+		// text the same answer twice. Lower is steadier on borderline texts as well: fewer
+		// refusals, fewer runs that drop half the content.
+		input.InferenceConfig.Temperature = aws.Float32(0.3)
+	} else {
+		// The current generation thinks before it answers unless told not to. An editing
+		// tool has nothing to reason about out loud, thinking tokens are billed as output,
+		// and the user would wait for them before the first word.
+		input.AdditionalModelRequestFields = document.NewLazyDocument(map[string]any{
+			"thinking": map[string]any{"type": "disabled"},
+		})
+	}
+
+	out, err := bedrockClient.ConverseStream(ctx, input)
 	if err != nil {
 		return result, err
 	}
@@ -114,6 +126,21 @@ func runShorten(ctx context.Context, params requestParams, req shortenRequest, o
 	}
 
 	return result, nil
+}
+
+// takesTemperature tells the two generations of Claude apart, because the request differs
+// between them in two fields. The earlier one — Haiku 4.5, which the tiers ran until
+// 2026-09 and which a device override can still name — takes a temperature and does not
+// think. Claude 5 (Sonnet 5 is what the tiers run now) rejects temperature with a 400 and
+// thinks by default, so it gets thinking switched off instead. The list names the earlier
+// models this service has run or may be pointed back at; anything else is current.
+func takesTemperature(model string) bool {
+	for _, earlier := range []string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-sonnet-4-5"} {
+		if strings.Contains(model, earlier) {
+			return true
+		}
+	}
+	return false
 }
 
 // buildSystemBlocks holds the cache breakpoint: everything before it is static across

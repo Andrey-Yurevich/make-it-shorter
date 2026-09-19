@@ -77,7 +77,7 @@ func TestFormatReportSurvivesFailedSections(t *testing.T) {
 		Problems: []string{"waf activity: boom"},
 	}, "us-east-1", "/aws/lambda/mis-api")
 
-	for _, want := range []string{"Total cost: <b>unavailable</b>", "WAF blocked: unavailable", "problems:", "boom"} {
+	for _, want := range []string{"Total cost: <b>unavailable</b>", "by model:\nunavailable", "WAF blocked: unavailable", "problems:", "boom"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("the message should contain %q:\n%s", want, text)
 		}
@@ -145,7 +145,11 @@ func TestFormatReportRendering(t *testing.T) {
 		To:           summer + 3600_000,
 		TotalCostUsd: &cost,
 		TopCountries: []countryCost{{Country: "PL", CostUsd: cost}, {Country: "??", CostUsd: 0}},
-		Waf:          &wafSection{Blocked: 2, TopRules: []ruleHit{{Rule: "origin-must-be-the-extension (block)", Hits: 2}}},
+		Models: []modelCost{
+			{Model: "us.anthropic.claude-sonnet-5", Requests: 41, CostUsd: cost},
+			{Model: "us.anthropic.claude-haiku-4-5-20251001-v1:0", Requests: 1, CostUsd: 0},
+		},
+		Waf: &wafSection{Blocked: 2, TopRules: []ruleHit{{Rule: "origin-must-be-the-extension (block)", Hits: 2}}},
 		Lambda:       &lambdaStats{Errors: 7, Invocations: 113, ErrorRate: &rate},
 		LastLambdaErrors: []lambdaError{{
 			TimestampMs: summer,
@@ -165,6 +169,8 @@ func TestFormatReportRendering(t *testing.T) {
 		"🇵🇱 PL",                 // the flag is the country code in regional indicators
 		"🏳 ??",                  // and an unknown country gets a blank one, not a wrong one
 		"<b>$0.1637</b>",        // values are bold, keys are not
+		"us.anthropic.claude-sonnet-5 — <b>41</b> requests, <b>$0.1637</b>\n",
+		"<b>1</b> request, <b>$0.0000</b> (no price in MODEL_PRICES)", // zero with requests is a missing price, and says so
 		"14:23:27 CEST",         // the zone rides on the end of the window, in its summer name
 		"$252Faws$252Flambda",   // the console's double escaping of the log group
 		"$255B$2524LATEST$255D", // and of the "[$LATEST]" every Lambda stream carries

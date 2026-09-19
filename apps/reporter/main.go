@@ -49,6 +49,9 @@ type report struct {
 
 	TotalCostUsd *float64      `json:"totalCostUsd"`
 	TopCountries []countryCost `json:"topCountries"`
+	// Every model that answered, not a top five: there are one or two of them, and the
+	// point is to see all of them next to each other.
+	Models []modelCost `json:"models"`
 
 	Waf *wafSection `json:"waf"`
 
@@ -62,6 +65,12 @@ type report struct {
 type countryCost struct {
 	Country string  `json:"country"`
 	CostUsd float64 `json:"costUsd"`
+}
+
+type modelCost struct {
+	Model    string  `json:"model"`
+	Requests int     `json:"requests"`
+	CostUsd  float64 `json:"costUsd"`
 }
 
 // wafSection counts what the WebACL stopped at the edge, before any of it reached the
@@ -195,6 +204,16 @@ func buildReport(ctx context.Context, logGroup, wafLogGroup, function, window st
 			}
 		}
 		built.TotalCostUsd = &total
+	}
+
+	models, err := costByModel(ctx, logGroup, start, end)
+	if err != nil {
+		built.Problems = append(built.Problems, "cost by model: "+err.Error())
+	} else {
+		built.Models = []modelCost{}
+		for _, row := range models {
+			built.Models = append(built.Models, modelCost{Model: row.model, Requests: row.requests, CostUsd: row.cost})
+		}
 	}
 
 	// An empty name is how Terraform says the WebACL is not writing logs at all. Left as

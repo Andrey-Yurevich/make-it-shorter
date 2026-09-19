@@ -127,9 +127,14 @@ variable "waf_rate_limit" {
 # only here: the function is handed the resolved TIER1_* and REST_* values and never
 # sees a default of its own. Editing a number here moves both tiers at once.
 
+# The US geo inference profile. Sonnet 5 has no bare on-demand model id on
+# bedrock-runtime: a geo or global profile is required. The geo one keeps the IAM list
+# in modules/api short (US and Canada regions) at a 10% premium over the global one.
+# Any model named here or in a device override has to be in model_prices below and in
+# the function's IAM policy, or the call is denied and the cost is logged as zero.
 variable "default_model" {
   type    = string
-  default = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+  default = "us.anthropic.claude-sonnet-5"
 }
 
 variable "default_max_summary_tokens" {
@@ -167,8 +172,15 @@ variable "rest" {
 }
 
 # USD per million tokens, keyed by model id. Cache reads and writes are priced
-# separately because Bedrock bills them separately; both are near zero today, since the
-# only static part of the prompt is too short to be cached at all.
+# separately because Bedrock bills them separately.
+#
+# These are Anthropic's list prices with the 10% that Bedrock adds for a geo (us.)
+# profile over the global one, for Claude 4.5 and later: 2.00/10.00 list becomes
+# 2.20/11.00. Cache write is 1.25x input, cache read 0.1x. Confirm against
+# https://aws.amazon.com/bedrock/pricing/ when the prices change; the function only
+# multiplies what it is given here.
+#
+# Haiku 4.5 stays priced because a device override can still name it.
 variable "model_prices" {
   type = map(object({
     input      = number
@@ -177,11 +189,17 @@ variable "model_prices" {
     cacheWrite = number
   }))
   default = {
+    "us.anthropic.claude-sonnet-5" = {
+      input      = 2.20
+      output     = 11.00
+      cacheRead  = 0.22
+      cacheWrite = 2.75
+    }
     "us.anthropic.claude-haiku-4-5-20251001-v1:0" = {
-      input      = 1.00
-      output     = 5.00
-      cacheRead  = 0.10
-      cacheWrite = 1.25
+      input      = 1.10
+      output     = 5.50
+      cacheRead  = 0.11
+      cacheWrite = 1.375
     }
   }
 }

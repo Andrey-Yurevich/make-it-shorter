@@ -57,6 +57,25 @@ func formatReport(built report, region, apiLogGroup string) string {
 		}
 	}
 
+	fmt.Fprintf(out, "\nby model:\n")
+	switch {
+	case built.Models == nil:
+		fmt.Fprintf(out, "unavailable\n")
+	case len(built.Models) == 0:
+		fmt.Fprintf(out, "none\n")
+	default:
+		for _, row := range built.Models {
+			cost := row.CostUsd
+			fmt.Fprintf(out, "%s — %s %s, %s", escape(row.Model), bold(fmt.Sprint(row.Requests)), plural(row.Requests, "request"), bold(money(&cost)))
+			// Requests that cost nothing were not free: the function had no price for this
+			// model and wrote zero. Said here, because a zero reads as cheap otherwise.
+			if row.Requests > 0 && row.CostUsd == 0 {
+				fmt.Fprintf(out, " (no price in MODEL_PRICES)")
+			}
+			fmt.Fprintf(out, "\n")
+		}
+	}
+
 	if built.Waf == nil {
 		fmt.Fprintf(out, "\nWAF blocked: unavailable\n")
 	} else {
@@ -181,6 +200,13 @@ func countryFlag(country string) string {
 }
 
 func bold(text string) string { return "<b>" + text + "</b>" }
+
+func plural(count int, noun string) string {
+	if count == 1 {
+		return noun
+	}
+	return noun + "s"
+}
 
 func escape(text string) string { return html.EscapeString(text) }
 

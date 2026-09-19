@@ -50,12 +50,25 @@ resource "aws_iam_role_policy" "function" {
         # Both actions are needed: phase 1 streams (ConverseStream) and phase 2
         # does not (Converse). The inference profile and every regional model it
         # can route to must be listed, or the call is denied at the profile.
+        #
+        # Two models: Sonnet 5, which the tiers run, and Haiku 4.5, which a device
+        # override can still name. The US geo profile of Sonnet 5 routes within the
+        # US and Canada; the regions are the ones its model card lists for the geo
+        # profile. `aws bedrock get-inference-profile` shows the live list — check it
+        # after a new region appears, since a call routed to an unlisted one is denied.
         Effect = "Allow"
         Action = [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
         ]
         Resource = [
+          "arn:aws:bedrock:${local.region}:${local.account}:inference-profile/us.anthropic.claude-sonnet-5",
+          "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-5",
+          "arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-sonnet-5",
+          "arn:aws:bedrock:us-west-1::foundation-model/anthropic.claude-sonnet-5",
+          "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-5",
+          "arn:aws:bedrock:ca-central-1::foundation-model/anthropic.claude-sonnet-5",
+          "arn:aws:bedrock:ca-west-1::foundation-model/anthropic.claude-sonnet-5",
           "arn:aws:bedrock:${local.region}:${local.account}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0",
           "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
           "arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",

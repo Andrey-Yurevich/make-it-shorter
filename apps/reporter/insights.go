@@ -64,6 +64,47 @@ func costByCountry(ctx context.Context, logGroup string, start, end time.Time) (
 	return rows, nil
 }
 
+// modelRow is one model's share of the window: how many requests it answered and what
+// they cost.
+type modelRow struct {
+	model    string
+	requests int
+	cost     float64
+}
+
+// costByModel returns every model that answered in the window, most expensive first.
+//
+// The function prices a request from MODEL_PRICES and logs zero for a model it has no
+// price for. Requests and dollars side by side is what makes that visible: a model with
+// requests and no cost is a missing price, not a free model. During a model change, or
+// with a device override naming another model, this is also the only place the two
+// are told apart.
+func costByModel(ctx context.Context, logGroup string, start, end time.Time) ([]modelRow, error) {
+	const query = `
+		filter event = "shorten"
+		| stats count(*) as requests, sum(estimatedCostUsd) as cost by model
+		| sort cost desc`
+
+	results, err := runQuery(ctx, logGroup, query, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	rows := []modelRow{}
+	for _, result := range results {
+		// A request rejected before the model was resolved has no model field, and
+		// Insights returns the group with the field missing rather than empty.
+		model := result["model"]
+		if model == "" {
+			model = "??"
+		}
+		requests, _ := strconv.Atoi(result["requests"])
+		cost, _ := strconv.ParseFloat(result["cost"], 64)
+		rows = append(rows, modelRow{model: model, requests: requests, cost: cost})
+	}
+	return rows, nil
+}
+
 // lastLambdaErrors returns the most recent lines the function wrote outside its own
 // structured record: the runtime's own failures, and the log.Printf calls the handler
 // makes when something it could not control went wrong.

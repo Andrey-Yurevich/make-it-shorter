@@ -55,10 +55,10 @@ func TestPromptDescribesEveryKnownTone(t *testing.T) {
 	}
 }
 
-// The shapes the prompt tells the model to recognise and mirror. The source reaches
-// the model flat — the extension extracts textContent, so list markers and table
-// borders are gone — and the shape rules are what stops a list or a table from
-// coming back as a paragraph. Each one has to be there by name.
+// The shapes the prompt tells the model to recognise and mirror. The extension writes
+// light Markdown for them — bold lines, "- ", "| cell |" — but pasted text carries none,
+// so the prompt has to name each shape and how it looks either way; the shape rules are
+// what stops a list or a table from coming back as a paragraph.
 func TestPromptDescribesEveryShape(t *testing.T) {
 	for _, shape := range []string{"Prose", "A list", "A table", "A document with sections", "Mixed"} {
 		if !strings.Contains(shortenPrompt, "\n- "+shape+" — ") {
