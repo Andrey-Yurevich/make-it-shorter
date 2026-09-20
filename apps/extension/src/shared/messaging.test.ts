@@ -4,6 +4,7 @@ import {
   readExtractRequest,
   readExtractResult,
   readPanelMessage,
+  readPinStateRequest,
   readSelectionChanged,
 } from "./messaging.ts";
 
@@ -113,4 +114,14 @@ test("a selection change with nothing in it is dropped", () => {
   assert.equal(readSelectionChanged({ type: "selection-changed" }), null);
   assert.equal(readSelectionChanged({ type: "extract" }), null);
   assert.equal(readSelectionChanged(null), null);
+});
+
+// The pin question is the one message that arrives from the open web: every page of
+// make-it-shorter.net can reach that listener, so the reader has to recognise our own
+// question and nothing else.
+test("only the pin question is read off the external listener", () => {
+  assert.deepEqual(readPinStateRequest({ type: "pin-state" }), { type: "pin-state" });
+  for (const message of [{ type: "extract" }, { type: "job" }, {}, null, undefined, "pin-state", 7]) {
+    assert.equal(readPinStateRequest(message), null, JSON.stringify(message));
+  }
 });

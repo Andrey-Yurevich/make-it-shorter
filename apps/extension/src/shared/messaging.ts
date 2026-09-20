@@ -20,6 +20,17 @@ export type SelectionChangedMessage = {
   truncated: boolean;
 };
 
+// welcome page → service worker. The page on make-it-shorter.net cannot read
+// chrome.action.getUserSettings() itself — only an extension context can — so it asks
+// for the one thing it needs: whether the toolbar icon is pinned. The manifest's
+// externally_connectable is what limits who may ask.
+export type PinStateRequest = { type: "pin-state" };
+
+// service worker → welcome page, the reply. `pinned` is the answer, and on a Chrome too
+// old for getUserSettings it is `true`: an unanswerable question must not leave the page
+// with a button that never unlocks.
+export type PinStateReply = { pinned: boolean };
+
 // What the panel is asked to work on.
 //
 // `text` is what a click on the toolbar icon read from the tab: the selection, or the
@@ -104,6 +115,12 @@ export function readExtractResult(reply: unknown): ExtractResult {
     source: isPageSource(reply.source) ? reply.source : "page",
     truncated: reply.truncated === true,
   };
+}
+
+// welcome page → service worker. Anything else on this listener is not ours: the page is
+// on the open web and the listener is reachable from every page of the domain.
+export function readPinStateRequest(message: unknown): PinStateRequest | null {
+  return isRecord(message) && message.type === "pin-state" ? { type: "pin-state" } : null;
 }
 
 // content script → service worker. A message with no text is not a selection worth

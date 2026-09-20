@@ -39,7 +39,9 @@ for (const file of sourceFiles(sourceDir)) {
   // The first parameter of a message listener is the message. Anything but `unknown`
   // there — including no annotation at all, which the chrome typings widen to `any` —
   // is a shape taken on trust.
-  for (const match of source.matchAll(/\.onMessage\.addListener\(\s*\(\s*(\w+)\s*(?::\s*([^,)]+?)\s*)?[,)]/g)) {
+  for (const match of source.matchAll(
+    /\.onMessage(?:External)?\.addListener\(\s*\(\s*(\w+)\s*(?::\s*([^,)]+?)\s*)?[,)]/g,
+  )) {
     const [, parameter, annotation] = match;
     if (annotation?.trim() !== "unknown") {
       problems.push(

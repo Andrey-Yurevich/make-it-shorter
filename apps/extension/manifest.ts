@@ -91,6 +91,12 @@ export function buildManifest(): chrome.runtime.ManifestV3 {
     background: { service_worker: "background.js", type: "module" },
     permissions: ["storage", "sidePanel", "activeTab", "scripting"],
     host_permissions: ["https://api.make-it-shorter.net/*"],
+    // The welcome page keeps its usage examples behind a pinned icon, and only an
+    // extension context can read chrome.action.getUserSettings(), so the page asks this
+    // extension over chrome.runtime.sendMessage. This is the door that makes the
+    // question possible, and it is as narrow as it goes: our own pages, nothing else.
+    // It is not a permission and adds no install warning.
+    externally_connectable: { matches: ["https://make-it-shorter.net/*"] },
   };
 
   if (EXTENSION_KEY) {

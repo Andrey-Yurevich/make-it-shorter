@@ -2,6 +2,7 @@ import { UNINSTALL_URL, WELCOME_URL } from "@/shared/limits.ts";
 import {
   PANEL_PORT,
   readExtractResult,
+  readPinStateRequest,
   readSelectionChanged,
   type ExtractRequest,
   type PanelJob,
@@ -21,7 +22,12 @@ let pendingJob: PanelJob | null = null;
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {
-    void chrome.tabs.create({ url: WELCOME_URL });
+    // The welcome page keeps its examples behind a pinned icon, and it has to ask this
+    // worker whether the icon is pinned — a web page cannot read that itself. Asking
+    // takes an extension id, so we hand it our own rather than have the page carry a
+    // hard-coded one: the store build and an unpacked build then both work, and the id
+    // never has to be kept in step in two repositories.
+    void chrome.tabs.create({ url: `${WELCOME_URL}?ext=${chrome.runtime.id}` });
   }
   // Leftovers from features that are gone: dialogs with their source texts, the catalog
   // version the follow-up buttons were filtered by, the compression level the tone
@@ -31,6 +37,29 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 void chrome.runtime.setUninstallURL(UNINSTALL_URL);
+
+// The welcome page asking whether the toolbar icon is pinned. This is the only thing the
+// extension accepts from the open web, and externally_connectable in the manifest is
+// what says who may ask: nothing here checks the sender, because the browser already
+// refused every origin but ours before the listener ran.
+chrome.runtime.onMessageExternal.addListener((message: unknown, _sender, sendResponse) => {
+  if (readPinStateRequest(message) === null) {
+    return false;
+  }
+  // getUserSettings arrived in Chrome 91. On anything older the question cannot be
+  // answered, and an unanswered question would leave the page's button locked forever,
+  // so the answer is yes and the page moves on.
+  if (!chrome.action.getUserSettings) {
+    sendResponse({ pinned: true });
+    return false;
+  }
+  chrome.action.getUserSettings().then(
+    (settings) => sendResponse({ pinned: settings.isOnToolbar }),
+    () => sendResponse({ pinned: true }),
+  );
+  // The answer comes from a promise, so the channel has to stay open for it.
+  return true;
+});
 
 // openPanelOnActionClick must stay false. With it on, Chrome opens the panel itself and
 // action.onClicked never fires — and then there is nowhere to start the extraction from.
