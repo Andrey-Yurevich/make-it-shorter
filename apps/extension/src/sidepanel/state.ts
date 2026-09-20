@@ -1,4 +1,4 @@
-import type { PanelJob } from "@/shared/messaging.ts";
+import type { ExtractedImage, PanelJob } from "@/shared/messaging.ts";
 import type { ErrorCode, Source } from "@/shared/protocol.ts";
 
 // The whole panel is this one reducer, and it is deliberately small: a text on the way
@@ -14,8 +14,16 @@ export type PanelState = {
   truncated: boolean;
   // Where the text in the field came from. It travels with the request.
   source: Source;
+  // The pictures the text in the field refers to by number. Only the numbers are ever
+  // sent; this table stays here and is what the result is rendered against.
+  images: ExtractedImage[];
   // The result as markdown, accumulated delta by delta.
   result: string;
+  // The table as it stood when this run started. The result on screen is rendered
+  // against this and not against `images`: a click on the icon after the run finished
+  // replaces the field and its table, and the text already on screen would then point
+  // at somebody else's pictures.
+  resultImages: ExtractedImage[];
   streaming: boolean;
   error: { code: ErrorCode; message?: string } | null;
   // The page could not be read: a restricted page, or nothing worth reading on it. Not
@@ -29,7 +37,9 @@ export const initialPanelState: PanelState = {
   input: "",
   truncated: false,
   source: "manual",
+  images: [],
   result: "",
+  resultImages: [],
   streaming: false,
   error: null,
   unreadable: false,
@@ -48,6 +58,8 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
   switch (action.type) {
     // Typing into the field is the user acting on the last message shown, so the hints
     // and errors go. The text they edit becomes their own: the request says `manual`.
+    // The picture table survives: fixing a word is no reason to lose the pictures, and
+    // a marker the user deleted simply stops being referred to.
     case "edit":
       return {
         ...state,
@@ -62,7 +74,15 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
       return applyJob(state, action.job);
 
     case "start":
-      return { ...state, result: "", streaming: true, error: null, unreadable: false, run: state.run + 1 };
+      return {
+        ...state,
+        result: "",
+        resultImages: state.images,
+        streaming: true,
+        error: null,
+        unreadable: false,
+        run: state.run + 1,
+      };
 
     case "delta":
       return { ...state, result: state.result + action.text };
@@ -96,6 +116,7 @@ function applyJob(state: PanelState, job: PanelJob): PanelState {
     input: job.text,
     truncated: job.truncated,
     source: job.kind === "text" ? job.source : "selection",
+    images: job.images,
     error: null,
     unreadable: false,
   };

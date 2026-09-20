@@ -22,7 +22,7 @@ export function App() {
           <p className="text-muted-foreground">Nothing to show.</p>
         ) : (
           <div ref={renderedRef}>
-            <MarkdownView markdown={content.markdown} lang={content.lang} />
+            <MarkdownView markdown={content.markdown} lang={content.lang} images={content.images} />
           </div>
         )}
       </main>

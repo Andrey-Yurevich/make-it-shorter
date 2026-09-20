@@ -2,7 +2,7 @@ import { Readability, isProbablyReaderable } from "@mozilla/readability";
 import { MIN_INPUT } from "@/shared/limits.ts";
 import { readExtractRequest, type ExtractResult, type SelectionChangedMessage } from "@/shared/messaging.ts";
 import { countCodePoints, normalizeText } from "@/shared/text.ts";
-import { selectionWithStructure, textWithStructure } from "./structure.ts";
+import { selectionWithStructure, textWithStructure, type Structured } from "./structure.ts";
 
 // The content script. It is not resident: the service worker injects it into the active
 // tab when the toolbar icon is clicked, and nowhere else. It does two things — answers
@@ -35,12 +35,19 @@ if (!window.__makeItShorterInjected) {
 // The selection when there is one, the page when there is not. Dirty text is an
 // acceptable result: what is content and what is furniture is decided by Readability on
 // the DOM, where link density and markup are still available, never on the flat string.
-// The same goes for shape: headings, list items and table rows are written down as light
-// Markdown here, while the DOM still tells them apart (structure.ts).
+// The same goes for shape: headings, list items, table rows and pictures are written
+// down as light Markdown here, while the DOM still tells them apart (structure.ts).
 function extract(): ExtractResult {
-  const selection = normalizeText(selectionText(window.getSelection()));
+  const selected = selectionText(window.getSelection());
+  const selection = normalizeText(selected.text);
   if (selection.text !== "") {
-    return { ok: true, text: selection.text, source: "selection", truncated: selection.truncated };
+    return {
+      ok: true,
+      text: selection.text,
+      source: "selection",
+      truncated: selection.truncated,
+      images: selected.images,
+    };
   }
 
   // The cheap question first: is there an article-shaped body of text on this page at
@@ -55,32 +62,34 @@ function extract(): ExtractResult {
   // the article's HTML with the furniture removed; that is parsed back into a detached
   // document so the shape can be read off it.
   const article = new Readability(document.cloneNode(true) as Document).parse();
-  let raw = "";
+  let structured: Structured = { text: "", images: [] };
   if (article?.content) {
     const detached = new DOMParser().parseFromString(article.content, "text/html");
-    raw = textWithStructure(detached.body);
+    structured = textWithStructure(detached.body);
   }
-  if (raw.trim() === "") {
+  if (structured.text.trim() === "") {
     // The page looked readable and Readability still declined — a forum thread, a long
-    // comment section. The visible text is a worse but honest fallback.
-    raw = document.body?.innerText ?? "";
+    // comment section. The visible text is a worse but honest fallback, and it carries
+    // no shape and no pictures: innerText is a flat string.
+    structured = { text: document.body?.innerText ?? "", images: [] };
   }
 
-  const page = normalizeText(raw);
+  const page = normalizeText(structured.text);
   if (page.text === "") {
     return { ok: false };
   }
-  return { ok: true, text: page.text, source: "page", truncated: page.truncated };
+  return { ok: true, text: page.text, source: "page", truncated: page.truncated, images: structured.images };
 }
 
 // The selection with its shape. Selection.toString() is the fallback for the case the
-// walker returns nothing — a selection of hidden or media nodes only.
-function selectionText(selection: Selection | null): string {
+// walker returns nothing — a selection of hidden or media nodes only — and it comes
+// without pictures, having no DOM left to read them off.
+function selectionText(selection: Selection | null): Structured {
   if (!selection || selection.isCollapsed) {
-    return "";
+    return { text: "", images: [] };
   }
   const structured = selectionWithStructure(selection);
-  return structured.trim() !== "" ? structured : selection.toString();
+  return structured.text.trim() !== "" ? structured : { text: selection.toString(), images: [] };
 }
 
 // Selections made while the panel is open go into its field. Debounced: selectionchange
@@ -100,8 +109,11 @@ function reportSelection(): void {
   }
 
   // Below the minimum there is nothing to shorten anyway, and picking up every stray
-  // word would overwrite text the user had put in the field by hand.
-  const normalized = normalizeText(selectionText(selection));
+  // word would overwrite text the user had put in the field by hand. The markers count
+  // towards the length exactly as they do on the server: they are part of the text that
+  // gets sent.
+  const structured = selectionText(selection);
+  const normalized = normalizeText(structured.text);
   if (countCodePoints(normalized.text) < MIN_INPUT) {
     return;
   }
@@ -110,6 +122,7 @@ function reportSelection(): void {
     type: "selection-changed",
     text: normalized.text,
     truncated: normalized.truncated,
+    images: structured.images,
   };
   try {
     // The worker drops the message when the panel is not open, so nothing here depends

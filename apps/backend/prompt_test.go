@@ -114,6 +114,19 @@ func TestPromptTellsTheModelTheSentinel(t *testing.T) {
 	}
 }
 
+// The marker the extension writes has to be the marker the prompt names. They are two
+// copies of one shape, like the error codes, and nothing would notice them drifting
+// apart: the model would stop copying the markers through, and every picture would
+// quietly stop appearing in the result.
+func TestPromptTellsTheModelTheImageMarker(t *testing.T) {
+	if !strings.Contains(shortenPrompt, imageMarkerExample) {
+		t.Errorf("the prompt never shows the marker %q", imageMarkerExample)
+	}
+	if !strings.Contains(shortenPrompt, "marker") {
+		t.Errorf("the prompt never tells the model what a marker is")
+	}
+}
+
 // The hold-back at the start of the stream: forwarded once the sentinel is ruled out,
 // swallowed once it is found, and undecided for as long as what has arrived could still
 // turn into it.

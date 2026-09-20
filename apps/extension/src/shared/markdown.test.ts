@@ -26,8 +26,13 @@ test("table rows are cells joined with a pipe", () => {
   assert.equal(markdownToPlainText(md), "Name | Size\nCat | Small\nHorse | Large");
 });
 
-test("links become their text and images their alt text", () => {
-  assert.equal(markdownToPlainText("See [the docs](https://example.com) and ![a chart](x.png)."), "See the docs and a chart.");
+// The plain text is what the counter counts and what Copy puts on the clipboard as
+// text/plain. A picture is not a character of it: pasting into a chat box should not
+// paste the word "chart" where the panel shows a photograph. The text/html half of Copy
+// keeps the pictures — it is the rendered DOM.
+test("links become their text and images become nothing", () => {
+  assert.equal(markdownToPlainText("See [the docs](https://example.com) and ![a chart](x.png)."), "See the docs and .");
+  assert.equal(markdownToPlainText("Before.\n\n![](1)\n\nAfter."), "Before.\n\nAfter.");
 });
 
 test("code, quotes and rules become plain paragraphs or nothing", () => {

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { hydrate } from "@/shared/hydrate.ts";
 import { LANGUAGES, languageFlag } from "@/shared/lang.ts";
 import { MAX_INPUT, MIN_INPUT } from "@/shared/limits.ts";
 import { markdownToPlainText } from "@/shared/markdown.ts";
@@ -95,6 +96,10 @@ export function App() {
     }
   }, [state.run]);
 
+  // The result with its picture markers resolved: one string, read by the renderer, the
+  // counter and both halves of Copy, so none of them can disagree about what is shown.
+  const shown = hydrate(state.result, state.resultImages, state.streaming);
+
   async function start(): Promise<void> {
     const id = ++runId.current;
     dispatch({ type: "start" });
@@ -133,7 +138,11 @@ export function App() {
   }
 
   async function openInWindow(): Promise<void> {
-    await stashOutputWindowContent({ markdown: state.result, lang: settingsRef.current?.lang ?? "en" });
+    await stashOutputWindowContent({
+      markdown: shown,
+      lang: settingsRef.current?.lang ?? "en",
+      images: state.resultImages,
+    });
     await chrome.windows.create({
       url: chrome.runtime.getURL("output.html"),
       type: "popup",
@@ -143,8 +152,10 @@ export function App() {
   }
 
   const inputLength = countCodePoints(state.input);
-  const outputLength = countCodePoints(markdownToPlainText(state.result));
-  const finished = !state.streaming && state.result !== "" && state.error === null;
+  const outputLength = countCodePoints(markdownToPlainText(shown));
+  // `shown` and not `state.result`: what the panel has to show is what is on screen, and
+  // the head of a stream can be half a marker, which is nothing yet.
+  const finished = !state.streaming && shown !== "" && state.error === null;
   // service_disabled is the one error that holds the button down: the service said no,
   // and it will say no again until something changes. Editing the field lifts it.
   const canShorten =
@@ -252,7 +263,7 @@ export function App() {
                 finished && "pb-10",
               )}
             >
-              {state.streaming && state.result === "" ? (
+              {state.streaming && shown === "" ? (
                 <div className="flex flex-col gap-2 py-1" aria-label="Waiting for the first words">
                   {/* Darker than the component's default: the default accent is a shade
                       off the background in the light theme and the pulse halves it. */}
@@ -260,11 +271,11 @@ export function App() {
                   <Skeleton className="h-3.5 w-11/12 bg-muted-foreground/20" />
                   <Skeleton className="h-3.5 w-4/6 bg-muted-foreground/20" />
                 </div>
-              ) : state.result === "" ? (
+              ) : shown === "" ? (
                 <p className="text-muted-foreground">The shortened text will appear here.</p>
               ) : (
                 <div ref={renderedRef}>
-                  <MarkdownView markdown={state.result} lang={lang} />
+                  <MarkdownView markdown={shown} lang={lang} images={state.resultImages} />
                 </div>
               )}
             </div>
@@ -273,7 +284,7 @@ export function App() {
                 <Button variant="ghost" size="sm" className="flex-1 rounded-none" onClick={() => void openInWindow()}>
                   Open in window
                 </Button>
-                <CopyButton markdown={state.result} rendered={renderedRef} className="flex-1 rounded-none" />
+                <CopyButton markdown={shown} rendered={renderedRef} className="flex-1 rounded-none" />
               </div>
             )}
           </div>

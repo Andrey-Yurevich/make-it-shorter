@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   readExtractRequest,
   readExtractResult,
+  readExtractedImages,
   readPanelMessage,
   readPinStateRequest,
   readSelectionChanged,
@@ -19,7 +20,7 @@ test("a well-formed text job passes through", () => {
       type: "job",
       job: { kind: "text", text: "hello", source: "selection", truncated: false },
     }),
-    { kind: "text", text: "hello", source: "selection", truncated: false },
+    { kind: "text", text: "hello", source: "selection", truncated: false, images: [] },
   );
 });
 
@@ -49,6 +50,7 @@ test("an unknown source falls back to page rather than travelling on", () => {
     text: "hi",
     source: "page",
     truncated: false,
+    images: [],
   });
 });
 
@@ -62,6 +64,7 @@ test("a fill job carries the selection and nothing else", () => {
     kind: "fill",
     text: "hi",
     truncated: true,
+    images: [],
   });
   // The same rule as every other job: a fill with no text is not a fill.
   assert.deepEqual(readPanelMessage({ type: "job", job: { kind: "fill" } }), { kind: "unreadable" });
@@ -86,12 +89,14 @@ test("an extract reply is read back into shape", () => {
     text: "hi",
     source: "selection",
     truncated: false,
+    images: [],
   });
   assert.deepEqual(readExtractResult({ ok: true, text: "hi" }), {
     ok: true,
     text: "hi",
     source: "page",
     truncated: false,
+    images: [],
   });
 });
 
@@ -109,11 +114,64 @@ test("a selection change with nothing in it is dropped", () => {
     type: "selection-changed",
     text: "hi",
     truncated: false,
+    images: [],
   });
   assert.equal(readSelectionChanged({ type: "selection-changed", text: "" }), null);
   assert.equal(readSelectionChanged({ type: "selection-changed" }), null);
   assert.equal(readSelectionChanged({ type: "extract" }), null);
   assert.equal(readSelectionChanged(null), null);
+});
+
+// The picture table is the newest thing to cross a boundary, and the only one whose
+// contents the panel hands to the network: an <img src> is a request. An entry that is
+// not exactly what the extractor writes is dropped rather than repaired — the marker
+// that pointed at it then renders as nothing, which is what a missing picture looks
+// like anyway.
+const PICTURE = { id: 1, src: "https://example.com/a.jpg", alt: "A photo" };
+
+test("a well-formed picture table passes through", () => {
+  assert.deepEqual(readExtractedImages([PICTURE]), [PICTURE]);
+  assert.deepEqual(readExtractedImages([]), []);
+});
+
+test("a table that is not a table at all is an empty one", () => {
+  for (const value of [undefined, null, {}, "images", 7, { 0: PICTURE }]) {
+    assert.deepEqual(readExtractedImages(value), [], JSON.stringify(value));
+  }
+});
+
+test("an entry the panel could not use is left behind, the rest are kept", () => {
+  const broken = [
+    null,
+    "https://example.com/a.jpg",
+    { id: 1 },
+    { id: "1", src: "https://example.com/a.jpg", alt: "" },
+    { id: 1.5, src: "https://example.com/a.jpg", alt: "" },
+    { id: 2, src: "http://example.com/a.jpg", alt: "" },
+    { id: 3, src: "javascript:alert(1)", alt: "" },
+    { id: 4, src: "data:image/png;base64,iVBOR", alt: "" },
+    { id: 5, src: "/a.jpg", alt: "" },
+    { id: 6, src: "https://example.com/a.jpg" },
+    { id: 7, src: "https://example.com/a.jpg", alt: 7 },
+  ];
+  assert.deepEqual(readExtractedImages([...broken, PICTURE]), [PICTURE]);
+});
+
+test("the picture table rides along with every message that carries text", () => {
+  const job = readPanelMessage({
+    type: "job",
+    job: { kind: "text", text: "hi", source: "page", truncated: false, images: [PICTURE] },
+  });
+  assert.deepEqual(job?.kind === "text" && job.images, [PICTURE]);
+
+  const fill = readPanelMessage({ type: "job", job: { kind: "fill", text: "hi", images: [PICTURE] } });
+  assert.deepEqual(fill?.kind === "fill" && fill.images, [PICTURE]);
+
+  const reply = readExtractResult({ ok: true, text: "hi", images: [PICTURE] });
+  assert.deepEqual(reply.ok && reply.images, [PICTURE]);
+
+  const selection = readSelectionChanged({ type: "selection-changed", text: "hi", images: [PICTURE] });
+  assert.deepEqual(selection?.images, [PICTURE]);
 });
 
 // The pin question is the one message that arrives from the open web: every page of

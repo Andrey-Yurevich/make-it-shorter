@@ -10,8 +10,15 @@ import { unified } from "unified";
 //   paragraphs and headings   separated by a blank line, markup stripped
 //   list items                one per line, "- " or "1. " in front
 //   table rows                cells joined with " | "
-//   links                     their text; images their alt text
+//   links                     their text
+//   images                    nothing at all
 //   code, quotes              their text as an ordinary paragraph
+//
+// It runs on the hydrated result — the markers already resolved into images — so the
+// counter and the text/plain half of Copy count and carry what is on screen. A picture
+// is not a character of it: pasting the result into a chat box should not paste "chart"
+// where the panel shows a photograph. The text/html half keeps the pictures, because it
+// is the rendered DOM and they are in it.
 
 const parser = unified().use(remarkParse).use(remarkGfm);
 
@@ -85,7 +92,8 @@ function inline(nodes: PhrasingContent[]): string {
         out += "\n";
         break;
       case "image":
-        out += node.alt ?? "";
+        // Nothing. The alt text is written for a reader who cannot see the picture, not
+        // for one who is about to paste the words somewhere else.
         break;
       case "emphasis":
       case "strong":

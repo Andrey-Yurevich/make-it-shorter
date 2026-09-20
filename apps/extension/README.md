@@ -10,11 +10,11 @@ decisions live in the root `CLAUDE.md`; this file is the package's own notes.
 | `manifest.ts` | the manifest, written into `dist/` by a Vite plugin; version from the git tag on HEAD |
 | `src/background/index.ts` | service worker: opens the panel on the icon click, injects `content.js`, hands the text to the panel over a port |
 | `src/content/index.ts` | content script, one IIFE with Readability inside; answers `extract`, reports selections |
-| `src/content/structure.ts` | DOM → text with its shape: headings as bold lines, `- ` / `1. ` items, `\| cell \|` rows; tested with linkedom |
+| `src/content/structure.ts` | DOM → text with its shape: headings as bold lines, `- ` / `1. ` items, `\| cell \|` rows, `{{img:N}}` markers and the picture table beside them; tested with linkedom |
 | `src/sidepanel/` | the panel: `App.tsx`, the reducer in `state.ts`, the network call in `api.ts` |
 | `src/output/` | the "Open in window" page |
 | `src/components/` | `MarkdownView` and `CopyButton`, shared by the panel and the window; `ui/` is shadcn |
-| `src/shared/` | pure modules with tests: SSE parser, text normalisation, languages, markdown → plain text, message readers, storage |
+| `src/shared/` | pure modules with tests: SSE parser, text normalisation, languages, markdown → plain text, `{{img:N}}` → `![](N)`, message readers, storage |
 | `public/_locales/` | the 30 catalogs of the strings Chrome itself shows (name, description, icon title) |
 | `scripts/` | the two build checks, see below |
 
@@ -61,3 +61,25 @@ Load `dist/` unpacked (with `EXTENSION_KEY` set) and walk through:
 - Shorten twice on the same text works; changing language or tone applies to the next run;
 - dark theme follows the system; Arabic output renders right to left;
 - the install dialog does not say "read and change all your data on all websites".
+
+## Pictures in the result
+
+The one part of this that no test can settle is whether the model carries the markers
+through. Production runs Haiku 4.5, so check there and not only on a newer model. Walk
+these, with the network panel open on the first two:
+
+| Page | What to look for |
+|---|---|
+| A Wikipedia article with an infobox and thumbnails | pictures in the places they held, captions shortened, hotlinking allowed |
+| A news site that lazy-loads through `data-src` and `srcset` | the real addresses are requested, not the placeholders |
+| Medium or Substack | `<figure>` with a `<figcaption>`: picture, then the caption as a paragraph |
+| A selection that starts inside a `<figure>` | the marker without its parent still renders |
+| A site that guards against hotlinking | the picture is missing, with no broken-image icon and no gap |
+| Pictures behind a login — Confluence, Notion | missing, same as above |
+| A page that is nothing but pictures, a gallery | `nothing_to_shorten` |
+| Dark theme | a transparent PNG is either legible or knowingly accepted as is |
+| Copy into Google Docs, then into a plain editor | the document keeps the pictures, the plain text has none of them and none of their alt text |
+| Open in window | the pictures are there too |
+
+The request the panel sends must contain `{{img:1}}` and no address: that is the privacy
+claim, and the network panel is where it is confirmed.

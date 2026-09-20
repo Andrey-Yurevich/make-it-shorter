@@ -5,10 +5,16 @@
 // service worker → content script
 export type ExtractRequest = { type: "extract" };
 
+// A picture the extraction found, numbered from one in document order. The text carries
+// only the number, as "{{img:1}}"; the address stays in this table, travels between the
+// extension's own surfaces and is never sent anywhere. The panel puts the two back
+// together when it renders the result.
+export type ExtractedImage = { id: number; src: string; alt: string };
+
 // content script → service worker, the reply to `extract`. `ok: false` is a page with
 // nothing to read: no selection and no article-shaped body of text.
 export type ExtractResult =
-  | { ok: true; text: string; source: "selection" | "page"; truncated: boolean }
+  | { ok: true; text: string; source: "selection" | "page"; truncated: boolean; images: ExtractedImage[] }
   | { ok: false };
 
 // content script → service worker, whenever a selection worth shortening is made in the
@@ -18,6 +24,7 @@ export type SelectionChangedMessage = {
   type: "selection-changed";
   text: string;
   truncated: boolean;
+  images: ExtractedImage[];
 };
 
 // welcome page → service worker. The page on make-it-shorter.net cannot read
@@ -39,8 +46,8 @@ export type PinStateReply = { pinned: boolean };
 // user asks. `unreadable` is a page we could not read: a restricted page, or one with
 // no text on it. That is not an error; the panel says so and waits.
 export type PanelJob =
-  | { kind: "text"; text: string; source: "selection" | "page"; truncated: boolean }
-  | { kind: "fill"; text: string; truncated: boolean }
+  | { kind: "text"; text: string; source: "selection" | "page"; truncated: boolean; images: ExtractedImage[] }
+  | { kind: "fill"; text: string; truncated: boolean; images: ExtractedImage[] }
   | { kind: "unreadable" };
 
 // service worker → panel, over the port. Nothing travels the other way.
@@ -68,6 +75,34 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+// The picture table, entry by entry. An entry the panel cannot use is left behind rather
+// than repaired: the marker that pointed at it renders as nothing, which is what a
+// missing picture should look like. Absent or malformed altogether is an empty table —
+// text with markers and no pictures still reads.
+//
+// `src` has to be an https URL, and that is checked here as well as where it was built:
+// this reader is the last thing between a string from another process and an <img> the
+// panel asks the network for.
+export function readExtractedImages(value: unknown): ExtractedImage[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const images: ExtractedImage[] = [];
+  for (const entry of value) {
+    if (!isRecord(entry) || typeof entry.alt !== "string") {
+      continue;
+    }
+    if (typeof entry.id !== "number" || !Number.isInteger(entry.id)) {
+      continue;
+    }
+    if (typeof entry.src !== "string" || !entry.src.startsWith("https://")) {
+      continue;
+    }
+    images.push({ id: entry.id, src: entry.src, alt: entry.alt });
+  }
+  return images;
+}
+
 // service worker → panel. Returns null for anything that is not a job, which the panel
 // ignores; a job it cannot read comes back as `unreadable`, because that is what it is.
 // Silently dropping a malformed job would leave the panel waiting for text that is
@@ -82,7 +117,12 @@ export function readPanelMessage(message: unknown): PanelJob | null {
   }
 
   if (job.kind === "fill" && typeof job.text === "string") {
-    return { kind: "fill", text: job.text, truncated: job.truncated === true };
+    return {
+      kind: "fill",
+      text: job.text,
+      truncated: job.truncated === true,
+      images: readExtractedImages(job.images),
+    };
   }
   if (job.kind === "text" && typeof job.text === "string") {
     return {
@@ -92,6 +132,7 @@ export function readPanelMessage(message: unknown): PanelJob | null {
       // of the request, and getting it wrong costs nothing a user can see.
       source: isPageSource(job.source) ? job.source : "page",
       truncated: job.truncated === true,
+      images: readExtractedImages(job.images),
     };
   }
   return { kind: "unreadable" };
@@ -114,6 +155,7 @@ export function readExtractResult(reply: unknown): ExtractResult {
     text: reply.text,
     source: isPageSource(reply.source) ? reply.source : "page",
     truncated: reply.truncated === true,
+    images: readExtractedImages(reply.images),
   };
 }
 
@@ -132,5 +174,10 @@ export function readSelectionChanged(message: unknown): SelectionChangedMessage 
   if (message.text === "") {
     return null;
   }
-  return { type: "selection-changed", text: message.text, truncated: message.truncated === true };
+  return {
+    type: "selection-changed",
+    text: message.text,
+    truncated: message.truncated === true,
+    images: readExtractedImages(message.images),
+  };
 }

@@ -1,7 +1,8 @@
-import type { ComponentProps, ReactNode } from "react";
+import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { isRtl } from "@/shared/lang.ts";
+import type { ExtractedImage } from "@/shared/messaging.ts";
 
 // The result, rendered. The model is told to write minimal Markdown — prose, lists, a
 // table if the source had one, a bold line as a heading — and this renders exactly that
@@ -10,22 +11,81 @@ import { isRtl } from "@/shared/lang.ts";
 // bold paragraph, a link is its text, a code block is a paragraph. Raw HTML is not
 // rendered (react-markdown's default shows it as text).
 //
+// Images are the one thing that does not come from the model. `markdown` has been
+// through hydrate(), which turned the extraction's "{{img:N}}" markers into "![](N)",
+// and `images` is the table those numbers index. Nothing else renders as a picture: an
+// address the model wrote by itself is not a number and is not in the table.
+//
 // Shared between the side panel and the output window, so the two look the same.
 
 type Props = {
+  // Hydrated: see shared/hydrate.ts. The caller hydrates rather than this component, so
+  // that the character counter and Copy read exactly the text that is on screen.
   markdown: string;
   lang: string;
+  images?: ExtractedImage[];
   className?: string;
 };
 
-export function MarkdownView({ markdown, lang, className }: Props) {
+// Stable identities: a fresh array or set on every render would restart the effect below
+// on every render.
+const NO_IMAGES: ExtractedImage[] = [];
+const NONE_FAILED: ReadonlySet<number> = new Set();
+
+export function MarkdownView({ markdown, lang, images = NO_IMAGES, className }: Props) {
+  // Pictures that would not load. They are not retried and not marked: see `picture`.
+  const [failed, setFailed] = useState(NONE_FAILED);
+
+  // A different table is a different run, and its pictures deserve their own attempt.
+  useEffect(() => setFailed(NONE_FAILED), [images]);
+
+  const table = useMemo(() => new Map(images.map((image) => [image.id, image])), [images]);
+  const withPictures = useMemo<Components>(
+    () => ({
+      ...components,
+      img: picture(table, failed, (id) => setFailed((gone) => new Set(gone).add(id))),
+    }),
+    [table, failed],
+  );
+
   return (
     <div dir={isRtl(lang) ? "rtl" : undefined} className={className}>
-      <Markdown remarkPlugins={[remarkGfm]} components={components}>
+      <Markdown remarkPlugins={[remarkGfm]} components={withPictures}>
         {markdown}
       </Markdown>
     </div>
   );
+}
+
+// The picture a number stands for. A number with nothing behind it renders as nothing,
+// and so does one that failed to load: no broken-image icon, no caption, no gap. A
+// picture behind a login, past an expired signature or guarded against hotlinking just
+// is not there, and a row of grey icons would say less about the text than the text does.
+function picture(
+  table: Map<number, ExtractedImage>,
+  failed: ReadonlySet<number>,
+  onFail: (id: number) => void,
+): Components["img"] {
+  return ({ src }) => {
+    const id = Number(src);
+    const image = table.get(id);
+    if (!image || failed.has(id)) {
+      return null;
+    }
+    return (
+      <img
+        src={image.src}
+        alt={image.alt}
+        loading="lazy"
+        decoding="async"
+        // Two things at once: the host never learns the extension's id, and the hotlink
+        // guards that turn away a foreign Referer usually let an empty one through.
+        referrerPolicy="no-referrer"
+        onError={() => onFail(id)}
+        className="my-2 block max-h-64 max-w-full rounded object-contain"
+      />
+    );
+  };
 }
 
 // Headings of any level: a paragraph in bold.
@@ -78,7 +138,6 @@ const components: Components = {
   pre: Paragraph,
   blockquote: Unwrap,
   hr: () => null,
-  img: ({ alt }) => <>{alt}</>,
   input: () => null,
   sup: Unwrap,
   section: Unwrap,

@@ -1,4 +1,5 @@
 import { normalizeLang } from "./lang.ts";
+import { readExtractedImages, type ExtractedImage } from "./messaging.ts";
 import { DEFAULT_TONE, isTone, type Tone } from "./protocol.ts";
 
 // Everything lives in chrome.storage.local, under four keys and no others: deviceId,
@@ -54,16 +55,27 @@ export async function hideRating(): Promise<void> {
 }
 
 // The hand-over to the output window goes through chrome.storage.session: memory only,
-// never the disk, so the rule that no text is stored anywhere holds. The window reads the
-// key once and removes it.
+// never the disk, so the rule that no text is stored anywhere holds. That covers the
+// picture table too — it travels with the text it belongs to. The window reads the key
+// once and removes it.
 const OUTPUT_WINDOW_KEY = "outputWindow";
 
-export type OutputWindowContent = { markdown: string; lang: string };
+export type OutputWindowContent = {
+  // Already hydrated: the markers resolved into "![](N)", the numbers pointing into
+  // `images` below.
+  markdown: string;
+  lang: string;
+  images: ExtractedImage[];
+};
 
 export async function stashOutputWindowContent(content: OutputWindowContent): Promise<void> {
   await chrome.storage.session.set({ [OUTPUT_WINDOW_KEY]: content });
 }
 
+// Storage is a boundary like any message: what comes back is whatever was written, by
+// whatever build of the extension wrote it. The picture table is read by the same reader
+// the messages use, so an entry that would not be allowed over a port is not allowed
+// here either.
 export async function takeOutputWindowContent(): Promise<OutputWindowContent | null> {
   const stored = await chrome.storage.session.get(OUTPUT_WINDOW_KEY);
   await chrome.storage.session.remove(OUTPUT_WINDOW_KEY);
@@ -75,5 +87,9 @@ export async function takeOutputWindowContent(): Promise<OutputWindowContent | n
   if (typeof fields.markdown !== "string") {
     return null;
   }
-  return { markdown: fields.markdown, lang: typeof fields.lang === "string" ? fields.lang : "en" };
+  return {
+    markdown: fields.markdown,
+    lang: typeof fields.lang === "string" ? fields.lang : "en",
+    images: readExtractedImages(fields.images),
+  };
 }

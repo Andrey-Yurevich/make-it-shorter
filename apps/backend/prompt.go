@@ -28,6 +28,19 @@ import (
 // be something no real text starts with.
 const nothingToShortenSentinel = "[[NOTHING_TO_SHORTEN]]"
 
+// imageMarkerExample is one of the markers the extension leaves in the text where the
+// page had a picture: "{{img:1}}", "{{img:2}}", numbered from one in the order they
+// appeared. The server neither writes them nor reads them — no picture and no address
+// ever reaches it — but the prompt has to show the model one, or the braces read as
+// noise and get rewritten or dropped, and the pictures vanish from the result. The
+// extension holds the other copy of this shape, the same way both sides hold their own
+// copy of the error codes, and each has a test on its own.
+//
+// Two braces where the sentinel has two brackets, on purpose: the head of the stream is
+// held back for as long as it could still be the sentinel, and a marker that started
+// like one would be held back with it.
+const imageMarkerExample = "{{img:1}}"
+
 // The prompt is organised by priority, and the order is the point. Three runs on one
 // dense text showed the previous version losing a list item, folding both lists into
 // prose and opening with a definition the source did not contain — each time because
@@ -70,11 +83,13 @@ Read the shape first, block by block, and keep it. The source may carry light Ma
 - A document with sections — headings standing alone between blocks of text: one "**bold line**" per section kept, followed by one short paragraph or list. Sections that are not content go whole: references, see also, external links, navigation, edit links, footnote markers such as [12].
 - Mixed — apply the rule of each part to that part, block by block, in the source's order. Blocks of different kinds are never merged: a list does not become a sentence, a paragraph does not become items, two lists with a paragraph between them stay two lists.
 
+Image markers. Where the page had a picture, the extension leaves a marker of its own in the text: ` + imageMarkerExample + `, {{img:2}}, and so on. A marker is not text — it carries no claim and is never counted as one. Keep every marker exactly as written and where it stands, whenever the block around it survives; drop it when that block goes. Never write a marker the source does not contain, never renumber one, never merge or repeat one.
+
 Keep the person and the voice: "I" to "you" stays "I" to "you"; a poem keeps its lines, a letter stays a letter, dialogue stays dialogue.
 
 MARKUP
 
-Only the Markdown named above: "**bold lines**" for headings, "- " and "1. " for items, "| cell |" rows for tables. Never "#" headings, links, images, code, quotes, horizontal rules, HTML or emoji.
+Only the Markdown named above: "**bold lines**" for headings, "- " and "1. " for items, "| cell |" rows for tables. Never "#" headings, links, Markdown images, code, quotes, horizontal rules, HTML or emoji. The extension's {{img:N}} markers are the one exception: copy them as they stand.
 
 LANGUAGE
 
@@ -92,7 +107,7 @@ Tone changes the voice, never the substance, the shape or the length: the same c
 
 WHEN THERE IS NO TEXT
 
-When the input is not a text at all — search results, a navigation menu, unrelated snippets or headlines, a table of raw data, random characters — write exactly ` + nothingToShortenSentinel + ` and nothing else. Only when there is genuinely nothing to shorten: a text with leftover navigation or boilerplate is still a text.
+When the input is not a text at all — search results, a navigation menu, unrelated snippets or headlines, a table of raw data, random characters — write exactly ` + nothingToShortenSentinel + ` and nothing else. Only when there is genuinely nothing to shorten: a text with leftover navigation or boilerplate is still a text. Image markers are not text either, so an input that is markers and a few stray words has nothing to shorten.
 
 OUTPUT
 

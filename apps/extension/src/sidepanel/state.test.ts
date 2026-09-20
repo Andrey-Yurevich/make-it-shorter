@@ -6,11 +6,16 @@ function after(actions: PanelAction[], from: PanelState = initialPanelState): Pa
   return actions.reduce(panelReducer, from);
 }
 
+const PICTURE = { id: 1, src: "https://example.com/a.jpg", alt: "A photo" };
+
 const pageJob: PanelAction = {
   type: "job",
-  job: { kind: "text", text: "the whole page", source: "page", truncated: true },
+  job: { kind: "text", text: "the whole page", source: "page", truncated: true, images: [PICTURE] },
 };
-const fillJob: PanelAction = { type: "job", job: { kind: "fill", text: "a selection", truncated: false } };
+const fillJob: PanelAction = {
+  type: "job",
+  job: { kind: "fill", text: "a selection", truncated: false, images: [] },
+};
 
 test("a text job fills the field with its source and truncation", () => {
   const state = after([pageJob]);
@@ -79,4 +84,33 @@ test("a job after a finished run replaces the field but not the result", () => {
   const state = after([{ type: "start" }, { type: "delta", text: "result" }, { type: "done" }, fillJob]);
   assert.equal(state.input, "a selection");
   assert.equal(state.result, "result");
+});
+
+// The pictures. The field's table is what the next run will refer to; the result's table
+// is the one the text on screen refers to, and it is taken when the run starts. Without
+// the snapshot, a click on the icon after the run finished would bring in a new table
+// and the result already on screen would point into it.
+
+test("a job brings its picture table along with its text", () => {
+  assert.deepEqual(after([pageJob]).images, [PICTURE]);
+  assert.deepEqual(after([pageJob, fillJob]).images, []);
+});
+
+test("a run renders against the table as it stood when it started", () => {
+  const running = after([pageJob, { type: "start" }]);
+  assert.deepEqual(running.resultImages, [PICTURE]);
+
+  const afterwards = after([{ type: "done" }, fillJob], running);
+  assert.deepEqual(afterwards.images, [], "the field follows the new selection");
+  assert.deepEqual(afterwards.resultImages, [PICTURE], "the result keeps the table it was written against");
+});
+
+test("typing keeps the pictures: fixing a word is no reason to lose them", () => {
+  const state = after([pageJob, { type: "edit", text: "the whole page, corrected" }]);
+  assert.deepEqual(state.images, [PICTURE]);
+});
+
+test("an unreadable page leaves the table alone, like the field", () => {
+  const state = after([pageJob, { type: "job", job: { kind: "unreadable" } }]);
+  assert.deepEqual(state.images, [PICTURE]);
 });

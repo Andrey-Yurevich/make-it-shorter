@@ -94,7 +94,13 @@ async function run(tab: chrome.tabs.Tab): Promise<void> {
 
     sendToPanel(
       extracted.ok
-        ? { kind: "text", text: extracted.text, source: extracted.source, truncated: extracted.truncated }
+        ? {
+            kind: "text",
+            text: extracted.text,
+            source: extracted.source,
+            truncated: extracted.truncated,
+            images: extracted.images,
+          }
         : { kind: "unreadable" },
     );
   } catch {
@@ -114,7 +120,7 @@ chrome.runtime.onMessage.addListener((message: unknown) => {
   if (selection && panelPort) {
     panelPort.postMessage({
       type: "job",
-      job: { kind: "fill", text: selection.text, truncated: selection.truncated },
+      job: { kind: "fill", text: selection.text, truncated: selection.truncated, images: selection.images },
     });
   }
   return false;
