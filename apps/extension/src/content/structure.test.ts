@@ -134,11 +134,32 @@ test("a lazy picture is found behind data-src, data-lazy-src and srcset", () => 
   assert.deepEqual(walk(`<img src="${placeholder}" data-src="/real.jpg" alt="">`).images, [
     { id: 1, src: "https://example.com/real.jpg", alt: "" },
   ]);
-  assert.deepEqual(walk(`<img src="${placeholder}" srcset="/small.jpg 480w, /large.jpg 1200w">`).images, [
-    { id: 1, src: "https://example.com/small.jpg", alt: "" },
+  assert.deepEqual(walk(`<img src="${placeholder}" data-srcset="/small.jpg 480w, /large.jpg 1200w">`).images, [
+    { id: 1, src: "https://example.com/large.jpg", alt: "" },
   ]);
   assert.deepEqual(walk(`<img data-lazy-src="/lazy.jpg">`).images, [
     { id: 1, src: "https://example.com/lazy.jpg", alt: "" },
+  ]);
+});
+
+// Every Mac screen is two device pixels to the CSS pixel, so the thumbnail in src is
+// drawn with twice the pixels it has and looks soft. srcset is where the bigger copy is
+// offered, and the biggest one on offer is the one to ask for.
+test("the widest candidate of a srcset wins, and a srcset wins over src", () => {
+  assert.deepEqual(walk("<img src='/thumb.jpg' srcset='/w330.jpg 1.5x, /w440.jpg 2x'>").images, [
+    { id: 1, src: "https://example.com/w440.jpg", alt: "" },
+  ]);
+  // Not in the order they are listed: the numbers decide.
+  assert.deepEqual(walk("<img srcset='/huge.jpg 1600w, /small.jpg 320w'>").images, [
+    { id: 1, src: "https://example.com/huge.jpg", alt: "" },
+  ]);
+  // A candidate without a descriptor is "1x" and loses to one that claims more.
+  assert.deepEqual(walk("<img srcset='/plain.jpg, /retina.jpg 2x'>").images, [
+    { id: 1, src: "https://example.com/retina.jpg", alt: "" },
+  ]);
+  // A srcset that leads nowhere falls through to src, like any other candidate.
+  assert.deepEqual(walk("<img src='/only.jpg' srcset='blob:https://example.com/x 2x'>").images, [
+    { id: 1, src: "https://example.com/only.jpg", alt: "" },
   ]);
 });
 

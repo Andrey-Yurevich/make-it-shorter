@@ -8,13 +8,13 @@ decisions live in the root `CLAUDE.md`; this file is the package's own notes.
 | Path | What |
 |---|---|
 | `manifest.ts` | the manifest, written into `dist/` by a Vite plugin; version from the git tag on HEAD |
-| `src/background/index.ts` | service worker: opens the panel on the icon click, injects `content.js`, hands the text to the panel over a port |
-| `src/content/index.ts` | content script, one IIFE with Readability inside; answers `extract`, reports selections |
+| `src/background/index.ts` | service worker: opens the panel on the icon click, injects `content.js`, hands the text to the panel over a port; answers the panel's `read-page` with the whole of the active tab |
+| `src/content/index.ts` | content script, one IIFE with Readability inside; answers `extract` (selection or page, or the page regardless when `scope` is `page`), reports selections |
 | `src/content/structure.ts` | DOM → text with its shape: headings as bold lines, `- ` / `1. ` items, `\| cell \|` rows, `{{img:N}}` markers and the picture table beside them; tested with linkedom |
 | `src/sidepanel/` | the panel: `App.tsx`, the reducer in `state.ts`, the network call in `api.ts` |
 | `src/output/` | the "Open in window" page |
 | `src/components/` | `MarkdownView` and `CopyButton`, shared by the panel and the window; `ui/` is shadcn |
-| `src/shared/` | pure modules with tests: SSE parser, text normalisation, languages, markdown → plain text, `{{img:N}}` → `![](N)`, message readers, storage |
+| `src/shared/` | pure modules with tests: SSE parser, text normalisation, languages, markdown → plain text, `{{img:N}}` → `![](N)`, picture and caption into one figure, message readers, storage |
 | `public/_locales/` | the 30 catalogs of the strings Chrome itself shows (name, description, icon title) |
 | `scripts/` | the two build checks, see below |
 
@@ -48,11 +48,25 @@ Load `dist/` unpacked (with `EXTENSION_KEY` set) and walk through:
   "page"; select text and click again: the selection replaces it;
 - select text (≥ 20 characters) on the same tab while the panel is open: the field
   follows; switching tabs alone changes nothing;
+- start a selection in the middle of a heading and drag it over a picture into the next
+  paragraph: the field gets the tail of the heading as a bold line and the picture as its
+  `{{img:1}}` marker, not flat text. The shape comes off the live DOM through the same
+  walker the whole-page path uses; `cloneContents()` keeps the partly selected heading,
+  and no unit test can check that — linkedom's `Range` has no `setStart`;
 - click the icon on `chrome://extensions` or the web store: the hint "This page has no
   readable text to shorten" under the field, nothing else;
-- Shorten: skeleton, then streaming text; once it is done, hovering the result shows a
-  strip along its bottom edge with "Open in window" and "Copy" as words, half the width
-  each; Copy puts both plain text and HTML on the clipboard and reads "Copied" briefly;
+- select text on an article, type something else into the field, then click "Load full
+  page content" next to the field's label: the field is replaced with the whole
+  article, source "page", the button reads "Loaded" briefly, and nothing is sent;
+- switch to a tab the icon was never clicked on and click "Load full page content": the
+  hint says to click the extension icon on it first; on `chrome://extensions` the same
+  hint;
+- Shorten: skeleton, then streaming text; hovering the result shows a strip along its
+  bottom edge with "Open in window" and "Copy" as words, half the width each; Copy puts
+  both plain text and HTML on the clipboard and reads "Copied" briefly;
+- the strip is there while the text is still arriving, with Copy greyed out until the
+  run ends; "Open in window" mid-run opens a window that goes on writing to the end,
+  and its own Copy works throughout;
 - the language picker shows a flag before each name, following the browser's region
   (Chrome in en-GB: British flag on English; in en-US: American); the tone picker shows
   a pictogram before each tone;
@@ -71,8 +85,11 @@ these, with the network panel open on the first two:
 | Page | What to look for |
 |---|---|
 | A Wikipedia article with an infobox and thumbnails | pictures in the places they held, captions shortened, hotlinking allowed |
-| A news site that lazy-loads through `data-src` and `srcset` | the real addresses are requested, not the placeholders |
-| Medium or Substack | `<figure>` with a `<figcaption>`: picture, then the caption as a paragraph |
+| A news site that lazy-loads through `data-src` and `srcset` | the real addresses are requested, not the placeholders, and the largest candidate of the `srcset` rather than the first |
+| Any article, on a 2x screen | the pictures are sharp, not soft: a thumbnail asked for at thumbnail size is drawn with twice the pixels it has |
+| Medium or Substack | `<figure>` with a `<figcaption>`: the caption comes back under the picture, small, grey and centred against it — and not while the text is still arriving |
+| An article where prose follows a picture | the paragraph under the picture stays a paragraph: only a short line is taken for a caption |
+| Any article, in the panel | the pictures are thumbnails, not the whole column: the text is what is on screen |
 | A selection that starts inside a `<figure>` | the marker without its parent still renders |
 | A site that guards against hotlinking | the picture is missing, with no broken-image icon and no gap |
 | Pictures behind a login — Confluence, Notion | missing, same as above |

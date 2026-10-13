@@ -43,11 +43,14 @@ const MAX_IMAGES = 20;
 // layout — so a picture that declares no size at all is kept.
 const MIN_IMAGE_SIDE = 40;
 
-// URL attributes in the order they are trusted: src, then what the lazy-loaders leave
-// behind. On the page path Readability has already run _fixLazyImages and
-// _fixRelativeUris; on the selection path this list is all there is.
-const IMAGE_URL_ATTRIBUTES = ["src", "data-src", "data-lazy-src"];
+// Where an address may be, in the order it is trusted. The srcset attributes come first
+// because that is where the big copy of the picture is: src is the fallback the page
+// shows a browser that cannot choose, and on an article it is usually a thumbnail. Then
+// src, then what the lazy-loaders leave behind. On the page path Readability has already
+// run _fixLazyImages and _fixRelativeUris; on the selection path this list is all there
+// is.
 const IMAGE_SRCSET_ATTRIBUTES = ["srcset", "data-srcset"];
+const IMAGE_URL_ATTRIBUTES = ["src", "data-src", "data-lazy-src"];
 
 // What stands in the text where the page had a picture. The number indexes the table
 // that travels beside the text, and only the table holds the URL: the marker is all the
@@ -215,26 +218,45 @@ function imageSrc(image: Element): string | null {
 
 function imageCandidates(image: Element): string[] {
   const candidates: string[] = [];
+  for (const name of IMAGE_SRCSET_ATTRIBUTES) {
+    const widest = widestSrcsetCandidate(image.getAttribute(name) ?? "");
+    if (widest !== "") {
+      candidates.push(widest);
+    }
+  }
   for (const name of IMAGE_URL_ATTRIBUTES) {
     const value = (image.getAttribute(name) ?? "").trim();
     if (value !== "") {
       candidates.push(value);
     }
   }
-  for (const name of IMAGE_SRCSET_ATTRIBUTES) {
-    const first = firstSrcsetCandidate(image.getAttribute(name) ?? "");
-    if (first !== "") {
-      candidates.push(first);
-    }
-  }
   return candidates;
 }
 
-// "small.png 1x, large.png 2x" — the first one, whatever its descriptor says. Choosing
-// the candidate that fits the panel would need the panel's width here, and the panel
-// scales whatever it gets anyway.
-function firstSrcsetCandidate(value: string): string {
-  return value.split(",")[0].trim().split(/\s+/)[0] ?? "";
+// "small.jpg 480w, large.jpg 1200w", or "a.jpg 1x, a@2x.jpg 2x" — the biggest of them.
+//
+// The first one listed is normally the smallest, and the smallest is the wrong one to
+// take: the panel never stretches a picture past its own pixels, but every Mac screen
+// is two device pixels to the CSS pixel, so a 220-pixel thumbnail drawn 220 points wide
+// is drawn with 440 pixels and looks soft. Asking for the largest costs bandwidth we do
+// not pay for and is the only lever we have — nothing here can rewrite a URL to a size
+// the site never offered.
+//
+// One srcset never mixes the two kinds of descriptor (the HTML parser refuses), so the
+// numbers can simply be compared. No descriptor at all means "1x" and loses to anything
+// that says otherwise.
+function widestSrcsetCandidate(value: string): string {
+  let widest = "";
+  let found = 0;
+  for (const entry of value.split(",")) {
+    const [url, descriptor] = entry.trim().split(/\s+/);
+    const size = Number.parseFloat(descriptor ?? "") || 1;
+    if (url !== undefined && url !== "" && size >= found) {
+      widest = url;
+      found = size;
+    }
+  }
+  return widest;
 }
 
 function tooSmall(image: Element): boolean {

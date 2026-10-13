@@ -2,8 +2,11 @@
 // service worker only ever opens the panel and gets the text out of the tab; the panel
 // does the network. Nothing here carries a result.
 
-// service worker → content script
-export type ExtractRequest = { type: "extract" };
+// service worker → content script. `auto` is the toolbar click: the selection if there is
+// one, otherwise the page. `page` is the panel's "Load full page content" button: the page
+// whatever is selected on it.
+export type ExtractScope = "auto" | "page";
+export type ExtractRequest = { type: "extract"; scope: ExtractScope };
 
 // A picture the extraction found, numbered from one in document order. The text carries
 // only the number, as "{{img:1}}"; the address stays in this table, travels between the
@@ -26,6 +29,29 @@ export type SelectionChangedMessage = {
   truncated: boolean;
   images: ExtractedImage[];
 };
+
+// panel → service worker. The "Load full page content" button: read the whole of the active
+// tab, whatever the field holds and whatever is selected on the page, into the field.
+// The panel cannot do this itself — the content script goes into the tab from the
+// worker, as it does on the toolbar click. Nothing is sent for it.
+//
+// `windowId` is the window the panel is in, which the panel knows and the worker does
+// not: the worker's only other way to the tab is "the last focused window", and a click
+// in a side panel does not reliably count as focusing one. Without it the worker falls
+// back to exactly that.
+export type ReadPageRequest = { type: "read-page"; windowId?: number };
+
+// Why a page came back without text. `no-text` is a page with nothing to read on it:
+// search results, a dashboard, a feed of cards. `no-access` is a tab the extension may
+// not reach: activeTab is granted by the click on the icon, and this tab has not had
+// one since it last navigated — or it is a restricted page, which looks the same from
+// here.
+export type UnreadableReason = "no-text" | "no-access";
+
+// service worker → panel, the reply to `read-page`.
+export type ReadPageReply =
+  | { ok: true; text: string; truncated: boolean; images: ExtractedImage[] }
+  | { ok: false; reason: UnreadableReason };
 
 // welcome page → service worker. The page on make-it-shorter.net cannot read
 // chrome.action.getUserSettings() itself — only an extension context can — so it asks
@@ -138,9 +164,42 @@ export function readPanelMessage(message: unknown): PanelJob | null {
   return { kind: "unreadable" };
 }
 
-// service worker → content script.
+// service worker → content script. A scope that is not `page` is the toolbar click: a
+// worker from an older build sends no scope at all, and it means what it always meant.
 export function readExtractRequest(message: unknown): ExtractRequest | null {
-  return isRecord(message) && message.type === "extract" ? { type: "extract" } : null;
+  if (!isRecord(message) || message.type !== "extract") {
+    return null;
+  }
+  return { type: "extract", scope: message.scope === "page" ? "page" : "auto" };
+}
+
+// panel → service worker. A window id that is not an integer is no window id.
+export function readReadPageRequest(message: unknown): ReadPageRequest | null {
+  if (!isRecord(message) || message.type !== "read-page") {
+    return null;
+  }
+  return Number.isInteger(message.windowId)
+    ? { type: "read-page", windowId: message.windowId as number }
+    : { type: "read-page" };
+}
+
+// service worker → panel, the reply to `read-page`. Anything that is not a well-formed
+// success or a well-formed refusal — including `undefined`, which is what a worker that
+// died mid-way leaves behind — is a page that could not be reached: the hint for that
+// says to click the icon, and the click starts everything over.
+export function readReadPageReply(reply: unknown): ReadPageReply {
+  if (!isRecord(reply)) {
+    return { ok: false, reason: "no-access" };
+  }
+  if (reply.ok === true && typeof reply.text === "string") {
+    return {
+      ok: true,
+      text: reply.text,
+      truncated: reply.truncated === true,
+      images: readExtractedImages(reply.images),
+    };
+  }
+  return { ok: false, reason: reply.reason === "no-text" ? "no-text" : "no-access" };
 }
 
 // content script → service worker, the reply to `extract`. Anything that is not a

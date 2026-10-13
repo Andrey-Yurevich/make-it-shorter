@@ -56,8 +56,14 @@ export async function hideRating(): Promise<void> {
 
 // The hand-over to the output window goes through chrome.storage.session: memory only,
 // never the disk, so the rule that no text is stored anywhere holds. That covers the
-// picture table too — it travels with the text it belongs to. The window reads the key
-// once and removes it.
+// picture table too — it travels with the text it belongs to.
+//
+// It is a channel rather than a single hand-over, because the window can be opened while
+// the run is still writing and watching a long text arrive in a bigger window is the
+// point of it. The panel writes the result again on every change until the run ends; the
+// window reads what is there and then listens for the rest. The window removes the key
+// as soon as it holds a finished version. A panel closed mid-run leaves one behind — in
+// memory, until the browser closes or the next run clears it.
 const OUTPUT_WINDOW_KEY = "outputWindow";
 
 export type OutputWindowContent = {
@@ -66,24 +72,46 @@ export type OutputWindowContent = {
   markdown: string;
   lang: string;
   images: ExtractedImage[];
+  // The run behind the text is still writing: this is a part of it, and more is coming.
+  streaming: boolean;
 };
 
 export async function stashOutputWindowContent(content: OutputWindowContent): Promise<void> {
   await chrome.storage.session.set({ [OUTPUT_WINDOW_KEY]: content });
 }
 
+export async function readOutputWindowContent(): Promise<OutputWindowContent | null> {
+  const stored = await chrome.storage.session.get(OUTPUT_WINDOW_KEY);
+  return readContent(stored[OUTPUT_WINDOW_KEY]);
+}
+
+// Every later version of the same hand-over, until the caller stops listening. A removal
+// is not one of them: the key being cleaned up is not the text going away, and a window
+// keeps what it has.
+export function watchOutputWindowContent(onChange: (content: OutputWindowContent) => void): () => void {
+  function listener(changes: { [key: string]: chrome.storage.StorageChange }): void {
+    const content = readContent(changes[OUTPUT_WINDOW_KEY]?.newValue);
+    if (content) {
+      onChange(content);
+    }
+  }
+  chrome.storage.session.onChanged.addListener(listener);
+  return () => chrome.storage.session.onChanged.removeListener(listener);
+}
+
+export async function clearOutputWindowContent(): Promise<void> {
+  await chrome.storage.session.remove(OUTPUT_WINDOW_KEY);
+}
+
 // Storage is a boundary like any message: what comes back is whatever was written, by
 // whatever build of the extension wrote it. The picture table is read by the same reader
 // the messages use, so an entry that would not be allowed over a port is not allowed
 // here either.
-export async function takeOutputWindowContent(): Promise<OutputWindowContent | null> {
-  const stored = await chrome.storage.session.get(OUTPUT_WINDOW_KEY);
-  await chrome.storage.session.remove(OUTPUT_WINDOW_KEY);
-  const content: unknown = stored[OUTPUT_WINDOW_KEY];
-  if (typeof content !== "object" || content === null) {
+function readContent(written: unknown): OutputWindowContent | null {
+  if (typeof written !== "object" || written === null) {
     return null;
   }
-  const fields = content as Record<string, unknown>;
+  const fields = written as Record<string, unknown>;
   if (typeof fields.markdown !== "string") {
     return null;
   }
@@ -91,5 +119,8 @@ export async function takeOutputWindowContent(): Promise<OutputWindowContent | n
     markdown: fields.markdown,
     lang: typeof fields.lang === "string" ? fields.lang : "en",
     images: readExtractedImages(fields.images),
+    // Anything but a true written by this build means "finished": a window must not wait
+    // for more from a panel that is not going to send it.
+    streaming: fields.streaming === true,
   };
 }

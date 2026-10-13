@@ -41,13 +41,28 @@ test("text and fill jobs are ignored while streaming", () => {
 test("the unreadable job leaves the field alone and raises the hint", () => {
   const state = after([{ type: "edit", text: "pasted by hand" }, { type: "job", job: { kind: "unreadable" } }]);
   assert.equal(state.input, "pasted by hand");
-  assert.equal(state.unreadable, true);
+  assert.equal(state.unreadable, "no-text");
+});
+
+// The "Load full page content" button, refused. The field keeps what it held, like an
+// unreadable job, and the hint carries the reason the worker gave.
+test("a refused page read keeps the field and says why", () => {
+  const before = after([{ type: "edit", text: "pasted by hand" }, { type: "error", code: "too_long" }]);
+  const state = after([{ type: "unreadable", reason: "no-access" }], before);
+  assert.equal(state.input, "pasted by hand");
+  assert.equal(state.unreadable, "no-access");
+  assert.equal(state.error, null);
+});
+
+test("starting a run clears the hint", () => {
+  const state = after([{ type: "unreadable", reason: "no-access" }, pageJob, { type: "start" }]);
+  assert.equal(state.unreadable, null);
 });
 
 test("typing clears the hint, the error and the truncation, and makes the source manual", () => {
   const before = after([pageJob, { type: "job", job: { kind: "unreadable" } }, { type: "error", code: "too_long" }]);
   const state = after([{ type: "edit", text: "corrected" }], before);
-  assert.equal(state.unreadable, false);
+  assert.equal(state.unreadable, null);
   assert.equal(state.error, null);
   assert.equal(state.truncated, false);
   assert.equal(state.source, "manual");

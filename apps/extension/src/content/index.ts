@@ -1,6 +1,11 @@
 import { Readability, isProbablyReaderable } from "@mozilla/readability";
 import { MIN_INPUT } from "@/shared/limits.ts";
-import { readExtractRequest, type ExtractResult, type SelectionChangedMessage } from "@/shared/messaging.ts";
+import {
+  readExtractRequest,
+  type ExtractResult,
+  type ExtractScope,
+  type SelectionChangedMessage,
+} from "@/shared/messaging.ts";
 import { countCodePoints, normalizeText } from "@/shared/text.ts";
 import { selectionWithStructure, textWithStructure, type Structured } from "./structure.ts";
 
@@ -22,32 +27,36 @@ if (!window.__makeItShorterInjected) {
   window.__makeItShorterInjected = true;
 
   chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-    if (!readExtractRequest(message)) {
+    const request = readExtractRequest(message);
+    if (!request) {
       return false;
     }
-    sendResponse(extract());
+    sendResponse(extract(request.scope));
     return false;
   });
 
   document.addEventListener("selectionchange", onSelectionChange);
 }
 
-// The selection when there is one, the page when there is not. Dirty text is an
-// acceptable result: what is content and what is furniture is decided by Readability on
-// the DOM, where link density and markup are still available, never on the flat string.
-// The same goes for shape: headings, list items, table rows and pictures are written
-// down as light Markdown here, while the DOM still tells them apart (structure.ts).
-function extract(): ExtractResult {
-  const selected = selectionText(window.getSelection());
-  const selection = normalizeText(selected.text);
-  if (selection.text !== "") {
-    return {
-      ok: true,
-      text: selection.text,
-      source: "selection",
-      truncated: selection.truncated,
-      images: selected.images,
-    };
+// The selection when there is one, the page when there is not — or the page regardless,
+// when the panel's "Load full page content" button asked for it. Dirty text is an acceptable
+// result: what is content and what is furniture is decided by Readability on the DOM,
+// where link density and markup are still available, never on the flat string. The same
+// goes for shape: headings, list items, table rows and pictures are written down as
+// light Markdown here, while the DOM still tells them apart (structure.ts).
+function extract(scope: ExtractScope): ExtractResult {
+  if (scope === "auto") {
+    const selected = selectionText(window.getSelection());
+    const selection = normalizeText(selected.text);
+    if (selection.text !== "") {
+      return {
+        ok: true,
+        text: selection.text,
+        source: "selection",
+        truncated: selection.truncated,
+        images: selected.images,
+      };
+    }
   }
 
   // The cheap question first: is there an article-shaped body of text on this page at

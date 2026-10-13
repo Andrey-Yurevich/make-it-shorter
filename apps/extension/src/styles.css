@@ -74,6 +74,18 @@
   --color-ring: var(--ring);
 }
 
+/* A caption whose picture did not load is a line of the text again. The picture is
+   removed from the page rather than drawn broken (see MarkdownView), and a small grey
+   line centred under nothing tells the reader less than its own words do. Written here
+   and outside every layer because it has to beat the utility classes on the element. */
+figure:not(:has(img)) figcaption {
+  margin-top: 0;
+  text-align: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

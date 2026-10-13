@@ -7,7 +7,7 @@ import { markdownToPlainText } from "@/shared/markdown.ts";
 // documents and mail that keep formatting. The button is a word, not an icon, and it
 // reads "Copied" for a moment afterwards.
 
-type Props = Pick<ComponentProps<typeof Button>, "variant" | "size" | "className"> & {
+type Props = Pick<ComponentProps<typeof Button>, "variant" | "size" | "className" | "disabled"> & {
   markdown: string;
   // The rendered result; its innerHTML is the text/html half of the clipboard item.
   rendered: RefObject<HTMLElement | null>;
@@ -15,7 +15,7 @@ type Props = Pick<ComponentProps<typeof Button>, "variant" | "size" | "className
 
 const COPIED_FOR_MS = 1500;
 
-export function CopyButton({ markdown, rendered, variant = "ghost", size = "sm", className }: Props) {
+export function CopyButton({ markdown, rendered, variant = "ghost", size = "sm", className, disabled }: Props) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export function CopyButton({ markdown, rendered, variant = "ghost", size = "sm",
   }
 
   return (
-    <Button variant={variant} size={size} className={className} onClick={() => void copy()}>
+    <Button variant={variant} size={size} className={className} disabled={disabled} onClick={() => void copy()}>
       {copied ? "Copied" : "Copy"}
     </Button>
   );

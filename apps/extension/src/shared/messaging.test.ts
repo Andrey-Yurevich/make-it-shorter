@@ -6,6 +6,8 @@ import {
   readExtractedImages,
   readPanelMessage,
   readPinStateRequest,
+  readReadPageReply,
+  readReadPageRequest,
   readSelectionChanged,
 } from "./messaging.ts";
 
@@ -13,6 +15,8 @@ import {
 // blank. None of them may reach the panel as a job with a missing text, because
 // `countCodePoints` spreads that text and `[...undefined]` throws inside render — which
 // unmounts the whole panel, not just the message that caused it.
+
+const PICTURE = { id: 1, src: "https://example.com/a.jpg", alt: "A photo" };
 
 test("a well-formed text job passes through", () => {
   assert.deepEqual(
@@ -76,11 +80,52 @@ test("anything that is not a job is ignored", () => {
   }
 });
 
-test("an extract request is only its type", () => {
-  assert.deepEqual(readExtractRequest({ type: "extract" }), { type: "extract" });
-  assert.deepEqual(readExtractRequest({ type: "extract", mode: "page" }), { type: "extract" });
+// The scope is the one thing an extract request carries. A worker from an older build
+// sends none, and that is the toolbar click, which is what it always was.
+test("an extract request is its type and its scope, defaulting to the toolbar click", () => {
+  assert.deepEqual(readExtractRequest({ type: "extract", scope: "page" }), { type: "extract", scope: "page" });
+  assert.deepEqual(readExtractRequest({ type: "extract", scope: "auto" }), { type: "extract", scope: "auto" });
+  assert.deepEqual(readExtractRequest({ type: "extract" }), { type: "extract", scope: "auto" });
+  assert.deepEqual(readExtractRequest({ type: "extract", scope: "selection" }), { type: "extract", scope: "auto" });
   assert.equal(readExtractRequest({ type: "selection-changed" }), null);
   assert.equal(readExtractRequest(undefined), null);
+});
+
+test("a read-page request is its type and, when it is a whole number, the panel's window", () => {
+  assert.deepEqual(readReadPageRequest({ type: "read-page", windowId: 12 }), { type: "read-page", windowId: 12 });
+  assert.deepEqual(readReadPageRequest({ type: "read-page" }), { type: "read-page" });
+  for (const windowId of [undefined, null, "12", 1.5, NaN, {}]) {
+    assert.deepEqual(readReadPageRequest({ type: "read-page", windowId }), { type: "read-page" }, String(windowId));
+  }
+  for (const message of [{ type: "extract" }, { type: "selection-changed" }, {}, null, undefined, "read-page"]) {
+    assert.equal(readReadPageRequest(message), null, JSON.stringify(message));
+  }
+});
+
+// The reply to read-page is the one message the panel reads off sendMessage, and a worker
+// that died mid-way leaves `undefined` behind. That is a page out of reach, and the hint
+// for it says to click the icon — which starts everything over.
+test("a read-page reply is read back into shape", () => {
+  assert.deepEqual(readReadPageReply({ ok: true, text: "the page", truncated: true, images: [PICTURE] }), {
+    ok: true,
+    text: "the page",
+    truncated: true,
+    images: [PICTURE],
+  });
+  assert.deepEqual(readReadPageReply({ ok: true, text: "the page" }), {
+    ok: true,
+    text: "the page",
+    truncated: false,
+    images: [],
+  });
+  assert.deepEqual(readReadPageReply({ ok: false, reason: "no-text" }), { ok: false, reason: "no-text" });
+  assert.deepEqual(readReadPageReply({ ok: false, reason: "no-access" }), { ok: false, reason: "no-access" });
+});
+
+test("anything but a well-formed read-page reply is a page out of reach", () => {
+  for (const reply of [undefined, null, {}, { ok: false }, { ok: true }, { ok: true, text: 7 }, { ok: false, reason: "x" }, "ok"]) {
+    assert.deepEqual(readReadPageReply(reply), { ok: false, reason: "no-access" }, JSON.stringify(reply));
+  }
 });
 
 test("an extract reply is read back into shape", () => {
@@ -127,8 +172,6 @@ test("a selection change with nothing in it is dropped", () => {
 // not exactly what the extractor writes is dropped rather than repaired — the marker
 // that pointed at it then renders as nothing, which is what a missing picture looks
 // like anyway.
-const PICTURE = { id: 1, src: "https://example.com/a.jpg", alt: "A photo" };
-
 test("a well-formed picture table passes through", () => {
   assert.deepEqual(readExtractedImages([PICTURE]), [PICTURE]);
   assert.deepEqual(readExtractedImages([]), []);
@@ -169,6 +212,9 @@ test("the picture table rides along with every message that carries text", () =>
 
   const reply = readExtractResult({ ok: true, text: "hi", images: [PICTURE] });
   assert.deepEqual(reply.ok && reply.images, [PICTURE]);
+
+  const page = readReadPageReply({ ok: true, text: "hi", images: [PICTURE] });
+  assert.deepEqual(page.ok && page.images, [PICTURE]);
 
   const selection = readSelectionChanged({ type: "selection-changed", text: "hi", images: [PICTURE] });
   assert.deepEqual(selection?.images, [PICTURE]);

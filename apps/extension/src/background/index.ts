@@ -3,15 +3,21 @@ import {
   PANEL_PORT,
   readExtractResult,
   readPinStateRequest,
+  readReadPageRequest,
   readSelectionChanged,
   type ExtractRequest,
+  type ExtractResult,
+  type ExtractScope,
   type PanelJob,
+  type ReadPageReply,
+  type ReadPageRequest,
 } from "@/shared/messaging.ts";
 
 // The service worker owns three things and nothing else: it opens the panel, it puts the
-// content script into the tab, and it hands the panel what the tab held. It never talks
-// to the API — the panel does that, because the panel is an ordinary document that lives
-// as long as it is open, while Chrome unloads this worker whenever it feels like.
+// content script into the tab, and it hands the panel what the tab held — on the toolbar
+// click, and again when the panel's "Load full page content" button asks for it. It never
+// talks to the API — the panel does that, because the panel is an ordinary document that
+// lives as long as it is open, while Chrome unloads this worker whenever it feels like.
 
 // The panel connects a port when it mounts, so the port is the panel's lifetime. Both
 // are lost when the worker restarts; the panel notices its port dying and reconnects.
@@ -83,14 +89,7 @@ async function run(tab: chrome.tabs.Tab): Promise<void> {
 
   try {
     await chrome.sidePanel.open({ tabId });
-
-    // activeTab was granted by the click, so the script may go into this tab now. It is
-    // injected on every click: the script guards itself against running twice.
-    await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
-
-    const request: ExtractRequest = { type: "extract" };
-    const reply: unknown = await chrome.tabs.sendMessage(tabId, request);
-    const extracted = readExtractResult(reply);
+    const extracted = await extractFrom(tabId, "auto");
 
     sendToPanel(
       extracted.ok
@@ -111,11 +110,58 @@ async function run(tab: chrome.tabs.Tab): Promise<void> {
   }
 }
 
-// A selection made in a tab the script is in goes into the panel's field while the panel
-// is open. Nothing is sent for it: selecting text is reading, not asking, and the panel
-// has a button for asking. Without the port there is no panel, and the message is
-// dropped where it stands.
-chrome.runtime.onMessage.addListener((message: unknown) => {
+// The content script into the tab, then the question. Throws when the tab is out of
+// reach: no activeTab for it, or a page Chrome keeps extensions out of.
+async function extractFrom(tabId: number, scope: ExtractScope): Promise<ExtractResult> {
+  // activeTab was granted by the click on the icon, so the script may go into this tab.
+  // It is injected every time: the script guards itself against running twice.
+  await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
+
+  const request: ExtractRequest = { type: "extract", scope };
+  const reply: unknown = await chrome.tabs.sendMessage(tabId, request);
+  return readExtractResult(reply);
+}
+
+// The "Load full page content" button: the whole of the tab the user is looking at, whatever
+// is selected on it. The tab is the active one of the panel's window, which the panel
+// names; a panel that could not name it gets the last focused window instead. activeTab
+// is not granted by a click in the panel — only the toolbar icon grants it — so a tab
+// the icon was never clicked on, or one that navigated since, is out of reach, and the
+// panel says to click the icon first.
+async function readPage(request: ReadPageRequest): Promise<ReadPageReply> {
+  try {
+    const [tab] = await chrome.tabs.query(
+      request.windowId === undefined ? { active: true, lastFocusedWindow: true } : { active: true, windowId: request.windowId },
+    );
+    if (tab?.id === undefined) {
+      console.warn("read-page: no active tab", request);
+      return { ok: false, reason: "no-access" };
+    }
+    const extracted = await extractFrom(tab.id, "page");
+    if (!extracted.ok) {
+      return { ok: false, reason: "no-text" };
+    }
+    return { ok: true, text: extracted.text, truncated: extracted.truncated, images: extracted.images };
+  } catch (error) {
+    // The one place a human can see why the button said no: the worker's console.
+    console.warn("read-page: tab out of reach", error);
+    return { ok: false, reason: "no-access" };
+  }
+}
+
+// Two things arrive here. The panel asking for the page, which is answered. And a
+// selection made in a tab the script is in, which goes into the panel's field while the
+// panel is open. Nothing is sent for either — reading is not asking, and the panel has a
+// button for asking. Without the port there is no panel, and the selection is dropped
+// where it stands.
+chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+  const pageRequest = readReadPageRequest(message);
+  if (pageRequest) {
+    void readPage(pageRequest).then(sendResponse);
+    // The answer comes from a promise, so the channel has to stay open for it.
+    return true;
+  }
+
   const selection = readSelectionChanged(message);
   if (selection && panelPort) {
     panelPort.postMessage({

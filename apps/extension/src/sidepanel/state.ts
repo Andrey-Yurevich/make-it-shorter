@@ -1,4 +1,4 @@
-import type { ExtractedImage, PanelJob } from "@/shared/messaging.ts";
+import type { ExtractedImage, PanelJob, UnreadableReason } from "@/shared/messaging.ts";
 import type { ErrorCode, Source } from "@/shared/protocol.ts";
 
 // The whole panel is this one reducer, and it is deliberately small: a text on the way
@@ -26,9 +26,10 @@ export type PanelState = {
   resultImages: ExtractedImage[];
   streaming: boolean;
   error: { code: ErrorCode; message?: string } | null;
-  // The page could not be read: a restricted page, or nothing worth reading on it. Not
-  // an error — a hint under the field, until the user types or another job arrives.
-  unreadable: boolean;
+  // The page could not be read, and why: nothing worth reading on it, or a tab the
+  // extension may not reach. Not an error — a hint under the field, until the user
+  // types or another job arrives.
+  unreadable: UnreadableReason | null;
   // Counts the runs started, so that the output area can reset its scroll on each one.
   run: number;
 };
@@ -42,13 +43,15 @@ export const initialPanelState: PanelState = {
   resultImages: [],
   streaming: false,
   error: null,
-  unreadable: false,
+  unreadable: null,
   run: 0,
 };
 
 export type PanelAction =
   | { type: "edit"; text: string }
   | { type: "job"; job: PanelJob }
+  // The "Load full page content" button asked for the page and did not get it.
+  | { type: "unreadable"; reason: UnreadableReason }
   | { type: "start" }
   | { type: "delta"; text: string }
   | { type: "done" }
@@ -67,11 +70,15 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
         truncated: false,
         source: "manual",
         error: null,
-        unreadable: false,
+        unreadable: null,
       };
 
     case "job":
       return applyJob(state, action.job);
+
+    // Like an unreadable job: the field keeps what it held, the hint says why.
+    case "unreadable":
+      return { ...state, unreadable: action.reason, error: null };
 
     case "start":
       return {
@@ -80,7 +87,7 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
         resultImages: state.images,
         streaming: true,
         error: null,
-        unreadable: false,
+        unreadable: null,
         run: state.run + 1,
       };
 
@@ -100,8 +107,10 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
 function applyJob(state: PanelState, job: PanelJob): PanelState {
   // The input field keeps whatever it held: a page that cannot be read is no reason to
   // throw away text the user pasted there.
+  // The toolbar click reads the tab it was clicked on, so access is never the problem:
+  // what it found was nothing to read.
   if (job.kind === "unreadable") {
-    return { ...state, unreadable: true, error: null };
+    return { ...state, unreadable: "no-text", error: null };
   }
 
   // A run is writing. Swapping the text under it would leave the result on screen
@@ -118,6 +127,6 @@ function applyJob(state: PanelState, job: PanelJob): PanelState {
     source: job.kind === "text" ? job.source : "selection",
     images: job.images,
     error: null,
-    unreadable: false,
+    unreadable: null,
   };
 }

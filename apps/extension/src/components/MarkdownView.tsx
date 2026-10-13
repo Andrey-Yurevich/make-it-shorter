@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { cn } from "@/lib/utils";
+import { remarkFigures } from "@/shared/figures.ts";
 import { isRtl } from "@/shared/lang.ts";
 import type { ExtractedImage } from "@/shared/messaging.ts";
 
@@ -14,7 +16,8 @@ import type { ExtractedImage } from "@/shared/messaging.ts";
 // Images are the one thing that does not come from the model. `markdown` has been
 // through hydrate(), which turned the extraction's "{{img:N}}" markers into "![](N)",
 // and `images` is the table those numbers index. Nothing else renders as a picture: an
-// address the model wrote by itself is not a number and is not in the table.
+// address the model wrote by itself is not a number and is not in the table. A picture
+// and the short line under it are grouped into a figure first — see shared/figures.ts.
 //
 // Shared between the side panel and the output window, so the two look the same.
 
@@ -24,15 +27,36 @@ type Props = {
   markdown: string;
   lang: string;
   images?: ExtractedImage[];
+  // A narrow surface — the side panel. Pictures are held to a thumbnail there: at the
+  // panel's width a picture drawn as large as it may be fills the column, and two of
+  // them push the text off the screen. The window has the room and keeps the larger cap.
+  compact?: boolean;
+  // The text is still being written. Captions wait for the end of it: the last paragraph
+  // on screen is half of one, and its length — the only thing that tells a caption from
+  // prose — is not the length it is going to have. Everything settles when the run ends,
+  // rather than every paragraph under a picture starting grey and growing out of it.
+  streaming?: boolean;
   className?: string;
 };
+
+// GFM for the tables, then the figures — the second walks the tree the first finished.
+// While the run is writing there are no figures yet, for the reason under `streaming`.
+const PLUGINS = [remarkGfm, remarkFigures];
+const PLUGINS_WHILE_WRITING = [remarkGfm];
 
 // Stable identities: a fresh array or set on every render would restart the effect below
 // on every render.
 const NO_IMAGES: ExtractedImage[] = [];
 const NONE_FAILED: ReadonlySet<number> = new Set();
 
-export function MarkdownView({ markdown, lang, images = NO_IMAGES, className }: Props) {
+export function MarkdownView({
+  markdown,
+  lang,
+  images = NO_IMAGES,
+  compact = false,
+  streaming = false,
+  className,
+}: Props) {
   // Pictures that would not load. They are not retried and not marked: see `picture`.
   const [failed, setFailed] = useState(NONE_FAILED);
 
@@ -43,14 +67,14 @@ export function MarkdownView({ markdown, lang, images = NO_IMAGES, className }: 
   const withPictures = useMemo<Components>(
     () => ({
       ...components,
-      img: picture(table, failed, (id) => setFailed((gone) => new Set(gone).add(id))),
+      img: picture(table, failed, compact, (id) => setFailed((gone) => new Set(gone).add(id))),
     }),
-    [table, failed],
+    [table, failed, compact],
   );
 
   return (
     <div dir={isRtl(lang) ? "rtl" : undefined} className={className}>
-      <Markdown remarkPlugins={[remarkGfm]} components={withPictures}>
+      <Markdown remarkPlugins={streaming ? PLUGINS_WHILE_WRITING : PLUGINS} components={withPictures}>
         {markdown}
       </Markdown>
     </div>
@@ -64,6 +88,7 @@ export function MarkdownView({ markdown, lang, images = NO_IMAGES, className }: 
 function picture(
   table: Map<number, ExtractedImage>,
   failed: ReadonlySet<number>,
+  compact: boolean,
   onFail: (id: number) => void,
 ): Components["img"] {
   return ({ src }) => {
@@ -82,7 +107,11 @@ function picture(
         // guards that turn away a foreign Referer usually let an empty one through.
         referrerPolicy="no-referrer"
         onError={() => onFail(id)}
-        className="my-2 block max-h-64 max-w-full rounded object-contain"
+        // Centred in the column, and never stretched: max-width and max-height only
+        // shrink, so a small picture is drawn at its own size and stays sharp rather
+        // than being blown up to the width of the panel. The height is what keeps a
+        // picture from taking the screen — a wide one hits it long before the width.
+        className={cn("mx-auto my-2 block max-w-full rounded object-contain", compact ? "max-h-32" : "max-h-64")}
       />
     );
   };
@@ -117,6 +146,11 @@ function dom<T extends keyof HTMLElementTagNameMap>(
 }
 
 const components: Components = {
+  // A picture and its caption, made one block by remarkFigures. The margins inside it
+  // are taken away so that the caption sits against the picture it belongs to, and the
+  // figure keeps the spacing the two of them have from the text around.
+  figure: dom("figure", "my-2 first:mt-0 last:mb-0 [&_p]:my-0 [&_img]:my-0"),
+  figcaption: dom("figcaption", "mt-1 text-center text-xs text-muted-foreground"),
   p: Paragraph,
   h1: Heading,
   h2: Heading,

@@ -12,9 +12,16 @@ import { hydrate } from "@/shared/hydrate.ts";
 import { LANGUAGES, languageFlag } from "@/shared/lang.ts";
 import { MAX_INPUT, MIN_INPUT } from "@/shared/limits.ts";
 import { markdownToPlainText } from "@/shared/markdown.ts";
-import { PANEL_PORT, readPanelMessage } from "@/shared/messaging.ts";
+import {
+  PANEL_PORT,
+  readPanelMessage,
+  readReadPageReply,
+  type ReadPageRequest,
+  type UnreadableReason,
+} from "@/shared/messaging.ts";
 import { TONES, type ErrorCode, type Tone } from "@/shared/protocol.ts";
 import {
+  clearOutputWindowContent,
   getSettings,
   hideRating,
   isRatingHidden,
@@ -40,10 +47,31 @@ import { initialPanelState, panelReducer } from "./state.ts";
 // panel is open.
 const BROWSER_TAGS: readonly string[] = [chrome.i18n.getUILanguage(), ...navigator.languages];
 
+// How long the page button reads "Loaded" after the page came in.
+const LOADED_FOR_MS = 1500;
+
 export function App() {
   const [state, dispatch] = useReducer(panelReducer, initialPanelState);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [ratingHidden, setRatingHidden] = useState(true);
+  // A window has been handed this run and is showing it. Until the run ends, every
+  // change goes to it as well: a window opened mid-stream goes on writing there.
+  const [handedOver, setHandedOver] = useState(false);
+  // "Load full page content" has asked the worker for the page and is waiting for it.
+  // Short — the script goes in and answers in milliseconds — but the button stays down
+  // meanwhile, so a second click cannot start a second read.
+  const [readingPage, setReadingPage] = useState(false);
+  // The page has just arrived. The button says so for a moment, the way Copy says
+  // "Copied": when the field already held the whole page, the text that replaces it is
+  // the same text, and nothing else on screen would show that anything happened.
+  const [pageLoaded, setPageLoaded] = useState(false);
+  useEffect(() => {
+    if (!pageLoaded) {
+      return;
+    }
+    const timer = setTimeout(() => setPageLoaded(false), LOADED_FOR_MS);
+    return () => clearTimeout(timer);
+  }, [pageLoaded]);
 
   // Read inside callbacks that outlive the render they were created in.
   const settingsRef = useRef<Settings | null>(null);
@@ -99,10 +127,24 @@ export function App() {
   // The result with its picture markers resolved: one string, read by the renderer, the
   // counter and both halves of Copy, so none of them can disagree about what is shown.
   const shown = hydrate(state.result, state.resultImages, state.streaming);
+  const lang = settings?.lang ?? "en";
+
+  // The window, once it has been given this run, is given the rest of it too: the same
+  // key, written again on every change, until the run ends and `streaming` turns false.
+  useEffect(() => {
+    if (handedOver) {
+      void stashOutputWindowContent({ markdown: shown, lang, images: state.resultImages, streaming: state.streaming });
+    }
+  }, [handedOver, shown, lang, state.resultImages, state.streaming]);
 
   async function start(): Promise<void> {
     const id = ++runId.current;
     dispatch({ type: "start" });
+    // Whatever window was handed the last run keeps what it has: it is a finished text
+    // and this is a different one. The key it came through is cleared, so no result
+    // sits in memory longer than the run that produced it.
+    setHandedOver(false);
+    void clearOutputWindowContent();
     const current = settingsRef.current ?? (await getSettings());
 
     await shorten(
@@ -127,6 +169,32 @@ export function App() {
     );
   }
 
+  // The whole page into the field, whatever the field holds and whatever is selected on
+  // the page: the worker reads the active tab, as it does on the toolbar click, and the
+  // text replaces the field. Nothing is sent — the Shorten button is still the ask.
+  async function loadPage(): Promise<void> {
+    setReadingPage(true);
+    // The window this panel is in, so that the worker reads its tab and not whichever
+    // window happens to count as focused. A panel that cannot tell leaves it out.
+    const panelWindow = await chrome.windows.getCurrent().catch(() => null);
+    const request: ReadPageRequest = { type: "read-page", windowId: panelWindow?.id };
+    // A rejection is no worker to answer — the extension was reloaded under the panel,
+    // most likely — and reads the same as no answer.
+    const reply: unknown = await chrome.runtime.sendMessage(request).catch(() => undefined);
+    setReadingPage(false);
+    const page = readReadPageReply(reply);
+
+    if (!page.ok) {
+      dispatch({ type: "unreadable", reason: page.reason });
+      return;
+    }
+    dispatch({
+      type: "job",
+      job: { kind: "text", text: page.text, source: "page", truncated: page.truncated, images: page.images },
+    });
+    setPageLoaded(true);
+  }
+
   // A change applies to the next run, not to the text already on screen: running it
   // again costs a request out of the daily quota, and the Shorten button is what spends
   // it. Both values are written to storage as they are picked.
@@ -137,12 +205,11 @@ export function App() {
     await saveSettings(patch);
   }
 
+  // The text as it stands, then the window to read it in. It may still be arriving:
+  // what is there goes over now, and the effect above sends the rest as it comes.
   async function openInWindow(): Promise<void> {
-    await stashOutputWindowContent({
-      markdown: shown,
-      lang: settingsRef.current?.lang ?? "en",
-      images: state.resultImages,
-    });
+    await stashOutputWindowContent({ markdown: shown, lang, images: state.resultImages, streaming: state.streaming });
+    setHandedOver(true);
     await chrome.windows.create({
       url: chrome.runtime.getURL("output.html"),
       type: "popup",
@@ -155,7 +222,7 @@ export function App() {
   const outputLength = countCodePoints(markdownToPlainText(shown));
   // `shown` and not `state.result`: what the panel has to show is what is on screen, and
   // the head of a stream can be half a marker, which is nothing yet.
-  const finished = !state.streaming && shown !== "" && state.error === null;
+  const hasResult = shown !== "" && state.error === null;
   // service_disabled is the one error that holds the button down: the service said no,
   // and it will say no again until something changes. Editing the field lifts it.
   const canShorten =
@@ -163,14 +230,26 @@ export function App() {
     inputLength >= MIN_INPUT &&
     inputLength <= MAX_INPUT &&
     state.error?.code !== "service_disabled";
-  const lang = settings?.lang ?? "en";
+  // Loading replaces the field, and a run is reading it: the reducer would drop the job
+  // anyway, so the button says so by staying down.
+  const canLoadPage = !state.streaming && !readingPage;
 
   return (
     <div className="flex h-full flex-col">
       <main className="flex min-h-0 flex-1 flex-col gap-3 p-3">
         <section className="flex min-h-0 flex-1 flex-col gap-1.5">
           <FieldRow>
-            <Label htmlFor="input-text">Input text</Label>
+            {/* The label, and next to it the one way to fill the field from the panel
+                itself: the whole of the tab, as the toolbar click reads it, selection
+                or no selection. It only loads — the button below is still what sends.
+                The two are named by what they do to the field: this one replaces it,
+                that one shortens what is in it. */}
+            <div className="flex min-w-0 items-center gap-2">
+              <Label htmlFor="input-text">Input text</Label>
+              <Button variant="outline" size="xs" disabled={!canLoadPage} onClick={() => void loadPage()}>
+                {readingPage ? "Loading…" : pageLoaded ? "Loaded" : "Load full page content"}
+              </Button>
+            </div>
             <CharCount value={inputLength} />
           </FieldRow>
           {/* The field stays editable while the answer is being written: correcting the
@@ -234,7 +313,7 @@ export function App() {
 
           {/* The only way to spend a request. Nothing else in the extension sends one. */}
           <Button className="w-full" disabled={!canShorten} onClick={() => void start()}>
-            {state.streaming ? "Shortening…" : "Shorten"}
+            {state.streaming ? "Shortening…" : "Shorten this text"}
           </Button>
 
           {state.error && (
@@ -249,18 +328,21 @@ export function App() {
             <Label>Shortened text</Label>
             <CharCount value={outputLength} />
           </FieldRow>
-          {/* The result and, once it is complete, the two things to do with it. The
-              buttons are a strip along the bottom of the field, each taking half of its
-              width, and they show while the pointer is over the field or one of them has
-              focus. Words, not icons: the panel is narrow, and nothing here needs a
-              tooltip to be understood. */}
+          {/* The result and the two things to do with it. The buttons are a strip along
+              the bottom of the field, each taking half of its width, and they show while
+              the pointer is over the field or one of them has focus. Words, not icons:
+              the panel is narrow, and nothing here needs a tooltip to be understood.
+              The strip is there as soon as there are words on screen, while the text is
+              still arriving as well: opening the window mid-run is how a long result is
+              read somewhere bigger while it is written. Copy is the one that waits for
+              the end — half a text on the clipboard is not what Copy means. */}
           <div className="group relative min-h-0 flex-1">
             <div
               ref={outputRef}
               className={cn(
                 "h-full overflow-y-auto rounded-md border bg-transparent px-3 py-2 text-sm leading-relaxed dark:bg-input/30",
                 // Room for the last line to scroll out from under the strip.
-                finished && "pb-10",
+                hasResult && "pb-10",
               )}
             >
               {state.streaming && shown === "" ? (
@@ -275,16 +357,27 @@ export function App() {
                 <p className="text-muted-foreground">The shortened text will appear here.</p>
               ) : (
                 <div ref={renderedRef}>
-                  <MarkdownView markdown={shown} lang={lang} images={state.resultImages} />
+                  <MarkdownView
+                    markdown={shown}
+                    lang={lang}
+                    images={state.resultImages}
+                    compact
+                    streaming={state.streaming}
+                  />
                 </div>
               )}
             </div>
-            {finished && (
+            {hasResult && (
               <div className="absolute inset-x-px bottom-px flex divide-x overflow-hidden rounded-b-md border-t bg-background/90 opacity-0 backdrop-blur-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 dark:bg-popover/90">
                 <Button variant="ghost" size="sm" className="flex-1 rounded-none" onClick={() => void openInWindow()}>
                   Open in window
                 </Button>
-                <CopyButton markdown={shown} rendered={renderedRef} className="flex-1 rounded-none" />
+                <CopyButton
+                  markdown={shown}
+                  rendered={renderedRef}
+                  disabled={state.streaming}
+                  className="flex-1 rounded-none"
+                />
               </div>
             )}
           </div>
@@ -331,9 +424,22 @@ function CharCount({ value }: { value: number }) {
 
 // One line under the field, and only when there is something to say. The order is the
 // priority: the page could not be read, the text is too short, too long, or was cut.
-function InputHint({ length, truncated, unreadable }: { length: number; truncated: boolean; unreadable: boolean }) {
-  if (unreadable) {
+function InputHint({
+  length,
+  truncated,
+  unreadable,
+}: {
+  length: number;
+  truncated: boolean;
+  unreadable: UnreadableReason | null;
+}) {
+  if (unreadable === "no-text") {
     return <Hint>This page has no readable text to shorten. Paste the text here instead.</Hint>;
+  }
+  // Only the toolbar click grants access to a tab, and the click reads the tab as well:
+  // so the way out is the click, and it is also the answer.
+  if (unreadable === "no-access") {
+    return <Hint>This page could not be read. Click the extension icon on it first, or paste the text here.</Hint>;
   }
   if (length > 0 && length < MIN_INPUT) {
     return <Hint>Add {characters(MIN_INPUT - length)} more to shorten this text.</Hint>;
