@@ -1,7 +1,7 @@
 {
   "extName": { "message": "Make It Shorter" },
   "extDescription": {
-    "message": "AI summarizer: get a summary or just shorten it. Long article? Make it shorter — in one click, in any language."
+    "message": "The Make It Shorter app is an AI sentence shortener and text summarizer. Paste text and shorten it in one click, in any language."
   },
   "actionTitle": { "message": "Open Make It Shorter" }
 }

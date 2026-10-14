@@ -1,1 +1,1 @@
-AI summarizer: get a summary or just shorten it. Long article? Can you make it shorter - yes, in one click, in any language.
+The Make It Shorter app is an AI sentence shortener and text summarizer. Paste text and shorten it in one click, in any language.
