@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "AI-samenvatting: een samenvatting of gewoon korter. Lang artikel? Eén klik, in elke taal."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "Make It Shorter openen" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

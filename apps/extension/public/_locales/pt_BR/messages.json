@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "Resumo com IA: um resumo ou simplesmente mais curto. Texto longo? Um clique, em qualquer idioma."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "Abrir o Make It Shorter" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

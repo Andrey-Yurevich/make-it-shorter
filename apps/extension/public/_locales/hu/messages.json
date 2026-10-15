@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "MI-összefoglaló: összefoglaló vagy egyszerűen rövidebb szöveg. Hosszú cikk? Egy kattintás, bármely nyelven."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "A Make It Shorter megnyitása" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

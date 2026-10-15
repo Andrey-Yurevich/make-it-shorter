@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "Shrnutí s AI: shrnutí, nebo prostě kratší text. Dlouhý článek? Jedno kliknutí, v každém jazyce."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "Otevřít Make It Shorter" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

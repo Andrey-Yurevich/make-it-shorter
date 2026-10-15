@@ -67,8 +67,8 @@ export function buildManifest(): chrome.runtime.ManifestV3 {
 
   const manifest: chrome.runtime.ManifestV3 = {
     manifest_version: 3,
-    name: "__MSG_extName__",
-    description: "__MSG_extDescription__",
+    name: "__MSG_appName__",
+    description: "__MSG_shortDesc__",
     default_locale: "en",
     version,
     version_name: versionName,
@@ -79,7 +79,7 @@ export function buildManifest(): chrome.runtime.ManifestV3 {
       128: "icons/icon128.png",
     },
     action: {
-      default_title: "__MSG_actionTitle__",
+      default_title: "__MSG_appName__",
       default_icon: {
         16: "icons/icon16.png",
         32: "icons/icon32.png",

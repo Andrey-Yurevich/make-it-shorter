@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "Ringkasan AI: buat ringkasan atau sekadar perpendek. Artikel panjang? Sekali klik, dalam bahasa apa pun."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "Buka Make It Shorter" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

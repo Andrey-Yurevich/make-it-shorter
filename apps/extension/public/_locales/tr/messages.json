@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "Yapay zekâ özeti: özet çıkarın ya da sadece kısaltın. Uzun makale? Tek tıkla, her dilde."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "Make It Shorter'ı aç" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

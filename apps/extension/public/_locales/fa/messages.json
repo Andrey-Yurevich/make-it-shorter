@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "خلاصه‌سازی با هوش مصنوعی: خلاصه بگیرید یا فقط کوتاهش کنید. مقالهٔ بلند؟ با یک کلیک، به هر زبان."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "باز کردن Make It Shorter" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

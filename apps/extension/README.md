@@ -15,7 +15,7 @@ decisions live in the root `CLAUDE.md`; this file is the package's own notes.
 | `src/output/` | the "Open in window" page |
 | `src/components/` | `MarkdownView` and `CopyButton`, shared by the panel and the window; `ui/` is shadcn |
 | `src/shared/` | pure modules with tests: SSE parser, text normalisation, languages, markdown → plain text, `{{img:N}}` → `![](N)`, picture and caption into one figure, message readers, storage |
-| `public/_locales/` | the 30 catalogs of the strings Chrome itself shows (name, description, icon title) |
+| `public/_locales/` | the 30 catalogs of the store listing: `appName` (also the icon title), `shortDesc`, `storeDesc`; written by `scripts/localize-listing.py` |
 | `scripts/` | the two build checks, see below |
 
 ## Build
@@ -27,7 +27,7 @@ npm test                                 # the pure modules, node --test, no bro
 ```
 
 `npm run build` runs, in order: the locale check (30 directories, every `messages.json`
-parses), the boundary check (every `onMessage` listener parameter and every
+parses, has exactly `appName`, `shortDesc`, `storeDesc` and fits the store's limits), the boundary check (every `onMessage` listener parameter and every
 `sendMessage` reply is typed `unknown`), `tsc --noEmit`, the unit tests, then two Vite
 builds — the panel, the output window and the worker together (`vite.config.ts`), and
 `content.js` alone as a single classic script (`vite.content.config.ts`).

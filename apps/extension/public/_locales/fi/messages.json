@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "Tekoälytiivistys: tiivistelmä tai vain lyhyempi teksti. Pitkä artikkeli? Yksi klikkaus, millä kielellä vain."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "Avaa Make It Shorter" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

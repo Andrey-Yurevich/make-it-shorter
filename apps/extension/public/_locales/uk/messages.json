@@ -1,7 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": {
-    "message": "ШІ-стиснення: короткий виклад або просто коротше. Довга стаття? Один клік, будь-якою мовою."
+  "appName": {
+    "message": ""
   },
-  "actionTitle": { "message": "Відкрити Make It Shorter" }
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

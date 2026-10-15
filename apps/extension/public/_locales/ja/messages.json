@@ -1,5 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": { "message": "AI要約：要約するか、ただ短くするか。長い記事もワンクリックで、どの言語でも。" },
-  "actionTitle": { "message": "Make It Shorter を開く" }
+  "appName": {
+    "message": ""
+  },
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

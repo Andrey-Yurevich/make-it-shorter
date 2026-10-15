@@ -1,5 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": { "message": "AI 摘要：既能总结，也能只是缩短。文章太长？一键搞定，支持各种语言。" },
-  "actionTitle": { "message": "打开 Make It Shorter" }
+  "appName": {
+    "message": ""
+  },
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }

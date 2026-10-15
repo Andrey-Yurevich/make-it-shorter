@@ -1,5 +1,11 @@
 {
-  "extName": { "message": "Make It Shorter" },
-  "extDescription": { "message": "AI 요약: 요약하거나 그냥 짧게. 긴 글도 클릭 한 번으로, 어떤 언어로든." },
-  "actionTitle": { "message": "Make It Shorter 열기" }
+  "appName": {
+    "message": ""
+  },
+  "shortDesc": {
+    "message": ""
+  },
+  "storeDesc": {
+    "message": ""
+  }
 }
