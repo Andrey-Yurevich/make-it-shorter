@@ -6,9 +6,9 @@
 
 | Main keyword | Volume (before refresh) | Volume (after refresh) | KD (before refresh) | KD (after refresh) | Times used | Summarization services in top-10 |
 | --- | --- | --- | --- | --- | --- | --- |
-| make it shorter | 5400 | 5400 | 40 | **43** | 9 | 9 |
-| can you make it shorter | 2400 | 2400 | 30 | 30 | 2 | 2 |
-| make it short | 2400 | 2400 | 75 | 75 | 4 | 5 |
+| make it shorter | 5400 | 5400 | 40 | **43** | 7 | 9 |
+| can you make it shorter | 2400 | 2400 | 30 | 30 | 1 | 2 |
+| make it short | 2400 | 2400 | 75 | 75 | 3 | 5 |
 | make it short and simple | 1000 | 1000 | 85 | 85 | 1 | 1 |
 | make it way shorter | 880 | 880 | d25 | 25 | 1 | 0 |
 | can you make it short | 590 | 590 | 43 | 43 | 1 | 0 |
@@ -33,19 +33,19 @@
 
 | Extra keyword | Volume (before refresh) | Volume (after refresh) | KD (before refresh) | KD (after refresh) | Times used | Summarization services in top-10 |
 | --- | --- | --- | --- | --- | --- | --- |
-| summary | 60500 | 60500 | 80 | 80 | 8 | 2 |
-| summarize | 49500 | 49500 | 89 | 89 | 7 | 8 |
-| summarizer | 40500 | 40500 | 78 | 78 | 6 | 10 |
-| ai summarizer | 27100 | 27100 | 71 | 71 | 2 | 9 |
+| summary | 60500 | 60500 | 80 | 80 | 4 | 2 |
+| summarize | 49500 | 49500 | 89 | 89 | 4 | 8 |
+| summarizer | 40500 | 40500 | 78 | 78 | 4 | 10 |
+| ai summarizer | 27100 | 27100 | 71 | 71 | 1 | 9 |
 | summarization | 12100 | 12100 | 58 | 58 | 1 | 5 |
 | summarize ai | 9900 | 9900 | 78 | 78 | 1 | 9 |
-| summarized | 8100 | 8100 | 88 | 88 | 2 | 6 |
+| summarized | 8100 | 8100 | 88 | 88 | 1 | 6 |
 | summarizing | 8100 | 8100 | 82 | 82 | 1 | 3 |
 | article summarizer | 6600 | 6600 | 68 | 68 | 1 | 10 |
 | summerize | 6600 | 6600 | 29 | 29 | 2 | 3 |
 | summerizer | 6600 | 6600 | 73 | 73 | 1 | 10 |
 | text summarizer | 6600 | 6600 | 77 | 77 | 1 | 10 |
-| shorten it | 5400 | 5400 | 61 | 61 | 3 | 6 |
+| shorten it | 5400 | 5400 | 61 | 61 | 2 | 6 |
 | summaries | 5400 | 5400 | 65 | 65 | 1 | 1 |
 | summarize text from image | 5400 | 5400 | 42 | 42 | 1 | 9 |
 | summarize this | 5400 | 5400 | 85 | 85 | 1 | 10 |
