@@ -9,6 +9,12 @@ The script only starts Claude. What Claude does is in listing/prompt.md: it writ
 locale's messages.json and a short report in listing/<locale>.md. When Claude fails,
 usually on the usage limit, the script waits and starts the same locale again, so a run
 left alone in a terminal gets through the limit by itself.
+
+While Claude works, the script prints every step it takes: the tool and the file, command
+or report it is used on. A step can take minutes of writing with no tool call (the full
+description goes into messages.json in one edit), so during such a stretch it prints a
+line every 30 seconds with how much has been written. Lines keep coming while Claude is
+alive; minutes without one mean it is stuck.
 """
 import json
 import subprocess
@@ -23,6 +29,7 @@ PROMPT = ROOT / "listing/prompt.md"
 MODEL = "opus"
 RETRY_MINUTES = 20
 MAX_ATTEMPTS = 24
+QUIET_SECONDS = 30
 
 # locale -> (language, market, Semrush database). A database marks a priority market from
 # listing-translation-notes.md: there the name and keywords are chosen from Semrush data.
@@ -74,6 +81,55 @@ def sync_english():
     path.write_text(json.dumps(messages, ensure_ascii=False, indent=2) + "\n")
 
 
+def describe(tool):
+    # One line per tool call: the tool and what it is used on.
+    name = tool["name"].replace("mcp__claude_ai_", "")
+    args = tool.get("input", {})
+    target = args.get("file_path") or args.get("command") or args.get("report") or args.get("description") or ""
+    return f"{name} {target}".replace(f"{ROOT}/", "")[:120]
+
+
+def run_claude(command, prompt, locale):
+    # stream-json reports each event as it happens. stderr is not captured: whatever
+    # Claude complains about goes straight to the terminal.
+    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, cwd=ROOT)
+    process.stdin.write(prompt)
+    process.stdin.close()
+
+    reply = None
+    last_print = time.monotonic()
+    written = 0
+    for line in process.stdout:
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        prefix = f"  {time.strftime('%H:%M:%S')} {locale}"
+        if event.get("parent_tool_use_id"):
+            prefix += " subagent"
+
+        if event["type"] == "assistant":
+            for block in event["message"]["content"]:
+                if block["type"] == "tool_use":
+                    print(f"{prefix}: {describe(block)}", flush=True)
+                    last_print = time.monotonic()
+                    written = 0
+        elif event["type"] == "stream_event" and event["event"]["type"] == "content_block_delta":
+            # Tokens of thinking, text or a tool's input: Claude is busy, not stuck.
+            delta = event["event"]["delta"]
+            written += len(delta.get("text") or delta.get("thinking") or delta.get("partial_json") or "")
+            # Thinking may arrive without its text, so nothing written yet is still a signal.
+            if time.monotonic() - last_print >= QUIET_SECONDS:
+                activity = f"writing, {written} characters so far" if written else "thinking"
+                print(f"{prefix}: {activity}", flush=True)
+                last_print = time.monotonic()
+        elif event["type"] == "result":
+            reply = event
+
+    process.wait()
+    return process.returncode, reply
+
+
 def localize(locale):
     language, market, database = LANGUAGES[locale]
     prompt = PROMPT.read_text()
@@ -88,7 +144,9 @@ def localize(locale):
     command = [
         "claude", "-p",
         "--model", MODEL,
-        "--output-format", "json",
+        "--output-format", "stream-json",
+        "--verbose",
+        "--include-partial-messages",
         "--allowedTools",
         "Read",
         f"Edit(apps/extension/public/_locales/{locale}/messages.json)",
@@ -99,15 +157,12 @@ def localize(locale):
     ]
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        completed = subprocess.run(command, input=prompt, capture_output=True, text=True, cwd=ROOT)
-        try:
-            reply = json.loads(completed.stdout)
-        except ValueError:
-            reply = {"is_error": True, "result": completed.stdout.strip() or completed.stderr.strip()}
-        if completed.returncode == 0 and not reply.get("is_error"):
+        returncode, reply = run_claude(command, prompt, locale)
+        if returncode == 0 and reply and not reply.get("is_error"):
             print(reply.get("result", "").strip(), flush=True)
             return
-        print(f"{locale}: claude failed: {reply.get('result', '')}".strip(), flush=True)
+        error = reply.get("result", "") if reply else f"exit code {returncode}"
+        print(f"{locale}: claude failed: {error}".strip(), flush=True)
         if attempt < MAX_ATTEMPTS:
             print(f"{locale}: retrying in {RETRY_MINUTES} min ({attempt}/{MAX_ATTEMPTS})", flush=True)
             time.sleep(RETRY_MINUTES * 60)

@@ -56,13 +56,14 @@ Translate `long-description.txt` faithfully in meaning and structure — the sam
 - In the English text `make it shorter` in lowercase is two things at once: the product's name and the English search keyword. Where it names the product, write `Make It Shorter`. On a priority market, use the name's national keyword instead in some of those places, where it reads naturally.
 - The English text works English search phrases into its sentences: `summarize`, `summarizer`, `summary generator`, `article summarizer`, `make it short`, `make it way shorter`, `make it as short as possible`, `can u make it short` and the like. Render each the way people in {market} would say it, using the keywords from step 1 where they fit. Never leave the English phrase in place and never transliterate it.
 - A line that exists only for English search and means nothing in {language} — the question about the misspelling `summerize`/`summerizer` — becomes the same point about a common {language} misspelling or variant if there is one, and is dropped otherwise. This is the only kind of line you may drop.
-- Tone names (`Simplified`, `Casual`, `Direct`, `Formal` and the rest) are labels of the English interface: keep them in English.
 - Keywords appear as often as a native writer would naturally use them and no more. Repetition reads as spam to the store's search.
 - At most 16,000 characters.
 
 ## Everywhere
 
 - The brand Make It Shorter stays in Latin letters and is never translated.
+- The extension's interface is English in every locale, so every name the listing takes from it stays in English exactly as written: the button `Shorten`, the tones `Simplified`, `Professional`, `Casual` and `Direct`, and any other button, field or option of the panel (`Copy`, `Open in window`, `Load full page content`). A reader looking for a translated name will not find it on screen. No quotation marks around them. Grammar around the name is yours: the sentence is {language}, only the label is English.
+- Parts of Chrome itself (the toolbar, the Chrome Web Store, the PDF viewer) are the opposite case: Chrome is localized, so call them what Chrome calls them in {language}.
 - One form of address throughout, the one usual in software store listings in {market}.
 - The typography of {language}: quotation marks, dashes, spaces before punctuation where the language has them.
 - No `$` sign anywhere: Chrome's message files treat it as a placeholder.
@@ -73,7 +74,7 @@ Start one subagent and give it only your {language} name, short description and 
 
 > You are a native {language} speaker in {market}, browsing the Chrome Web Store. Read this extension listing. List only the phrases that sound translated, unnatural or awkward to you, each with how a native would say it. Say nothing about what already sounds fine. If nothing jars, say so.
 
-Take the suggestions you agree with, without changing the meaning, the name or the keywords. One round, no polishing beyond it.
+Take the suggestions you agree with, without changing the meaning, the name, the keywords or the English interface names: a native reader will flag those as foreign, and that is expected. One round, no polishing beyond it.
 
 ## Step 5. Write and check
 
