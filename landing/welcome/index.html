@@ -117,92 +117,6 @@
     height:auto;
     overflow:visible;
   }
-
-  .gate{
-    margin-top:3.5rem;
-    text-align:center;
-  }
-
-  .button{
-    appearance:none;
-    border:0;
-    border-radius:12px;
-    padding:.9rem 1.6rem;
-    font:inherit;
-    font-weight:600;
-    color:var(--surface);
-    background:var(--ink);
-    cursor:pointer;
-    transition:opacity .15s,background .15s;
-  }
-
-  .button:hover{background:#000}
-
-  .button[aria-disabled="true"]{
-    background:var(--surface-muted);
-    color:#a1a1aa;
-    cursor:not-allowed;
-  }
-
-  .hint{
-    margin:.85rem auto 0;
-    max-width:26rem;
-    font-size:.95rem;
-    color:var(--warning);
-    opacity:0;
-    transition:opacity .15s;
-  }
-
-  /* A warning the user can find by hovering, by tabbing to the button, or by clicking
-     it — a disabled button answers none of those, which is why the button is only
-     marked disabled and not actually disabled. */
-  .button[aria-disabled="true"]:hover ~ .hint,
-  .button[aria-disabled="true"]:focus-visible ~ .hint,
-  .hint.show{opacity:1}
-
-  section.examples{margin-top:4rem}
-
-  section.examples > h2{
-    justify-content:center;
-    font-size:1.5rem;
-  }
-
-  section.examples > h2::before{content:none}
-
-  h3{
-    margin:2.5rem 0 .75rem;
-    font-size:1.05rem;
-    line-height:1.35;
-    font-weight:500;
-    color:var(--ink-soft);
-  }
-
-  figure{margin:0}
-
-  video{
-    display:block;
-    width:100%;
-    height:auto;
-    border:1px solid var(--line);
-    border-radius:12px;
-    background:var(--surface-muted);
-  }
-
-  /* A recording that is not in the bucket yet leaves an empty frame rather than a broken
-     player; the day the file lands, the page plays it with no change here. */
-  .placeholder{
-    display:none;
-    margin:0;
-    padding:4rem 1.5rem;
-    border:1px dashed var(--line);
-    border-radius:12px;
-    background:var(--surface-muted);
-    color:var(--ink-soft);
-    text-align:center;
-  }
-
-  figure.missing video{display:none}
-  figure.missing .placeholder{display:block}
 </style>
 </head>
 <body>
@@ -414,6 +328,8 @@
                   <path d="M1469,158 L1457,190"></path>
                   <path d="M1469,158 L1436,164"></path>
                 </g>
+                <circle cx="1124" cy="252" r="38" fill="#1a57ff"></circle>
+                <text x="1124" y="252" fill="#fff" font-size="44" font-weight="700" text-anchor="middle" dominant-baseline="central" font-family="Helvetica, Arial, sans-serif">3</text>
               </svg>
             </div>
         </foreignObject>
@@ -421,30 +337,6 @@
     </li>
   </ol>
 
-  <div class="gate">
-    <button id="examples-button" class="button" type="button" aria-disabled="true" aria-describedby="pin-hint">
-      Quick usage examples
-    </button>
-    <p id="pin-hint" class="hint" role="status">Pin Make It Shorter first — that is step 1 above.</p>
-  </div>
-
-  <section id="examples" class="examples" hidden>
-    <h2>Here are a couple of ways to use it</h2>
-
-    <h3>Example 1</h3>
-    <figure>
-      <video src="/assets/usage1-demo.mp4" width="3022" height="1898" autoplay muted loop playsinline
-             aria-label="Shortening a selected email in Gmail"></video>
-      <p class="placeholder">This recording is coming soon.</p>
-    </figure>
-
-    <h3>Example 2</h3>
-    <figure>
-      <video src="/assets/usage2-demo.mp4" width="3022" height="1898" autoplay muted loop playsinline
-             aria-label="Shortening an entire Wikipedia article"></video>
-      <p class="placeholder">This recording is coming soon.</p>
-    </figure>
-  </section>
 </main>
 
 <script>
@@ -1356,9 +1248,6 @@
 </script>
 
 <script>
-// Three small things, in the order they happen: the fireworks, the gate on the examples
-// button, and the recordings that may not be in the bucket yet.
-
 // Fireworks. The five-burst "realistic" recipe from the canvas-confetti readme, fired
 // once when the page opens, and skipped entirely for a visitor who asked for less motion.
 (function fireworks() {
@@ -1377,91 +1266,6 @@
   burst(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
   burst(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
   burst(0.1, { spread: 120, startVelocity: 45 });
-})();
-
-// The gate. Whether the icon is pinned is something only the extension can answer, so
-// the page asks it: chrome.action.getUserSettings() does not exist on a web page.
-//
-// The extension puts its own id in the query string when it opens this page, which is
-// why nothing is hard-coded here and the unpacked build works the same as the store one.
-// Opened any other way — a bookmark, a second visit, another browser — there is nobody
-// to ask, and the button is simply open.
-(function gate() {
-  var button = document.getElementById("examples-button");
-  var hint = document.getElementById("pin-hint");
-  var examples = document.getElementById("examples");
-  var pinned = false;
-
-  function unlock() {
-    pinned = true;
-    button.removeAttribute("aria-disabled");
-    hint.classList.remove("show");
-    hint.hidden = true;
-  }
-
-  button.addEventListener("click", function () {
-    if (!pinned) {
-      // A click is the third way to ask for the warning, after hover and keyboard focus.
-      hint.classList.add("show");
-      return;
-    }
-    examples.hidden = false;
-    button.hidden = true;
-    examples.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-
-  var id = new URLSearchParams(location.search).get("ext");
-  var ready = /^[a-p]{32}$/.test(id || "") && window.chrome && chrome.runtime && chrome.runtime.sendMessage;
-  if (!ready) {
-    unlock();
-    return;
-  }
-
-  // Silence means the extension is gone, disabled, or too old to answer. A few tries in
-  // a row with no answer and the gate opens: a locked page with no way past it is worse
-  // than showing the examples to someone who has not pinned anything.
-  var silent = 0;
-  function ask() {
-    if (pinned) {
-      return;
-    }
-    chrome.runtime.sendMessage(id, { type: "pin-state" }, function (reply) {
-      if (chrome.runtime.lastError || !reply) {
-        silent += 1;
-        if (silent >= 4) {
-          unlock();
-        }
-        return;
-      }
-      silent = 0;
-      if (reply.pinned === true) {
-        unlock();
-      }
-    });
-  }
-
-  ask();
-  var timer = setInterval(function () {
-    if (pinned) {
-      clearInterval(timer);
-      return;
-    }
-    ask();
-  }, 1000);
-  // Pinning happens in the toolbar, so the answer has usually changed by the time the
-  // window comes back.
-  window.addEventListener("focus", ask);
-})();
-
-// The recordings. They are uploaded to the bucket separately from this page, so a file
-// that is not there yet — or is still a placeholder of zero bytes — leaves a frame with
-// a line of text instead of a dead player.
-(function recordings() {
-  document.querySelectorAll("video").forEach(function (video) {
-    video.addEventListener("error", function () {
-      video.parentElement.classList.add("missing");
-    });
-  });
 })();
 </script>
 
