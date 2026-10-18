@@ -21,8 +21,8 @@ const limits = { appName: 75, shortDesc: 132, storeDesc: 16000 };
 const problems = [];
 const locales = readdirSync(localesDir).sort();
 
-if (locales.length !== 30) {
-  problems.push(`expected 30 locales, found ${locales.length}`);
+if (locales.length !== 32) {
+  problems.push(`expected 32 locales, found ${locales.length}`);
 }
 
 for (const locale of locales) {
