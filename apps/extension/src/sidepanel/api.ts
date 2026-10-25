@@ -13,6 +13,13 @@ export type StreamHandlers = {
   onError: (code: ErrorCode, message?: string) => void;
 };
 
+// A call beyond the account's Lambda concurrency ceiling is throttled with a plain 429
+// before the function runs: no quota spent, no model called, so asking again duplicates
+// nothing. Three quiet retries, then the ordinary error — the user sees only a longer
+// skeleton. Only 429: the WAF refuses with 403, and repeating that would just spend the
+// per-IP rate limit.
+const THROTTLE_RETRY_DELAYS_MS = [1_000, 5_000, 5_000];
+
 export async function shorten(request: ShortenRequest, handlers: StreamHandlers): Promise<void> {
   const body = JSON.stringify(request);
 
@@ -24,19 +31,26 @@ export async function shorten(request: ShortenRequest, handlers: StreamHandlers)
   const deadline = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "X-Device-Id": await getDeviceId(),
-        // OAC in front of the Function URL: CloudFront does not hash the body itself,
-        // it signs whatever this header says. Without it the origin answers 403, and a
-        // local mock will never show you that.
-        "x-amz-content-sha256": await sha256Hex(body),
-      },
-      body,
-    });
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Device-Id": await getDeviceId(),
+      // OAC in front of the Function URL: CloudFront does not hash the body itself,
+      // it signs whatever this header says. Without it the origin answers 403, and a
+      // local mock will never show you that.
+      "x-amz-content-sha256": await sha256Hex(body),
+    };
+    const post = () => fetch(API_URL, { method: "POST", signal: controller.signal, headers, body });
+
+    // The retries live inside the same 60s deadline: it aborts a wait as well as a fetch.
+    let response = await post();
+    for (const delay of THROTTLE_RETRY_DELAYS_MS) {
+      if (response.status !== 429) {
+        break;
+      }
+      await response.body?.cancel();
+      await sleep(delay, controller.signal);
+      response = await post();
+    }
 
     // Anything but 200 is transport trouble, not our protocol: the WAF rejects some
     // requests with a plain 403 and no SSE in sight.
@@ -90,6 +104,20 @@ function dispatch(event: ServerEvent, handlers: StreamHandlers): void {
       handlers.onError(event.code, event.message);
       return;
   }
+}
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
 }
 
 async function sha256Hex(body: string): Promise<string> {

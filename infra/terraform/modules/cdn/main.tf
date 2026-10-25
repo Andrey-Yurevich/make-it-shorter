@@ -363,6 +363,7 @@ resource "aws_route53_record" "api" {
 }
 
 output "distribution_arn" { value = aws_cloudfront_distribution.api.arn }
+output "distribution_id" { value = aws_cloudfront_distribution.api.id }
 # Empty when logging is off, and that is the point: the reporter reads this to decide
 # between "nothing was blocked" and "nobody was counting". A name that stayed valid while
 # the delivery was switched off would turn the second into the first.

@@ -10,7 +10,7 @@
 |---|---|---|
 | `apps/extension` | Расширение Chrome MV3 | TypeScript, React, Tailwind v4, shadcn/ui, Vite |
 | `apps/backend` | Lambda-обработчик `POST /v1/shorten` | Go, стандартная библиотека + AWS SDK |
-| `apps/reporter` | Отчёт по CloudWatch: CLI и вебхук Telegram-бота | Go, отдельный модуль |
+| `apps/reporter` | Отчёт по CloudWatch: CLI, вебхук Telegram-бота и алертер `mis-alerts` | Go, отдельный модуль |
 | `infra/terraform` | Вся инфраструктура, один корень | Terraform |
 | `landing/` | Статические страницы `/welcome`, `/uninstall`, `/rate-us` | HTML без сборки |
 | `scripts/` | `make-release.sh`, `frontend-build.sh`, `smoke-test.sh`; `localize-listing.py` | bash; python |
@@ -151,7 +151,7 @@ SSE, UTF-8, `Content-Type: text/event-stream`, `Cache-Control: no-store`. Кад
 | `done` | `{tokensIn, tokensOut}` | один раз, штатное завершение; клиенту не показывается |
 | `error` | `{code, message?}` | вместо `done` |
 
-**`done` отправляется всегда** — без него клиент не отличает «завершено» от оборванного соединения. Любая ошибка конвейера — HTTP 200 и одно событие `error`; не-200 клиент трактует как транспортную ошибку (`upstream_error`).
+**`done` отправляется всегда** — без него клиент не отличает «завершено» от оборванного соединения. Любая ошибка конвейера — HTTP 200 и одно событие `error`; не-200 клиент трактует как транспортную ошибку (`upstream_error`). Исключение — 429: это троттлинг Lambda сверх лимита одновременных вызовов, отказ до запуска функции, без квоты и без Bedrock. Клиент молча повторяет через 1, 5 и 5 с внутри того же 60-секундного дедлайна и только потом показывает `upstream_error`. 403 от WAF не повторяется.
 
 Коды: `too_short` · `too_long` · `rate_limited` · `unsupported_language` · `upstream_error` · `invalid_request` · `service_disabled` · `nothing_to_shorten`.
 
@@ -208,12 +208,13 @@ Stateless: текст живёт в памяти функции, пока идё
 
 ### Квота
 
-DynamoDB, одна таблица, два вида записей по префиксу ключа `pk`:
+DynamoDB, одна таблица, три вида записей по префиксу ключа `pk`:
 
 | Ключ | Что | TTL |
 |---|---|---|
 | `quota#<deviceId>#<YYYY-MM-DD>` | счётчик за сутки | +48 ч |
 | `device#<deviceId>` | переопределения: `model`, `maxSummaryTokens`, `dailyQuota`, `email`, `note` | нет, заводятся руками |
+| `alert#<ключ алерта>` | удержание сработавшего алерта, пишет только `mis-alerts` (раздел «Алерты») | срок удержания |
 
 Инкремент — один `UpdateItem` с `ConditionExpression` на лимит; чтение с последующей записью запрещено — параллельные запросы обошли бы лимит. **Инкремент до вызова Bedrock**, поэтому запрос, упавший `upstream_error`, квоту не возвращает: компенсирующая запись на пути отказа сама может не пройти. Единица — запрос клиента.
 
@@ -241,13 +242,32 @@ API самообслуживания для переопределений не�
 | `MODEL_PRICES` | JSON `{"<model>":{"input","output","cacheRead","cacheWrite"}}`, $/млн токенов |
 | `LOCAL_ADDR` | только локально: тот же обработчик обычным HTTP-сервером против настоящих Bedrock и DynamoDB |
 
-### Логи, метрики, алармы
+### Логи, метрики, алерты
 
 Одна JSON-запись на запрос, `event: "shorten"`: `inputLength`, `source`, `lang`, `tone`, `country`, `model`, `maxSummaryTokens`, `dailyQuota`, `firstTokenMs`, `totalMs`, `tokensIn/Out`, `cacheRead/WriteTokens`, `cacheReadShare`, `estimatedCostUsd`, `nothingToShorten`, `errorCode`. **Ничего из текста пользователя** — ни исходника, ни результата, ни фрагментов; ошибки Bedrock без эха запроса.
 
-**Формат записи — контракт с `apps/reporter`:** он фильтрует `event = "shorten"`, суммирует `estimatedCostUsd` по `country` и по `model` (число запросов и расход на каждую модель; модель с запросами и нулевым расходом — пропущенная цена в `MODEL_PRICES`, отчёт так и пишет), читает `errorCode`. Переименование любого из них ломает отчёт и метрический фильтр аларма молча.
+**Формат записи — контракт с `apps/reporter`:** он фильтрует `event = "shorten"`, суммирует `estimatedCostUsd` по `country` и по `model` (число запросов и расход на каждую модель; модель с запросами и нулевым расходом — пропущенная цена в `MODEL_PRICES`, отчёт так и пишет), читает `errorCode`; алертер читает тот же `estimatedCostUsd` и `firstTokenMs`. Переименование любого из них ломает отчёт и алерты молча.
 
-Функция публикует `EstimatedCostUsd` (расход считается по токенам и ценам из окружения, задержка минуты; AWS Budgets отстаёт на часы и остаётся страховкой на аккаунт) и `Successes` (ответ дошёл до `done`; штатная метрика Lambda не годится — `error` в SSE для неё успешный вызов). Алармы: расход за сутки > $40; ноль успехов за 3 часа при `Invocations ≥ min_invocations_for_alarm` (без условия по трафику это датчик ночи); прочие по вкусу.
+Функция ещё публикует метрики `EstimatedCostUsd` и `Successes`, но их больше никто не читает: алармы, которые на них стояли, удалены (2026-10-18). Убрать публикацию — релиз API: вместе с ней уходят право `PutMetricData` и переменная `METRIC_NAMESPACE`, а её отсутствие старый код считает фатальным, поэтому сначала код, потом окружение.
+
+#### Алерты
+
+**Весь алертинг — функция `mis-alerts`, сообщения в Telegram.** CloudWatch-алармов, SNS и AWS Budgets нет. EventBridge запускает функцию раз в минуту; это тот же бинарник, что бот и CLI `apps/reporter`, с `MODE=alerts`. Пишет она от имени бота, всем чатам из `telegram_chat_ids`, все сработавшие за запуск алерты — одним сообщением.
+
+| Алерт | Порог | Источник | Удержание |
+|---|---|---|---|
+| Вызовы API за любые 1 / 5 / 15 мин | > 10 / 50 / 150 | `AWS/Lambda Invocations` поминутно за 20 мин | 20 мин |
+| Дневной бюджет | ≥ $10 с полуночи по Берлину | тот же запрос Insights, что `/report` | до конца суток |
+| Устройство за сутки | > 20 вызовов | скан счётчиков `quota#…#<сегодня>` | до конца суток |
+| Ошибки Lambda | любая строка | тот же запрос Insights, что «last lambda errors» в отчёте: сбои рантайма и всё, что обработчик пишет через `log.Printf` (в том числе `bedrock failed`, которого метрика `Errors` не видит) | 20 мин |
+| Первый токен | p95 > 2 с за 15 мин, не меньше 5 ответов | Insights по `firstTokenMs` | 15 мин |
+| 5xx на `POST /v1/shorten` | любой | `AWS/CloudFront 5xxErrorRate × Requests` дистрибуции API | 20 мин |
+
+Пороги — переменные `alert_*` в Terraform. **Удержание:** сработавший ключ пишется условным `PutItem` в `alert#…` с TTL; пока срок не вышел, тот же ключ молчит, поэтому длящееся состояние приходит раз в удержание, а не раз в минуту, и два перекрывшихся запуска не шлют одно и то же дважды. Не доставилось ни в один чат — удержание снимается, следующая минута пробует снова. Проверка, которая не смогла выполниться, сама становится алертом (удержание час): молчащая проверка неотличима от тихой ночи. Каждый запуск пишет в свой лог одну JSON-строку `event: "alerts"` с измеренными числами — по ней видно, что алертер жив и видит данные; число запросов к дистрибуции стоит рядом с числом 5xx, потому что опечатка в размерностях CloudFront даёт пустой ряд, а не ошибку.
+
+**Id устройства уходит в Telegram** — в алерте «устройство за сутки», чтобы было с чем идти в переопределения. В логи алертера id не пишется.
+
+`go run . -alerts` в `apps/reporter` с тем же окружением, что у функции, — один запуск против прода: печатает измеренное и то, что сработало бы, ничего не удерживая и не отправляя. С `-send` — настоящий запуск, с удержанием и отправкой; удержания тестового запуска (`alert#budget#<день>`, `alert#device#…`) потом удаляются руками, иначе настоящий алерт промолчит до конца суток.
 
 ### Конфигурация Lambda
 
@@ -298,7 +318,7 @@ IP-адреса не собираются: страну определяет Clo
 | Длина подписи под картинкой | 200 code points | `shared/figures.ts` |
 | Квота | 50 запросов в сутки на устройство | env Lambda по тирам |
 | Потолок ответа | 400 токенов в `variables.tf`, 3000 в `terraform.tfvars` | env Lambda по тирам |
-| Порог аларма по расходу | $40 в сутки | Terraform |
+| Дневной бюджет (алерт) | $10 в сутки | Terraform, `alert_daily_budget_usd` |
 | WAF rate limit | 60 запросов / 5 мин на IP | Terraform |
 | Таймауты | функция 50 с, CloudFront 60 с, клиент 60 с | код и Terraform |
 
@@ -306,13 +326,13 @@ IP-адреса не собираются: страну определяет Clo
 
 ## Инфраструктура
 
-Один корень `infra/terraform`, модули `api`, `cdn`, `data`, `landing`, `budget`, `artifacts`, `bot`. Состояние — S3 с версионированием и блокировкой, бакет создан отдельно. **Окружение одно — prod;** отладка идёт против него распакованной сборкой с `EXTENSION_KEY` и переопределением лимитов по своему `deviceId`. Именование `mis-<компонент>`, теги `Project = make-it-shorter`, `ManagedBy = terraform`.
+Один корень `infra/terraform`, модули `api`, `cdn`, `data`, `landing`, `alerts`, `artifacts`, `bot`. Состояние — S3 с версионированием и блокировкой, бакет создан отдельно. **Окружение одно — prod;** отладка идёт против него распакованной сборкой с `EXTENSION_KEY` и переопределением лимитов по своему `deviceId`. Именование `mis-<компонент>`, теги `Project = make-it-shorter`, `ManagedBy = terraform`.
 
 - **`api`:** Lambda из S3 (`s3_key = lambda_version`), Function URL `AWS_IAM` + `RESPONSE_STREAM`, вызов разрешён только `cloudfront.amazonaws.com` с условием на ARN дистрибуции. IAM без wildcard: Bedrock по ARN inference profile и каждой региональной модели, куда он маршрутизирует, для двух моделей — рабочей Sonnet 5 и Haiku 4.5 под переопределения устройств (список регионов сверять с `aws bedrock get-inference-profile`: вызов, ушедший в неперечисленный регион, отклоняется); `GetItem`/`UpdateItem` на одну таблицу; `PutMetricData`; своя log group. `reserved_concurrency` — `null`, пока потолок аккаунта 10 (AWS отклоняет резерв, оставляющий меньше 10).
 - **`cdn`:** CloudFront с OAC (`origin_type = lambda`, `signing_behavior = always`), кэш отключён, `origin_read_timeout = 60`, проброс заголовков `X-Device-Id`, `Origin`, `Content-Type`, `x-amz-content-sha256`, `CloudFront-Viewer-Country`. WAF `scope = CLOUDFRONT`: rate-based 60/5 мин на IP; byte-match `Origin STARTS_WITH chrome-extension://`, остальное 403; `AWSManagedRulesCommonRuleSet` (правило `SizeRestrictions_BODY` в `count` — тело запроса регулярно больше 8 КБ). ACM в `us-east-1`, ALIAS `api`.
 - **`data`:** DynamoDB `PAY_PER_REQUEST`, hash key `pk`, TTL по `ttl`, **PITR включён** ради ручных переопределений.
 - **`landing`:** приватный S3 + CloudFront с OAC, кэш включён (`Managed-CachingOptimized`; HTML 5 мин, хэшированные ассеты год, остальное час; строка запроса не в ключе — `/rate-us?stars=N` одна страница). CloudFront Function на viewer request дописывает `/index.html` к путям без расширения — иначе `/welcome` отдаёт 403. Инвалидация `/*` при выкате.
-- **`budget`:** аларм на суточную сумму `EstimatedCostUsd`, аларм «ноль успехов при трафике» через metric math, `aws_budgets_budget` 50/80/100 % как страховка, SNS на email.
+- **`alerts`:** функция `mis-alerts` из того же архива `bot/<label>.zip`, правило EventBridge `rate(1 minute)`, повторы асинхронного вызова выключены (следующая минута всё равно запустит). IAM: секрет бота, `StartQuery` на лог API, `Scan` таблицы, `PutItem`/`DeleteItem` только на ключи `alert#*` (`dynamodb:LeadingKeys`), `GetMetricData`. Слот в общем пуле конкурентности аккаунта (10) занимает на секунды раз в минуту.
 - **`artifacts`:** приватный бакет `mis-artifacts` с версионированием: `lambda/<label>.zip`, `bot/<label>.zip`, `extension/<label>.zip`. Архив расширения хранится потому, что магазин не отдаёт обратно загруженное, а при разборе жалобы нужно знать сборку у пользователей.
 - **`bot`:** Telegram-вебхук на Lambda Function URL (`authorization_type = NONE` — Telegram не подписывает), тот же бинарник, что CLI `apps/reporter`. Защита: секретный токен в `X-Telegram-Bot-Api-Secret-Token` (сравнение постоянного времени), белый список чатов (пустой — бот отвечает только id чата), окна отчёта ограничены `30m`, `1h`, `12h`, `24h`, `month`. Секрет `mis-bot` в Secrets Manager с `ignore_changes = [secret_string]`, Terraform его содержимого не знает.
 

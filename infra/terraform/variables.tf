@@ -204,21 +204,46 @@ variable "model_prices" {
   }
 }
 
-# --- alarms ---
+# --- alerts ---
+#
+# Every alert goes to the Telegram chats in telegram_chat_ids, from the mis-alerts
+# function, which checks once a minute. A limit is crossed when the measured value is
+# above it; the daily budget when spend reaches it.
 
-variable "alarm_email" {
-  type = string
+variable "alert_invocations_1m" {
+  type        = number
+  default     = 10
+  description = "API function invocations in any one minute."
 }
 
-variable "daily_cost_alarm_usd" {
-  type    = number
-  default = 40
+variable "alert_invocations_5m" {
+  type        = number
+  default     = 50
+  description = "API function invocations in any five minutes."
 }
 
-variable "min_invocations_for_alarm" {
+variable "alert_invocations_15m" {
+  type        = number
+  default     = 150
+  description = "API function invocations in any fifteen minutes."
+}
+
+variable "alert_daily_budget_usd" {
+  type        = number
+  default     = 10
+  description = "Estimated spend since local midnight in Berlin, the quota's day. Said once a day."
+}
+
+variable "alert_device_daily_calls" {
   type        = number
   default     = 20
-  description = "What counts as normal traffic for the zero-successes alarm. Without it the alarm is a night-time idle detector."
+  description = "Calls one device may make in a day before it is named in the chat. Below the quota on purpose: this is a look, not a block."
+}
+
+variable "alert_first_token_p95_ms" {
+  type        = number
+  default     = 2000
+  description = "p95 time to first token over 15 minutes, taken only when there were at least five answers."
 }
 
 # --- telegram bot ---

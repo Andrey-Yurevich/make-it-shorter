@@ -1,8 +1,6 @@
 # Values for the single prod environment. There is no dev: it would double the
 # infrastructure, domains and certificates for a stand nobody works on.
 
-alarm_email = "andrei@yurevich.it"
-
 # Which build production runs: the key of the artifact in S3, under lambda/ and without
 # the .zip. make-release.sh prints that name when it finishes uploading — the
 # version-shaped tag on the built commit, its short sha when there is no tag, and a -1,
@@ -25,7 +23,7 @@ default_model = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 default_max_summary_tokens = 3000
 
 # The bot artifact, built and uploaded by scripts/make-release.sh alongside the other two.
-bot_version = "2.4.0"
+bot_version = "ffffb8a"
 
 # Chats the Telegram bot answers. Empty until the first one is known: message the bot and
 # it replies with the chat id to put here.

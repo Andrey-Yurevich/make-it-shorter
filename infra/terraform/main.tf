@@ -118,14 +118,26 @@ module "landing" {
   log_retention_days = var.log_retention_days
 }
 
-module "budget" {
-  source = "./modules/budget"
+module "alerts" {
+  source = "./modules/alerts"
 
-  alarm_email               = var.alarm_email
-  daily_cost_alarm_usd      = var.daily_cost_alarm_usd
-  min_invocations_for_alarm = var.min_invocations_for_alarm
+  artifacts_bucket   = module.artifacts.bucket_name
+  bot_version        = var.bot_version
+  log_retention_days = var.log_retention_days
 
-  metric_namespace = local.metric_namespace
-  function_name    = module.api.function_name
-  log_group_name   = module.api.log_group_name
+  api_function_name = module.api.function_name
+  api_log_group     = module.api.log_group_name
+  table_name        = module.data.table_name
+  table_arn         = module.data.table_arn
+  distribution_id   = module.cdn.distribution_id
+
+  bot_secret_arn   = module.bot.secret_arn
+  allowed_chat_ids = var.telegram_chat_ids
+
+  invocations_1m     = var.alert_invocations_1m
+  invocations_5m     = var.alert_invocations_5m
+  invocations_15m    = var.alert_invocations_15m
+  daily_budget_usd   = var.alert_daily_budget_usd
+  device_daily_calls = var.alert_device_daily_calls
+  first_token_p95_ms = var.alert_first_token_p95_ms
 }

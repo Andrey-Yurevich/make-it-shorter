@@ -10,14 +10,16 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 // One operational report over a time window: what was spent, where it was spent, what
 // the WebACL stopped, and what went wrong.
 //
-// The same binary is both halves of the reporting. On a terminal it prints the report as
-// JSON; inside Lambda it is the Telegram bot's webhook and answers the same report as a
-// message. See runLambda in lambda.go.
+// The same binary is all of the reporting. On a terminal it prints the report as JSON;
+// inside Lambda it is either the Telegram bot's webhook, answering the same report as a
+// message, or the alerter EventBridge runs once a minute. See runLambda in lambda.go and
+// alerts.go.
 //
 //	cd apps/reporter && go run . -window 24h
 //
@@ -115,7 +117,14 @@ func main() {
 	// nothing else does; on a terminal it is absent and the flags below apply. Keeping
 	// them in one binary is what lets the bot answer with exactly the report the CLI
 	// prints, rather than with a second implementation of it that drifts.
+	//
+	// Inside Lambda there are two functions on this one binary, told apart by MODE: the
+	// webhook bot, and the alerter that EventBridge runs once a minute.
 	if os.Getenv("AWS_LAMBDA_RUNTIME_API") != "" {
+		if os.Getenv("MODE") == "alerts" {
+			runAlertsLambda()
+			return
+		}
 		runLambda()
 		return
 	}
@@ -125,7 +134,14 @@ func main() {
 	wafLogGroup := flag.String("waf-log-group", "aws-waf-logs-mis-api", "the WebACL's log group")
 	function := flag.String("function", "mis-api", "the API function's name, for Lambda metrics")
 	region := flag.String("region", "us-east-1", "AWS region")
+	alerts := flag.Bool("alerts", false, "run the alert checks once, configured from the same environment the alerter Lambda gets, and print what would fire")
+	send := flag.Bool("send", false, "with -alerts: hold and send the alerts to ALLOWED_CHAT_IDS, as the Lambda does")
 	flag.Parse()
+
+	if *alerts {
+		runAlertsOnce(*region, *send)
+		return
+	}
 
 	span, err := parseWindow(*window)
 	if err != nil {
@@ -267,4 +283,37 @@ func buildReport(ctx context.Context, logGroup, wafLogGroup, function, window st
 	}
 
 	return built
+}
+
+// runAlertsOnce is the alerter at a terminal: one run against production, printed. By
+// default nothing is held and nothing is sent; -send makes it the real thing, Telegram
+// included, which is how a changed check is tried end to end before it is deployed.
+func runAlertsOnce(region string, send bool) {
+	ctx := context.Background()
+	awsConfig, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	if err != nil {
+		log.Fatalf("could not load AWS configuration: %v", err)
+	}
+	newClients(awsConfig)
+
+	settings, err := loadAlertSettings()
+	if err != nil {
+		log.Fatalf("the alerter is not configured: %v", err)
+	}
+
+	if send {
+		secretsManager = secretsmanager.NewFromConfig(awsConfig)
+		if allowedChats, err = parseChatIDs(os.Getenv("ALLOWED_CHAT_IDS")); err != nil {
+			log.Fatal(err)
+		}
+		if err := loadSecrets(ctx); err != nil {
+			log.Fatalf("could not read the bot secret: %v", err)
+		}
+	}
+
+	line, err := json.MarshalIndent(runAlerts(ctx, settings, send), "", "  ")
+	if err != nil {
+		log.Fatalf("could not marshal the run: %v", err)
+	}
+	os.Stdout.Write(append(line, '\n'))
 }

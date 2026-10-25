@@ -71,16 +71,9 @@ func runLambda() {
 	wafLogGroup = os.Getenv("WAF_LOG_GROUP")
 	apiFunction = os.Getenv("API_FUNCTION_NAME")
 
-	for _, chat := range strings.Split(os.Getenv("ALLOWED_CHAT_IDS"), ",") {
-		chat = strings.TrimSpace(chat)
-		if chat == "" {
-			continue
-		}
-		id, err := strconv.ParseInt(chat, 10, 64)
-		if err != nil {
-			log.Fatalf("ALLOWED_CHAT_IDS holds something that is not a chat id: %q", chat)
-		}
-		allowedChats = append(allowedChats, id)
+	allowedChats, err = parseChatIDs(os.Getenv("ALLOWED_CHAT_IDS"))
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	if err := loadSecrets(ctx); err != nil {
@@ -90,6 +83,62 @@ func runLambda() {
 	}
 
 	lambda.Start(handleWebhook)
+}
+
+// runAlertsLambda is the entry point of the alerter: the same binary, started by
+// EventBridge once a minute instead of by Telegram. It shares the bot's secret and its
+// allow-list — the alerter speaks as the bot, to the chats the bot already answers.
+func runAlertsLambda() {
+	ctx := context.Background()
+
+	awsConfig, err := config.LoadDefaultConfig(ctx, config.WithRegion(os.Getenv("AWS_REGION")))
+	if err != nil {
+		log.Fatalf("could not load AWS configuration: %v", err)
+	}
+	newClients(awsConfig)
+	secretsManager = secretsmanager.NewFromConfig(awsConfig)
+
+	allowedChats, err = parseChatIDs(os.Getenv("ALLOWED_CHAT_IDS"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(allowedChats) == 0 {
+		log.Fatal("ALLOWED_CHAT_IDS is empty: the alerter would have nobody to tell")
+	}
+
+	settings, err := loadAlertSettings()
+	if err != nil {
+		log.Fatalf("the alerter is not configured: %v", err)
+	}
+
+	if err := loadSecrets(ctx); err != nil {
+		log.Fatalf("could not read the bot secret: %v", err)
+	}
+
+	// The scheduled event carries nothing this needs, so the handler takes no payload.
+	// It never returns an error either: a failed check is already an alert of its own,
+	// and an error here would only make EventBridge retry a run the next minute repeats.
+	lambda.Start(func(ctx context.Context) error {
+		logRun(runAlerts(ctx, settings, true))
+		return nil
+	})
+}
+
+// parseChatIDs reads ALLOWED_CHAT_IDS, comma-separated Telegram chat ids.
+func parseChatIDs(list string) ([]int64, error) {
+	chats := []int64{}
+	for _, chat := range strings.Split(list, ",") {
+		chat = strings.TrimSpace(chat)
+		if chat == "" {
+			continue
+		}
+		id, err := strconv.ParseInt(chat, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("ALLOWED_CHAT_IDS holds something that is not a chat id: %q", chat)
+		}
+		chats = append(chats, id)
+	}
+	return chats, nil
 }
 
 func loadSecrets(ctx context.Context) error {

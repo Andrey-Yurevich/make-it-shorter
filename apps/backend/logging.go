@@ -43,8 +43,8 @@ type requestLog struct {
 }
 
 func (entry *requestLog) write() {
-	// The metric filter behind the daily cost alarm selects on this value. Renaming it
-	// without renaming the filter zeroes the alarm silently.
+	// The reporter and the alerter both select on this value. Renaming it without
+	// renaming their queries zeroes the report and every log-based alert silently.
 	entry.Event = "shorten"
 
 	// The share of input read from cache. It is zero today — the static part of the
