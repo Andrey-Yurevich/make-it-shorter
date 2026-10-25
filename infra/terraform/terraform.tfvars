@@ -9,7 +9,7 @@
 # Deploying is editing this line and running terraform apply; the script does neither. A
 # rollback is the same edit naming an older key, and works as long as that key is still
 # in the bucket.
-lambda_version = "2.4.0"
+lambda_version = "2.4.2"
 
 # Overrides the Sonnet 5 default in variables.tf. AWS applies a quota of 0 to this
 # account for the whole recent premium row — Sonnet 5, Opus 5, Opus 4.7, Opus 4.8,
@@ -23,7 +23,7 @@ default_model = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 default_max_summary_tokens = 3000
 
 # The bot artifact, built and uploaded by scripts/make-release.sh alongside the other two.
-bot_version = "ffffb8a"
+bot_version = "2.4.2"
 
 # Chats the Telegram bot answers. Empty until the first one is known: message the bot and
 # it replies with the chat id to put here.
