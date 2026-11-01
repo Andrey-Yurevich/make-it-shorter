@@ -10,6 +10,14 @@ locale's messages.json and a short report in listing/<locale>.md. When Claude fa
 usually on the usage limit, the script waits and starts the same locale again, so a run
 left alone in a terminal gets through the limit by itself.
 
+Semrush out of API units or without a subscription is a different failure: Claude would
+carry on and write the listing without keywords, and only the owner can clear it, by
+fixing the connector. The script stops Claude as soon as Semrush answers so, and starts
+the same locale again every 10 minutes, with no limit on attempts, until Semrush works.
+
+Several runs of the script may work at once on different locales; the prompt tells
+Claude so.
+
 While Claude works, the script prints every step it takes: the tool and the file, command
 or report it is used on. A step can take minutes of writing with no tool call (the full
 description goes into messages.json in one edit), so during such a stretch it prints a
@@ -17,6 +25,7 @@ line every 30 seconds with how much has been written. Lines keep coming while Cl
 alive; minutes without one mean it is stuck.
 """
 import json
+import re
 import subprocess
 import sys
 import time
@@ -28,11 +37,16 @@ PROMPT = ROOT / "listing/prompt.md"
 
 MODEL = "opus"
 RETRY_MINUTES = 20
+SEMRUSH_RETRY_MINUTES = 10
 MAX_ATTEMPTS = 24
 QUIET_SECONDS = 30
 
+# Semrush error codes that only the owner can clear. A Semrush error is a JSON object in
+# the tool's result; rate_limit is not here, it passes and Claude retries the call.
+SEMRUSH_LIMIT = re.compile(r'"code"\s*:\s*"(no_api_units|no_subscription)"')
+
 # locale -> (language, market, Semrush database). A database marks a priority market from
-# listing-translation-notes.md: there the name and keywords are chosen from Semrush data.
+# assets/listing-translation-notes.md: there the name and keywords are chosen from Semrush data.
 # Everywhere else the listing is written natively and the name stays English. `all` runs
 # them in this order, so the markets that matter are done first.
 LANGUAGES = {
@@ -74,13 +88,16 @@ LANGUAGES = {
 
 
 def sync_english():
-    # The full description is written by hand in long-description.txt; the English
+    # The full description is written by hand in assets/long-description.txt; the English
     # catalog carries a copy so that every locale has the same three keys.
     path = LOCALES_DIR / "en/messages.json"
     messages = json.loads(path.read_text())
-    long_description = (ROOT / "long-description.txt").read_text().strip()
+    long_description = (ROOT / "assets/long-description.txt").read_text().strip()
     messages["storeDesc"] = {"message": long_description}
-    path.write_text(json.dumps(messages, ensure_ascii=False, indent=2) + "\n")
+    text = json.dumps(messages, ensure_ascii=False, indent=2) + "\n"
+    # Parallel runs all sync it; rewriting an unchanged file could let one read it empty.
+    if path.read_text() != text:
+        path.write_text(text)
 
 
 def describe(tool):
@@ -91,6 +108,13 @@ def describe(tool):
     return f"{name} {target}".replace(f"{ROOT}/", "")[:120]
 
 
+def result_text(content):
+    # A tool result is a string or a list of content blocks.
+    if isinstance(content, str):
+        return content
+    return "".join(part.get("text", "") for part in content or [] if isinstance(part, dict))
+
+
 def run_claude(command, prompt, locale):
     # stream-json reports each event as it happens. stderr is not captured: whatever
     # Claude complains about goes straight to the terminal.
@@ -99,6 +123,8 @@ def run_claude(command, prompt, locale):
     process.stdin.close()
 
     reply = None
+    semrush_limit = None
+    semrush_calls = set()
     last_print = time.monotonic()
     written = 0
     for line in process.stdout:
@@ -116,6 +142,14 @@ def run_claude(command, prompt, locale):
                     print(f"{prefix}: {describe(block)}", flush=True)
                     last_print = time.monotonic()
                     written = 0
+                    if block["name"].startswith("mcp__claude_ai_Semrush"):
+                        semrush_calls.add(block["id"])
+        elif event["type"] == "user" and isinstance(event["message"]["content"], list):
+            for block in event["message"]["content"]:
+                if block.get("type") == "tool_result" and block.get("tool_use_id") in semrush_calls:
+                    match = SEMRUSH_LIMIT.search(result_text(block.get("content")))
+                    if match:
+                        semrush_limit = match.group(1)
         elif event["type"] == "stream_event" and event["event"]["type"] == "content_block_delta":
             # Tokens of thinking, text or a tool's input: Claude is busy, not stuck.
             delta = event["event"]["delta"]
@@ -128,8 +162,12 @@ def run_claude(command, prompt, locale):
         elif event["type"] == "result":
             reply = event
 
+        if semrush_limit:
+            process.kill()
+            break
+
     process.wait()
-    return process.returncode, reply
+    return process.returncode, reply, semrush_limit
 
 
 def localize(locale):
@@ -158,17 +196,25 @@ def localize(locale):
         "Agent",
     ]
 
-    for attempt in range(1, MAX_ATTEMPTS + 1):
-        returncode, reply = run_claude(command, prompt, locale)
+    attempt = 1
+    while True:
+        returncode, reply, semrush_limit = run_claude(command, prompt, locale)
+        if semrush_limit:
+            # Not an attempt: it lasts until the owner fixes the connector, however long.
+            print(f"{locale}: Semrush answered {semrush_limit}, fix the connector; "
+                  f"retrying in {SEMRUSH_RETRY_MINUTES} min", flush=True)
+            time.sleep(SEMRUSH_RETRY_MINUTES * 60)
+            continue
         if returncode == 0 and reply and not reply.get("is_error"):
             print(reply.get("result", "").strip(), flush=True)
             return
         error = reply.get("result", "") if reply else f"exit code {returncode}"
         print(f"{locale}: claude failed: {error}".strip(), flush=True)
-        if attempt < MAX_ATTEMPTS:
-            print(f"{locale}: retrying in {RETRY_MINUTES} min ({attempt}/{MAX_ATTEMPTS})", flush=True)
-            time.sleep(RETRY_MINUTES * 60)
-    raise RuntimeError(f"{locale}: gave up after {MAX_ATTEMPTS} attempts")
+        if attempt == MAX_ATTEMPTS:
+            raise RuntimeError(f"{locale}: gave up after {MAX_ATTEMPTS} attempts")
+        print(f"{locale}: retrying in {RETRY_MINUTES} min ({attempt}/{MAX_ATTEMPTS})", flush=True)
+        attempt += 1
+        time.sleep(RETRY_MINUTES * 60)
 
 
 def main():

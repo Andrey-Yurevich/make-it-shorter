@@ -2,7 +2,7 @@
 
 Rewrite the Chrome Web Store listing of the extension Make It Shorter for people in {market} who speak {language}: the name, the short description and the full description. Work on this one locale only.
 
-The current {language} listing was machine-translated and reads like it. Two old short descriptions from other locales show the problem:
+The current {language} listing, where there is one, was machine-translated and reads like it. Two old short descriptions from other locales show the problem:
 
 - ru: «ИИ-суммаризатор: краткое изложение или просто короче. Длинная статья? Сожмите её одним кликом, на любом языке.»
 - pl: «Streszczenie AI: streszczenie albo po prostu krócej. Długi artykuł? Jedno kliknięcie, w każdym języku.»
@@ -21,11 +21,11 @@ Do not translate sentence by sentence. Take what each sentence tells the reader 
 The English listing is the only source of meaning:
 
 - name and short description: `appName` and `shortDesc` in `apps/extension/public/_locales/en/messages.json`;
-- full description: `long-description.txt`.
+- full description: `assets/long-description.txt`.
 
-The rules of the course this listing follows are in `listing-translation-notes.md` (in Russian). The steps below already apply them; read the file only if a step is unclear.
+The rules of the course this listing follows are in `assets/listing-translation-notes.md` (in Russian). The steps below already apply them; read the file only if a step is unclear.
 
-The current texts in `apps/extension/public/_locales/{locale}/messages.json` are the problem being fixed: do not reuse them.
+The current texts in `apps/extension/public/_locales/{locale}/messages.json` are the problem being fixed: do not reuse them. The file may not exist: the locale has no listing yet, and you create it in step 5. The same goes for `listing/{locale}.md`.
 
 ## Step 1. Keywords and name
 
@@ -51,13 +51,17 @@ At most 132 characters, one or two sentences. On a priority market it opens with
 
 ## Step 3. Full description
 
-Translate `long-description.txt` faithfully in meaning and structure — the same sections in the same order, the same emoji, the same list items, the same questions and answers — and natively in wording.
+Translate `assets/long-description.txt` faithfully in meaning and structure — the same sections in the same order, the same emoji, the same list items, the same questions and answers — and natively in wording.
 
 - In the English text `make it shorter` in lowercase is two things at once: the product's name and the English search keyword. Where it names the product, write `Make It Shorter`. On a priority market, use the name's national keyword instead in some of those places, where it reads naturally.
 - The English text works English search phrases into its sentences: `summarize`, `summarizer`, `summary generator`, `article summarizer`, `make it short`, `make it way shorter`, `make it as short as possible`, `can u make it short` and the like. Render each the way people in {market} would say it, using the keywords from step 1 where they fit. Never leave the English phrase in place and never transliterate it.
 - A line that exists only for English search and means nothing in {language} — the question about the misspelling `summerize`/`summerizer` — becomes the same point about a common {language} misspelling or variant if there is one, and is dropped otherwise. This is the only kind of line you may drop.
 - Keywords appear as often as a native writer would naturally use them and no more. Repetition reads as spam to the store's search.
 - At most 16,000 characters.
+
+## Parallel runs
+
+Several runs like this one may work at the same time, each on its own locale. Touch only your two files: `apps/extension/public/_locales/{locale}/messages.json` and `listing/{locale}.md`. Another locale's file may be missing, half-written or wrong while its run is in progress, so `check-locales.mjs` may report problems in other locales, and a wrong number of locales. Those belong to other runs: ignore them, do not try to fix them, and do not mention them in the report.
 
 ## Everywhere
 
@@ -78,7 +82,7 @@ Take the suggestions you agree with, without changing the meaning, the name, the
 
 ## Step 5. Write and check
 
-Overwrite `apps/extension/public/_locales/{locale}/messages.json` with exactly this structure — these three keys in this order, nothing else, two-space indent:
+Overwrite `apps/extension/public/_locales/{locale}/messages.json`, or create it if it does not exist, with exactly this structure — these three keys in this order, nothing else, two-space indent:
 
 ```json
 {
@@ -94,7 +98,7 @@ Overwrite `apps/extension/public/_locales/{locale}/messages.json` with exactly t
 }
 ```
 
-Run `node apps/extension/scripts/check-locales.mjs`. It must pass: it parses every locale and checks the length limits, counting characters as Unicode code points.
+Run `node apps/extension/scripts/check-locales.mjs`. It parses every locale and checks the length limits, counting characters as Unicode code points. It must report nothing about {locale}; what it reports about other locales is covered by Parallel runs above.
 
 Then write `listing/{locale}.md`, short, for the owner, who does not read {language}:
 
