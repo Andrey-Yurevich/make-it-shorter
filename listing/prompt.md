@@ -54,8 +54,8 @@ At most 132 characters, one or two sentences. On a priority market it opens with
 Translate `assets/long-description.txt` faithfully in meaning and structure — the same sections in the same order, the same emoji, the same list items, the same questions and answers — and natively in wording.
 
 - In the English text `make it shorter` in lowercase is two things at once: the product's name and the English search keyword. Where it names the product, write `Make It Shorter`. On a priority market, use the name's national keyword instead in some of those places, where it reads naturally.
-- The English text works English search phrases into its sentences: `summarize`, `summarizer`, `summary generator`, `article summarizer`, `make it short`, `make it way shorter`, `make it as short as possible`, `can u make it short` and the like. Render each the way people in {market} would say it, using the keywords from step 1 where they fit. Never leave the English phrase in place and never transliterate it.
-- A line that exists only for English search and means nothing in {language} — the question about the misspelling `summerize`/`summerizer` — becomes the same point about a common {language} misspelling or variant if there is one, and is dropped otherwise. This is the only kind of line you may drop.
+- The English text works English search phrases into its sentences: `summarize`, `summarizer`, `article summarizer`, `make it short` and the like. Render each the way people in {market} would say it, using the keywords from step 1 where they fit. Never leave the English phrase in place and never transliterate it.
+- Never add a question or a line about a misspelling, a spelling without diacritics or a search query. The store rejected this listing as keyword spam for exactly that.
 - Keywords appear as often as a native writer would naturally use them and no more. Repetition reads as spam to the store's search.
 - At most 16,000 characters.
 

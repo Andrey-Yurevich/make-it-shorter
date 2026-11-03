@@ -31,9 +31,10 @@ How much shorter depends on your source. A long article shrinks to its key ideas
 2️⃣ Work: summarize this thread before you answer, or make it short and straight to the point before you forward it.
 3️⃣ Research: an article summarizer for the first pass through a reading list, even when you summarize ai papers.
 4️⃣ Looking things up: run Make It Shorter on five sources and keep the one that answers your question.
-5️⃣ Writing: when an editor asks can you make it a little shorter, paste your draft and press Shorten.
 
 When your result is ready, copy it or open it in a separate window. Copied text pastes neatly into a document, an email or a chat.
+
+The panel follows your system's light or dark theme, and results in Arabic, Persian, Hebrew and Urdu read from right to left. A new language or tone takes effect on your next press of Shorten, so the text being written now is never interrupted.
 
 A summary tells you whether an article deserves twenty minutes and which part holds the answer. When a detail decides something, like a number in a contract, go back to the source. There is AI underneath, so now and then a nuance may slip.
 
@@ -43,19 +44,14 @@ A summary tells you whether an article deserves twenty minutes and which part ho
 📍 Up to 30,000 characters at a time. On very long pages, only the first part is shortened.
 📍 Chrome's own pages, the Chrome Web Store and the built-in PDF viewer cannot be read. Copy and paste by hand there.
 
+🔒 Your text and your privacy:
+
+- Your text is sent only to be shortened, and only when you press Shorten. Loading a page just fills the input box.
+- Your text is never saved, on our server or on your device. The panel holds one result and forgets it when you close it.
+- The extension reads a tab only after you click its icon there. It does not watch the other pages you open.
+- Picture addresses stay on your device. Pictures load directly from the site they came from.
+
 📋 Questions people ask:
-
-❓ I have a long report. Can you make it shorter?
-💡 Yes. Select just what you need, or click the icon with nothing selected to load a full page. One press of Shorten, and your report is summarized.
-
-❓ The result is still long. Can you make it even shorter?
-💡 Copy your result, paste it back into the panel and press Shorten again. Each pass can make it much shorter, until only key points are left.
-
-❓ Can you make it short and simple?
-💡 Yes, the Simplified tone is there to make it simple and shorter: plain words instead of jargon, in short sentences.
-
-❓ Can u make it short enough for a chat message?
-💡 Pick Casual or Direct. To make it a short paragraph or make it very short, run it once more.
 
 ❓ Which language does the summary come out in?
 💡 Your browser language by default. Pick any other, and your choice is kept for next time.
@@ -63,16 +59,5 @@ A summary tells you whether an article deserves twenty minutes and which part ho
 ❓ Can you summarize text from image files or screenshots?
 💡 No. Make It Shorter reads the words on a page, not pictures of them.
 
-❓ Does this tool rewrite your text or really shorten it?
-💡 It shortens. It does what make it shorter please asks for: the same message in fewer words, not a retelling.
-
-❓ I typed summerize by mistake. Is this the same thing?
-💡 Yes. Summerize and summerizer are common misspellings, and this is the summarizer you were looking for.
-
-❓ Will this work as a summary generator for my own drafts?
-💡 Yes. Paste a draft and summarize it the same way as any page.
-
 ❓ Do I need an account?
 💡 No. Install the extension, pin its icon and you are ready.
-
-Make it shorter: for when you need to make it way shorter, make it as short as possible, or shorten it to see what a page says before you commit to a full read.

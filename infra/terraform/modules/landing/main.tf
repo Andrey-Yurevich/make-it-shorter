@@ -58,6 +58,9 @@ resource "aws_cloudfront_origin_access_control" "landing" {
 # CloudFront does not serve index.html for a subdirectory on its own, so /welcome
 # would return 403 — and that would be discovered exactly when the first user
 # installs the extension.
+#
+# The root has no page of its own, so it redirects to the store listing. 302 rather than 301:
+# browsers keep a 301 indefinitely, and a real landing page would not reach them.
 resource "aws_cloudfront_function" "index_rewrite" {
   name    = "mis-landing-index-rewrite"
   runtime = "cloudfront-js-2.0"
@@ -66,6 +69,13 @@ resource "aws_cloudfront_function" "index_rewrite" {
   code = <<-JS
     function handler(event) {
       var request = event.request;
+      if (request.uri === '/') {
+        return {
+          statusCode: 302,
+          statusDescription: 'Found',
+          headers: { location: { value: 'https://chromewebstore.google.com/detail/make-it-shorter/phmdfocnbihinckemlobokmkbjjhlhfk' } },
+        };
+      }
       if (request.uri.endsWith('/')) {
         request.uri += 'index.html';
       } else if (!request.uri.includes('.')) {
