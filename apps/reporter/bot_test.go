@@ -77,7 +77,7 @@ func TestFormatReportSurvivesFailedSections(t *testing.T) {
 		Problems: []string{"waf activity: boom"},
 	}, "us-east-1", "/aws/lambda/mis-api")
 
-	for _, want := range []string{"Total cost: <b>unavailable</b>", "by model:\nunavailable", "WAF blocked: unavailable", "problems:", "boom"} {
+	for _, want := range []string{"Total cost: <b>unavailable</b>", "Installs: <b>unavailable</b>", "Uninstalls: <b>unavailable</b>", "by model:\nunavailable", "WAF blocked: unavailable", "problems:", "boom"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("the message should contain %q:\n%s", want, text)
 		}
@@ -136,6 +136,8 @@ func TestWebhookRejectsWhatItShould(t *testing.T) {
 func TestFormatReportRendering(t *testing.T) {
 	cost := 0.1637
 	rate := 0.0619
+	installs := 12
+	uninstalls := 0
 	// 2026-08-19 11:23:27 UTC, which is 13:23:27 in Berlin.
 	const summer = 1787138607520
 
@@ -144,13 +146,15 @@ func TestFormatReportRendering(t *testing.T) {
 		From:         summer,
 		To:           summer + 3600_000,
 		TotalCostUsd: &cost,
-		TopCountries: []countryCost{{Country: "PL", CostUsd: cost}, {Country: "??", CostUsd: 0}},
+		Installs:     &installs,
+		Uninstalls:   &uninstalls,
+		TopCountries: []countryRequests{{Country: "PL", Requests: 41}, {Country: "??", Requests: 1}},
 		Models: []modelCost{
 			{Model: "us.anthropic.claude-sonnet-5", Requests: 41, CostUsd: cost},
 			{Model: "us.anthropic.claude-haiku-4-5-20251001-v1:0", Requests: 1, CostUsd: 0},
 		},
-		Waf: &wafSection{Blocked: 2, TopRules: []ruleHit{{Rule: "origin-must-be-the-extension (block)", Hits: 2}}},
-		Lambda:       &lambdaStats{Errors: 7, Invocations: 113, ErrorRate: &rate},
+		Waf:    &wafSection{Blocked: 2, TopRules: []ruleHit{{Rule: "origin-must-be-the-extension (block)", Hits: 2}}},
+		Lambda: &lambdaStats{Errors: 7, Invocations: 113, ErrorRate: &rate},
 		LastLambdaErrors: []lambdaError{{
 			TimestampMs: summer,
 			ID:          "a2a91f05-2bbf-4813-8af1-3ee4d94b77e9",
@@ -166,9 +170,11 @@ func TestFormatReportRendering(t *testing.T) {
 	}, "us-east-1", "/aws/lambda/mis-api")
 
 	want := []string{
-		"🇵🇱 PL",                 // the flag is the country code in regional indicators
-		"🏳 ??",                  // and an unknown country gets a blank one, not a wrong one
-		"<b>$0.1637</b>",        // values are bold, keys are not
+		"🇵🇱 PL — <b>41</b> requests\n", // the flag is the country code in regional indicators
+		"🏳 ?? — <b>1</b> request\n",    // and an unknown country gets a blank one, not a wrong one
+		"Installs: <b>12</b>\n",
+		"Uninstalls: <b>0</b>\n", // a measured zero is printed, not read as unavailable
+		"<b>$0.1637</b>",         // values are bold, keys are not
 		"us.anthropic.claude-sonnet-5 — <b>41</b> requests, <b>$0.1637</b>\n",
 		"<b>1</b> request, <b>$0.0000</b> (no price in MODEL_PRICES)", // zero with requests is a missing price, and says so
 		"14:23:27 CEST",         // the zone rides on the end of the window, in its summer name

@@ -195,7 +195,7 @@ func checkAlerts(ctx context.Context, settings alertSettings, now time.Time) ([]
 	// "/report 24h" read one number the same way. Today is the quota's day, local midnight
 	// in Berlin, not the last 24 hours.
 	day := now.In(reportLocation).Format("2006-01-02")
-	countries, err := costByCountry(ctx, settings.apiLogGroup, startOfDay(now), now)
+	countries, err := usageByCountry(ctx, settings.apiLogGroup, startOfDay(now), now)
 	if err != nil {
 		failed("budget", err)
 	} else {

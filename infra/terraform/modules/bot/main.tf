@@ -4,6 +4,7 @@ variable "log_retention_days" { type = number }
 
 variable "api_log_group" { type = string }
 variable "waf_log_group" { type = string }
+variable "landing_log_group" { type = string }
 variable "api_function_name" { type = string }
 variable "metric_namespace" { type = string }
 
@@ -87,12 +88,13 @@ resource "aws_iam_role_policy" "bot" {
         Resource = [aws_secretsmanager_secret.bot.arn]
       },
       {
-        Sid    = "StartQueriesOnTheTwoLogGroupsItReports"
+        Sid    = "StartQueriesOnTheLogGroupsItReports"
         Effect = "Allow"
         Action = ["logs:StartQuery"]
         Resource = [
           "arn:aws:logs:${local.region}:${local.account}:log-group:${var.api_log_group}:*",
           "arn:aws:logs:${local.region}:${local.account}:log-group:${var.waf_log_group}:*",
+          "arn:aws:logs:${local.region}:${local.account}:log-group:${var.landing_log_group}:*",
         ]
       },
       {
@@ -149,6 +151,7 @@ resource "aws_lambda_function" "bot" {
       SECRET_ID         = aws_secretsmanager_secret.bot.arn
       API_LOG_GROUP     = var.api_log_group
       WAF_LOG_GROUP     = var.waf_log_group
+      LANDING_LOG_GROUP = var.landing_log_group
       API_FUNCTION_NAME = var.api_function_name
       # Empty until the first chat id is known — see answer() in lambda.go for what the
       # bot does in the meantime, which is to tell you the id and nothing else.

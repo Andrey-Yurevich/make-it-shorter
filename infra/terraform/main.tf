@@ -100,6 +100,7 @@ module "bot" {
 
   api_log_group     = module.api.log_group_name
   waf_log_group     = module.cdn.waf_log_group_name
+  landing_log_group = module.landing.log_group_name
   api_function_name = module.api.function_name
   metric_namespace  = local.metric_namespace
 

@@ -13,8 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-// One operational report over a time window: what was spent, where it was spent, what
-// the WebACL stopped, and what went wrong.
+// One operational report over a time window: what was spent, where the requests came
+// from, how many people installed and removed the extension, what the WebACL stopped, and
+// what went wrong.
 //
 // The same binary is all of the reporting. On a terminal it prints the report as JSON;
 // inside Lambda it is either the Telegram bot's webhook, answering the same report as a
@@ -31,7 +32,8 @@ import (
 //
 // Everything is read from the API function's own CloudWatch data — the structured log
 // record it writes per request, through Logs Insights, and the Lambda platform counters,
-// through CloudWatch metrics. Nothing is written anywhere.
+// through CloudWatch metrics — plus the access log of the landing distribution, for the
+// pages Chrome opens on install and uninstall. Nothing is written anywhere.
 
 const topN = 5
 
@@ -49,8 +51,11 @@ type report struct {
 	From   int64  `json:"from"`
 	To     int64  `json:"to"`
 
-	TotalCostUsd *float64      `json:"totalCostUsd"`
-	TopCountries []countryCost `json:"topCountries"`
+	TotalCostUsd *float64 `json:"totalCostUsd"`
+	Installs     *int     `json:"installs"`
+	Uninstalls   *int     `json:"uninstalls"`
+
+	TopCountries []countryRequests `json:"topCountries"`
 	// Every model that answered, not a top five: there are one or two of them, and the
 	// point is to see all of them next to each other.
 	Models []modelCost `json:"models"`
@@ -64,9 +69,9 @@ type report struct {
 	Problems []string `json:"problems"`
 }
 
-type countryCost struct {
-	Country string  `json:"country"`
-	CostUsd float64 `json:"costUsd"`
+type countryRequests struct {
+	Country  string `json:"country"`
+	Requests int    `json:"requests"`
 }
 
 type modelCost struct {
@@ -132,6 +137,7 @@ func main() {
 	window := flag.String("window", "24h", "report window: 30m, 1h, 12h, 24h or month")
 	logGroup := flag.String("log-group", "/aws/lambda/mis-api", "the API function's log group")
 	wafLogGroup := flag.String("waf-log-group", "aws-waf-logs-mis-api", "the WebACL's log group")
+	landingLogGroup := flag.String("landing-log-group", "/aws/cloudfront/mis-landing", "the landing distribution's log group")
 	function := flag.String("function", "mis-api", "the API function's name, for Lambda metrics")
 	region := flag.String("region", "us-east-1", "AWS region")
 	alerts := flag.Bool("alerts", false, "run the alert checks once, configured from the same environment the alerter Lambda gets, and print what would fire")
@@ -163,7 +169,7 @@ func main() {
 
 	// Indented, and with a trailing newline: the report is read by a person as often as
 	// by a program, and jq should not be needed to look at it.
-	line, err := json.MarshalIndent(buildReport(ctx, *logGroup, *wafLogGroup, *function, *window, start, end), "", "  ")
+	line, err := json.MarshalIndent(buildReport(ctx, *logGroup, *wafLogGroup, *landingLogGroup, *function, *window, start, end), "", "  ")
 	if err != nil {
 		log.Fatalf("could not marshal the report: %v", err)
 	}
@@ -197,7 +203,7 @@ func parseWindow(window string) (time.Duration, error) {
 // A failed section leaves its field null and adds a line to problems, and the rest of
 // the report is still built: half a report beats an error when the half that works is
 // the half that says how much money is going out.
-func buildReport(ctx context.Context, logGroup, wafLogGroup, function, window string, start, end time.Time) report {
+func buildReport(ctx context.Context, logGroup, wafLogGroup, landingLogGroup, function, window string, start, end time.Time) report {
 	built := report{
 		Window:   window,
 		From:     start.UnixMilli(),
@@ -205,21 +211,32 @@ func buildReport(ctx context.Context, logGroup, wafLogGroup, function, window st
 		Problems: []string{},
 	}
 
-	countries, err := costByCountry(ctx, logGroup, start, end)
+	countries, err := usageByCountry(ctx, logGroup, start, end)
 	if err != nil {
-		built.Problems = append(built.Problems, "cost by country: "+err.Error())
+		built.Problems = append(built.Problems, "usage by country: "+err.Error())
 	} else {
 		// The query returns every country so that the total and the leaderboard come
 		// from one scan; the cut to five happens here.
 		total := 0.0
-		built.TopCountries = []countryCost{}
+		built.TopCountries = []countryRequests{}
 		for i, row := range countries {
 			total += row.cost
 			if i < topN {
-				built.TopCountries = append(built.TopCountries, countryCost{Country: row.key, CostUsd: row.cost})
+				built.TopCountries = append(built.TopCountries, countryRequests{Country: row.country, Requests: row.requests})
 			}
 		}
 		built.TotalCostUsd = &total
+	}
+
+	// The same reasoning as the WAF section below: an empty name means nothing is being
+	// logged, and that must not read as nobody installing anything.
+	if landingLogGroup == "" {
+		built.Problems = append(built.Problems, "installs: logging is switched off (landing_logs_enabled)")
+	} else if installs, uninstalls, err := installCounts(ctx, landingLogGroup, start, end); err != nil {
+		built.Problems = append(built.Problems, "installs: "+err.Error())
+	} else {
+		built.Installs = &installs
+		built.Uninstalls = &uninstalls
 	}
 
 	models, err := costByModel(ctx, logGroup, start, end)

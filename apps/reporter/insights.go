@@ -15,10 +15,12 @@ import (
 // The three questions asked of CloudWatch Logs Insights, and the machinery for asking
 // them. Everything here reads the API function's log group; nothing writes to it.
 
-// costRow is one line of a leaderboard: a key and the dollars behind it.
-type costRow struct {
-	key  string
-	cost float64
+// countryRow is one country's share of the window: how many requests came from it and
+// what they cost.
+type countryRow struct {
+	country  string
+	requests int
+	cost     float64
 }
 
 // logLine is one line of an error list: when it happened, something to find the record
@@ -34,23 +36,23 @@ type logLine struct {
 	text   string
 }
 
-// costByCountry returns every country seen in the window, most expensive first.
+// usageByCountry returns every country seen in the window, most requests first.
 //
 // The whole list rather than the top five, because the caller needs both the leaderboard
-// and the total, and one query that returns everything is cheaper than two queries — an
-// Insights query is billed by the bytes it scans, and both would scan the same bytes.
-func costByCountry(ctx context.Context, logGroup string, start, end time.Time) ([]costRow, error) {
+// and the total cost, and one query that returns everything is cheaper than two queries —
+// an Insights query is billed by the bytes it scans, and both would scan the same bytes.
+func usageByCountry(ctx context.Context, logGroup string, start, end time.Time) ([]countryRow, error) {
 	const query = `
 		filter event = "shorten"
-		| stats sum(estimatedCostUsd) as cost by country
-		| sort cost desc`
+		| stats count(*) as requests, sum(estimatedCostUsd) as cost by country
+		| sort requests desc`
 
 	results, err := runQuery(ctx, logGroup, query, start, end)
 	if err != nil {
 		return nil, err
 	}
 
-	rows := []costRow{}
+	rows := []countryRow{}
 	for _, result := range results {
 		// A record written before the country header was read has no country field at
 		// all, and Insights returns the group with the field missing rather than empty.
@@ -58,8 +60,9 @@ func costByCountry(ctx context.Context, logGroup string, start, end time.Time) (
 		if country == "" {
 			country = "??"
 		}
+		requests, _ := strconv.Atoi(result["requests"])
 		cost, _ := strconv.ParseFloat(result["cost"], 64)
-		rows = append(rows, costRow{key: country, cost: cost})
+		rows = append(rows, countryRow{country: country, requests: requests, cost: cost})
 	}
 	return rows, nil
 }
@@ -103,6 +106,45 @@ func costByModel(ctx context.Context, logGroup string, start, end time.Time) ([]
 		rows = append(rows, modelRow{model: model, requests: requests, cost: cost})
 	}
 	return rows, nil
+}
+
+// installCounts counts the two pages Chrome itself opens: /welcome when the extension is
+// installed and /uninstall when it is removed. The extension cannot report either — it
+// has not started yet, or it is gone — so the landing distribution's log is the only count.
+//
+// 304 counts with 200: it is a real page open by a browser holding an earlier copy, which
+// is what a second uninstall from the same browser looks like.
+//
+// The rest of the filter is there because the paths are public and scanners find them. A
+// third of the /welcome hits were curl, Java, crawlers and an iPhone, and only desktop
+// Chromium can install the extension at all, so only desktop Chromium is counted. It is
+// a filter on a header anyone can write, so these are estimates and not a ledger.
+//
+// An interpreted string rather than a raw one like the other queries: Insights wants these
+// field names in backticks, and a raw string cannot hold a backtick.
+func installCounts(ctx context.Context, landingLogGroup string, start, end time.Time) (installs, uninstalls int, err error) {
+	const query = "filter `cs-uri-stem` in ['/welcome', '/uninstall']" +
+		" and `sc-status` in [200, 304]" +
+		" and `cs(User-Agent)` like 'Chrome/'" +
+		" and `cs(User-Agent)` not like /(?i)(bot|compatible|headless|mobile)/" +
+		" | stats count(*) as hits by `cs-uri-stem`"
+
+	results, err := runQuery(ctx, landingLogGroup, query, start, end)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// A page nobody opened has no row at all, which is the zero it should be.
+	for _, result := range results {
+		hits, _ := strconv.Atoi(result["hits"])
+		switch result["cs-uri-stem"] {
+		case "/welcome":
+			installs = hits
+		case "/uninstall":
+			uninstalls = hits
+		}
+	}
+	return installs, uninstalls, nil
 }
 
 // lastLambdaErrors returns the most recent lines the function wrote outside its own

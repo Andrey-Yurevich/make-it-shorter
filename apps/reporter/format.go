@@ -43,6 +43,8 @@ func formatReport(built report, region, apiLogGroup string) string {
 	fmt.Fprintf(out, "%s — %s\n", stamp(built.From), stampWithZone(built.To))
 
 	fmt.Fprintf(out, "\nTotal cost: %s\n", bold(money(built.TotalCostUsd)))
+	fmt.Fprintf(out, "Installs: %s\n", bold(count(built.Installs)))
+	fmt.Fprintf(out, "Uninstalls: %s\n", bold(count(built.Uninstalls)))
 
 	fmt.Fprintf(out, "\ntop %d countries:\n", topN)
 	switch {
@@ -52,8 +54,7 @@ func formatReport(built report, region, apiLogGroup string) string {
 		fmt.Fprintf(out, "none\n")
 	default:
 		for _, row := range built.TopCountries {
-			cost := row.CostUsd
-			fmt.Fprintf(out, "%s %s — %s\n", countryFlag(row.Country), escape(row.Country), bold(money(&cost)))
+			fmt.Fprintf(out, "%s %s — %s %s\n", countryFlag(row.Country), escape(row.Country), bold(fmt.Sprint(row.Requests)), plural(row.Requests, "request"))
 		}
 	}
 
@@ -215,6 +216,13 @@ func money(usd *float64) string {
 		return "unavailable"
 	}
 	return fmt.Sprintf("$%.4f", *usd)
+}
+
+func count(value *int) string {
+	if value == nil {
+		return "unavailable"
+	}
+	return fmt.Sprint(*value)
 }
 
 // stamp and stampWithZone read the report's epoch milliseconds back in Central European

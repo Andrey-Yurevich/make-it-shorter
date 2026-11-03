@@ -47,12 +47,13 @@ type botConfig struct {
 }
 
 var (
-	secrets        botConfig
-	allowedChats   []int64
-	apiLogGroup    string
-	wafLogGroup    string
-	apiFunction    string
-	secretsManager *secretsmanager.Client
+	secrets         botConfig
+	allowedChats    []int64
+	apiLogGroup     string
+	wafLogGroup     string
+	landingLogGroup string
+	apiFunction     string
+	secretsManager  *secretsmanager.Client
 )
 
 // runLambda is the entry point when the binary runs inside Lambda. Everything it needs
@@ -69,6 +70,7 @@ func runLambda() {
 
 	apiLogGroup = os.Getenv("API_LOG_GROUP")
 	wafLogGroup = os.Getenv("WAF_LOG_GROUP")
+	landingLogGroup = os.Getenv("LANDING_LOG_GROUP")
 	apiFunction = os.Getenv("API_FUNCTION_NAME")
 
 	allowedChats, err = parseChatIDs(os.Getenv("ALLOWED_CHAT_IDS"))
@@ -255,7 +257,7 @@ func buildAndFormat(ctx context.Context, window string) string {
 	}
 
 	end := time.Now().UTC()
-	built := buildReport(ctx, apiLogGroup, wafLogGroup, apiFunction, window, end.Add(-span), end)
+	built := buildReport(ctx, apiLogGroup, wafLogGroup, landingLogGroup, apiFunction, window, end.Add(-span), end)
 
 	// The region and the API log group go to the formatter so it can turn each error's
 	// timestamp into a link to the log stream it came from.
